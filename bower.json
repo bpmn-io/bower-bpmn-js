@@ -1,0 +1,24 @@
+{
+  "name": "bpmn-js",
+  "version": "0.1.0",
+  "authors": [
+    "bpmn.io"
+  ],
+  "description": "A bpmn 2.0 toolkit and web modeler",
+  "main": "bpmn-viewer.js",
+  "keywords": [
+    "models",
+    "diagram",
+    "renderer",
+    "modeler",
+    "bpmn"
+  ],
+  "dependencies": {
+    "lodash": "~2.4.1",
+    "jquery": "~2.1.1",
+    "jquery-mousewheel": "~3.1.11",
+    "sax": "https://github.com/isaacs/sax-js/archive/v0.6.0.tar.gz",
+    "Snap.svg": "~0.3.0"
+  },
+  "homepage": "http://bpmn.io"
+}
