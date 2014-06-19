@@ -21,7 +21,7 @@ Include the file into your project
 
 <script>
   // require is part of bundle file
-  var BpmnViewer = require('bpmn-js');
+  var BpmnViewer = window.BpmnJS;
 
   var xml; // ADD BPMN 2.0 XML HERE
   var viewer = new BpmnViewer({ container: 'body' });
