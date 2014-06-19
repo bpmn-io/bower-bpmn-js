@@ -1,8 +1,4 @@
-require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({"bpmn-js":[function(require,module,exports){
-module.exports=require('Focm2+');
-},{}],"Focm2+":[function(require,module,exports){
-module.exports = require('./lib/Viewer');
-},{"./lib/Viewer":"KXdkPL"}],3:[function(require,module,exports){
+!function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.BpmnJS=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 var _  = (window._);
 
 function failSafeAsync(fn) {
@@ -27,16 +23,16 @@ function failSafeAsync(fn) {
 }
 
 module.exports.failSafeAsync = failSafeAsync;
-},{}],"KXdkPL":[function(require,module,exports){
+},{}],2:[function(_dereq_,module,exports){
 'use strict';
 
-var Diagram = require('diagram-js'),
-    BpmnModel = require('bpmn-moddle'),
+var Diagram = _dereq_('diagram-js'),
+    BpmnModel = _dereq_('bpmn-moddle'),
     $ = (window.$),
     _ = (window._);
 
-var Importer = require('./import/Importer'),
-    util = require('./Util');
+var Importer = _dereq_('./import/Importer'),
+    util = _dereq_('./Util');
 
 
 function getSvgContents(diagram) {
@@ -250,15 +246,13 @@ Viewer.prototype.on = function(event, handler) {
 
 // modules that comprise the bpmn viewer
 Viewer.prototype._modules = [
-  require('./core'),
-  require('diagram-js/lib/features/selection')
+  _dereq_('./core'),
+  _dereq_('diagram-js/lib/features/selection')
 ];
 
 module.exports = Viewer;
 
-},{"./Util":3,"./core":7,"./import/Importer":12,"bpmn-moddle":"UqDJNG","diagram-js":35,"diagram-js/lib/features/selection":56}],"bpmn-js/Viewer":[function(require,module,exports){
-module.exports=require('KXdkPL');
-},{}],6:[function(require,module,exports){
+},{"./Util":1,"./core":4,"./import/Importer":9,"bpmn-moddle":11,"diagram-js":31,"diagram-js/lib/features/selection":52}],3:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -321,20 +315,20 @@ function BpmnRegistry(events, elementRegistry) {
 BpmnRegistry.$inject = [ 'eventBus', 'elementRegistry' ];
 
 module.exports = BpmnRegistry;
-},{}],7:[function(require,module,exports){
+},{}],4:[function(_dereq_,module,exports){
 module.exports = {
-  __depends__: [ require('../draw') ],
-  bpmnRegistry: [ 'type', require('./BpmnRegistry') ]
+  __depends__: [ _dereq_('../draw') ],
+  bpmnRegistry: [ 'type', _dereq_('./BpmnRegistry') ]
 };
-},{"../draw":10,"./BpmnRegistry":6}],8:[function(require,module,exports){
+},{"../draw":7,"./BpmnRegistry":3}],5:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
 
-var DefaultRenderer = require('diagram-js/lib/draw/Renderer');
-var LabelUtil = require('diagram-js/lib/util/LabelUtil');
+var DefaultRenderer = _dereq_('diagram-js/lib/draw/Renderer');
+var LabelUtil = _dereq_('diagram-js/lib/util/LabelUtil');
 
-var DiUtil = require('../util/Di');
+var DiUtil = _dereq_('../util/Di');
 
 var flattenPoints = DefaultRenderer.flattenPoints;
 
@@ -1804,7 +1798,7 @@ BpmnRenderer.prototype = Object.create(DefaultRenderer.prototype);
 BpmnRenderer.$inject = [ 'eventBus', 'styles', 'bpmnRegistry', 'pathMap' ];
 
 module.exports = BpmnRenderer;
-},{"../util/Di":13,"diagram-js/lib/draw/Renderer":45,"diagram-js/lib/util/LabelUtil":58}],9:[function(require,module,exports){
+},{"../util/Di":10,"diagram-js/lib/draw/Renderer":41,"diagram-js/lib/util/LabelUtil":54}],6:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -2251,12 +2245,12 @@ function PathMap(Snap) {
 PathMap.$inject = [ 'snap' ];
 
 module.exports = PathMap;
-},{}],10:[function(require,module,exports){
+},{}],7:[function(_dereq_,module,exports){
 module.exports = {
-  renderer: [ 'type', require('./BpmnRenderer') ],
-  pathMap: [ 'type', require('./PathMap') ]
+  renderer: [ 'type', _dereq_('./BpmnRenderer') ],
+  pathMap: [ 'type', _dereq_('./PathMap') ]
 };
-},{"./BpmnRenderer":8,"./PathMap":9}],11:[function(require,module,exports){
+},{"./BpmnRenderer":5,"./PathMap":6}],8:[function(_dereq_,module,exports){
 var _ = (window._);
 
 function BpmnTraverser(handler) {
@@ -2586,13 +2580,13 @@ function BpmnTraverser(handler) {
 }
 
 module.exports = BpmnTraverser;
-},{}],12:[function(require,module,exports){
+},{}],9:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
 
-var BpmnTreeWalker = require('./BpmnTreeWalker'),
-    Util = require('../Util');
+var BpmnTreeWalker = _dereq_('./BpmnTreeWalker'),
+    Util = _dereq_('../Util');
 
 
 function hasLabel(element) {
@@ -2763,7 +2757,7 @@ function importBpmnDiagram(diagram, definitions, done) {
 }
 
 module.exports.importBpmnDiagram = Util.failSafeAsync(importBpmnDiagram);
-},{"../Util":3,"./BpmnTreeWalker":11}],13:[function(require,module,exports){
+},{"../Util":1,"./BpmnTreeWalker":8}],10:[function(_dereq_,module,exports){
 'use strict';
 
 function isExpandedPool(semantic) {
@@ -2776,15 +2770,13 @@ function isExpanded(semantic, di) {
 
 module.exports.isExpandedPool = isExpandedPool;
 module.exports.isExpanded = isExpanded;
-},{}],"UqDJNG":[function(require,module,exports){
-module.exports = require('./lib/model/Simple');
-},{"./lib/model/Simple":17}],"bpmn-moddle":[function(require,module,exports){
-module.exports=require('UqDJNG');
-},{}],16:[function(require,module,exports){
+},{}],11:[function(_dereq_,module,exports){
+module.exports = _dereq_('./lib/model/Simple');
+},{"./lib/model/Simple":13}],12:[function(_dereq_,module,exports){
 var _ = (window._);
 
-var Moddle = require('moddle'),
-    xml = require('moddle-xml');
+var Moddle = _dereq_('moddle'),
+    xml = _dereq_('moddle-xml');
 
 
 function createModel(packages) {
@@ -2879,34 +2871,34 @@ function Bpmn(packages) {
 
 
 module.exports = Bpmn;
-},{"moddle":27,"moddle-xml":18}],17:[function(require,module,exports){
-var BpmnModdle = require('../Bpmn');
+},{"moddle":23,"moddle-xml":14}],13:[function(_dereq_,module,exports){
+var BpmnModdle = _dereq_('../Bpmn');
 
 var packages = {
-  bpmn: require('../../resources/bpmn/json/bpmn.json'),
-  bpmndi: require('../../resources/bpmn/json/bpmndi.json'),
-  dc: require('../../resources/bpmn/json/dc.json'),
-  di: require('../../resources/bpmn/json/di.json')
+  bpmn: _dereq_('../../resources/bpmn/json/bpmn.json'),
+  bpmndi: _dereq_('../../resources/bpmn/json/bpmndi.json'),
+  dc: _dereq_('../../resources/bpmn/json/dc.json'),
+  di: _dereq_('../../resources/bpmn/json/di.json')
 };
 
 module.exports = new BpmnModdle(packages);
-},{"../../resources/bpmn/json/bpmn.json":31,"../../resources/bpmn/json/bpmndi.json":32,"../../resources/bpmn/json/dc.json":33,"../../resources/bpmn/json/di.json":34,"../Bpmn":16}],18:[function(require,module,exports){
+},{"../../resources/bpmn/json/bpmn.json":27,"../../resources/bpmn/json/bpmndi.json":28,"../../resources/bpmn/json/dc.json":29,"../../resources/bpmn/json/di.json":30,"../Bpmn":12}],14:[function(_dereq_,module,exports){
 'use strict';
 
-var Reader = require('./lib/Reader'),
-    Writer = require('./lib/Writer');
+var Reader = _dereq_('./lib/Reader'),
+    Writer = _dereq_('./lib/Writer');
 
 module.exports.Reader = Reader;
 module.exports.Writer = Writer;
-},{"./lib/Reader":19,"./lib/Writer":20}],19:[function(require,module,exports){
+},{"./lib/Reader":15,"./lib/Writer":16}],15:[function(_dereq_,module,exports){
 'use strict';
 
 var sax = (window.sax),
     _ = (window._);
 
-var common = require('./common'),
-    util = require('moddle/lib/util'),
-    Stack = require('tiny-stack'),
+var common = _dereq_('./common'),
+    util = _dereq_('moddle/lib/util'),
+    Stack = _dereq_('tiny-stack'),
 
     logger = util.logger,
 
@@ -3439,13 +3431,13 @@ function XMLReader(model) {
 
 module.exports = XMLReader;
 module.exports.ElementHandler = ElementHandler;
-},{"./common":21,"moddle/lib/util":25,"tiny-stack":26}],20:[function(require,module,exports){
+},{"./common":17,"moddle/lib/util":21,"tiny-stack":22}],16:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
 
-var util = require('moddle').util,
-    common = require('./common'),
+var util = _dereq_('moddle').util,
+    common = _dereq_('./common'),
 
     parseNameNs = util.parseNameNs,
     isSimpleType = util.isSimpleType,
@@ -4011,7 +4003,7 @@ function XMLWriter(options) {
 }
 
 module.exports = XMLWriter;
-},{"./common":21,"moddle":22}],21:[function(require,module,exports){
+},{"./common":17,"moddle":18}],17:[function(_dereq_,module,exports){
 'use strict';
 
 
@@ -4055,18 +4047,18 @@ var DEFAULT_NS_MAP = {
 
 
 module.exports.DEFAULT_NS_MAP = DEFAULT_NS_MAP;
-},{}],22:[function(require,module,exports){
+},{}],18:[function(_dereq_,module,exports){
 'use strict';
 
-module.exports = require('./lib/Model');
+module.exports = _dereq_('./lib/Model');
 
-module.exports.util = require('./lib/util');
-},{"./lib/Model":23,"./lib/util":25}],23:[function(require,module,exports){
+module.exports.util = _dereq_('./lib/util');
+},{"./lib/Model":19,"./lib/util":21}],19:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
 
-var util = require('./util'),
+var util = _dereq_('./util'),
     logger = util.logger,
     isBuiltInType = util.isBuiltInType,
     parseNameNs = util.parseNameNs;
@@ -4634,7 +4626,7 @@ function Model(packages, options) {
 }
 
 module.exports = Model;
-},{"./util":25}],24:[function(require,module,exports){
+},{"./util":21}],20:[function(_dereq_,module,exports){
 'use strict';
 
 var LEVEL_MAP = {
@@ -4717,7 +4709,7 @@ function Logger(defaultLevel, handler) {
 }
 
 module.exports = Logger;
-},{}],25:[function(require,module,exports){
+},{}],21:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -4795,10 +4787,10 @@ module.exports.isBuiltInType = isBuiltInType;
 module.exports.isSimpleType = isSimpleType;
 module.exports.parseNameNs = parseNameNs;
 
-var Logger = require('./Logger');
+var Logger = _dereq_('./Logger');
 
 module.exports.logger = new Logger();
-},{"./Logger":24}],26:[function(require,module,exports){
+},{"./Logger":20}],22:[function(_dereq_,module,exports){
 /**
  * Tiny stack for browser or server
  *
@@ -4915,15 +4907,15 @@ else {
 }
 } )( this );
 
-},{}],27:[function(require,module,exports){
-module.exports=require(22)
-},{"./lib/Model":28,"./lib/util":30}],28:[function(require,module,exports){
-module.exports=require(23)
-},{"./util":30}],29:[function(require,module,exports){
-module.exports=require(24)
-},{}],30:[function(require,module,exports){
-module.exports=require(25)
-},{"./Logger":29}],31:[function(require,module,exports){
+},{}],23:[function(_dereq_,module,exports){
+module.exports=_dereq_(18)
+},{"./lib/Model":24,"./lib/util":26}],24:[function(_dereq_,module,exports){
+module.exports=_dereq_(19)
+},{"./util":26}],25:[function(_dereq_,module,exports){
+module.exports=_dereq_(20)
+},{}],26:[function(_dereq_,module,exports){
+module.exports=_dereq_(21)
+},{"./Logger":25}],27:[function(_dereq_,module,exports){
 module.exports={
   "name": "BPMN20",
   "uri": "http://www.omg.org/spec/BPMN/20100524/MODEL",
@@ -7999,7 +7991,7 @@ module.exports={
     "alias": "lowerCase"
   }
 }
-},{}],32:[function(require,module,exports){
+},{}],28:[function(_dereq_,module,exports){
 module.exports={
   "name": "BPMNDI",
   "uri": "http://www.omg.org/spec/BPMN/20100524/DI",
@@ -8203,7 +8195,7 @@ module.exports={
   "associations": [],
   "prefix": "bpmndi"
 }
-},{}],33:[function(require,module,exports){
+},{}],29:[function(_dereq_,module,exports){
 module.exports={
   "name": "DC",
   "uri": "http://www.omg.org/spec/DD/20100524/DC",
@@ -8303,7 +8295,7 @@ module.exports={
   "prefix": "dc",
   "associations": []
 }
-},{}],34:[function(require,module,exports){
+},{}],30:[function(_dereq_,module,exports){
 module.exports={
   "name": "DI",
   "uri": "http://www.omg.org/spec/DD/20100524/DI",
@@ -8515,12 +8507,12 @@ module.exports={
   "associations": [],
   "prefix": "di"
 }
-},{}],35:[function(require,module,exports){
-module.exports = require('./lib/Diagram');
-},{"./lib/Diagram":36}],36:[function(require,module,exports){
+},{}],31:[function(_dereq_,module,exports){
+module.exports = _dereq_('./lib/Diagram');
+},{"./lib/Diagram":32}],32:[function(_dereq_,module,exports){
 'use strict';
 
-var di = require('didi');
+var di = _dereq_('didi');
 
 /**
  * @namespace djs
@@ -8590,7 +8582,7 @@ function createInjector(options) {
     'config': ['value', options]
   };
 
-  var coreModule = require('./core');
+  var coreModule = _dereq_('./core');
 
   var modules = [ configModule, coreModule ].concat(options.modules || []);
 
@@ -8708,14 +8700,14 @@ module.exports = Diagram;
 Diagram.prototype.destroy = function() {
   this.get('eventBus').fire('diagram.destroy');
 };
-},{"./core":44,"didi":61}],37:[function(require,module,exports){
+},{"./core":40,"didi":57}],33:[function(_dereq_,module,exports){
 'use strict';
 
 
 var _ = (window._);
 
-var AddShapeHandler = require('./cmd/AddShapeHandler'),
-    AddConnectionHandler = require('./cmd/AddConnectionHandler');
+var AddShapeHandler = _dereq_('./cmd/AddShapeHandler'),
+    AddConnectionHandler = _dereq_('./cmd/AddConnectionHandler');
 
 
 /**
@@ -9210,7 +9202,7 @@ Canvas.$inject = [
   'elementRegistry' ];
 
 module.exports = Canvas;
-},{"./cmd/AddConnectionHandler":42,"./cmd/AddShapeHandler":43}],38:[function(require,module,exports){
+},{"./cmd/AddConnectionHandler":38,"./cmd/AddShapeHandler":39}],34:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -9423,7 +9415,7 @@ function CommandStack(injector, events) {
 CommandStack.$inject = [ 'injector', 'eventBus' ];
 
 module.exports = CommandStack;
-},{}],39:[function(require,module,exports){
+},{}],35:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -9539,7 +9531,7 @@ function ElementRegistry(eventBus) {
 ElementRegistry.$inject = [ 'eventBus' ];
 
 module.exports = ElementRegistry;
-},{}],40:[function(require,module,exports){
+},{}],36:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -9772,7 +9764,7 @@ function EventBus() {
 
 
 module.exports = EventBus;
-},{}],41:[function(require,module,exports){
+},{}],37:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -9878,7 +9870,7 @@ GraphicsFactory.prototype.updateConnection = function(element, gfx) {
 GraphicsFactory.$inject = [ 'renderer', 'snap' ];
 
 module.exports = GraphicsFactory;
-},{}],42:[function(require,module,exports){
+},{}],38:[function(_dereq_,module,exports){
 'use strict';
 
 
@@ -9950,12 +9942,12 @@ AddConnectionHandler.$inject = ['eventBus', 'graphicsFactory', 'elementRegistry'
 
 // export
 module.exports = AddConnectionHandler;
-},{}],43:[function(require,module,exports){
+},{}],39:[function(_dereq_,module,exports){
 'use strict';
 
 
 var _ = (window._),
-    setParent = require('../../util/ShapeUtil').setParent;
+    setParent = _dereq_('../../util/ShapeUtil').setParent;
 
 
 /**
@@ -10033,19 +10025,19 @@ AddShapeHandler.$inject = ['eventBus', 'graphicsFactory', 'elementRegistry'];
 
 // export
 module.exports = AddShapeHandler;
-},{"../../util/ShapeUtil":59}],44:[function(require,module,exports){
+},{"../../util/ShapeUtil":55}],40:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = {
-  __depends__: [ require('../draw') ],
+  __depends__: [ _dereq_('../draw') ],
   __init__: [ 'canvas' ],
-  canvas: [ 'type', require('./Canvas') ],
-  commandStack: [ 'type', require('./CommandStack') ],
-  elementRegistry: [ 'type', require('./ElementRegistry') ],
-  eventBus: [ 'type', require('./EventBus') ],
-  graphicsFactory: [ 'type', require('./GraphicsFactory') ]
+  canvas: [ 'type', _dereq_('./Canvas') ],
+  commandStack: [ 'type', _dereq_('./CommandStack') ],
+  elementRegistry: [ 'type', _dereq_('./ElementRegistry') ],
+  eventBus: [ 'type', _dereq_('./EventBus') ],
+  graphicsFactory: [ 'type', _dereq_('./GraphicsFactory') ]
 };
-},{"../draw":48,"./Canvas":37,"./CommandStack":38,"./ElementRegistry":39,"./EventBus":40,"./GraphicsFactory":41}],45:[function(require,module,exports){
+},{"../draw":44,"./Canvas":33,"./CommandStack":34,"./ElementRegistry":35,"./EventBus":36,"./GraphicsFactory":37}],41:[function(_dereq_,module,exports){
 'use strict';
 
 // required components
@@ -10093,14 +10085,14 @@ Renderer.$inject = ['styles'];
 
 module.exports = Renderer;
 module.exports.flattenPoints = flattenPoints;
-},{}],46:[function(require,module,exports){
+},{}],42:[function(_dereq_,module,exports){
 var snapsvg = (window.Snap);
 
 // require snapsvg extensions
-require('./snapsvg-extensions');
+_dereq_('./snapsvg-extensions');
 
 module.exports = snapsvg;
-},{"./snapsvg-extensions":49}],47:[function(require,module,exports){
+},{"./snapsvg-extensions":45}],43:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -10163,15 +10155,15 @@ function Styles() {
 }
 
 module.exports = Styles;
-},{}],48:[function(require,module,exports){
+},{}],44:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = {
-  renderer: [ 'type', require('./Renderer') ],
-  snap: [ 'value', require('./Snap') ],
-  styles: [ 'type', require('./Styles') ]
+  renderer: [ 'type', _dereq_('./Renderer') ],
+  snap: [ 'value', _dereq_('./Snap') ],
+  styles: [ 'type', _dereq_('./Styles') ]
 };
-},{"./Renderer":45,"./Snap":46,"./Styles":47}],49:[function(require,module,exports){
+},{"./Renderer":41,"./Snap":42,"./Styles":43}],45:[function(_dereq_,module,exports){
 'use strict';
 
 var Snap = (window.Snap);
@@ -10358,13 +10350,13 @@ Snap.plugin(function (Snap, Element, Paper, global) {
     return new Snap(svg);
   };
 });
-},{}],50:[function(require,module,exports){
+},{}],46:[function(_dereq_,module,exports){
 'use strict';
 
 
 var _ = (window._);
 
-var GraphicsUtil = require('../../util/GraphicsUtil');
+var GraphicsUtil = _dereq_('../../util/GraphicsUtil');
 
 
 /**
@@ -10479,18 +10471,18 @@ function InteractionEvents(events, styles) {
 InteractionEvents.$inject = [ 'eventBus', 'styles' ];
 
 module.exports = InteractionEvents;
-},{"../../util/GraphicsUtil":57}],51:[function(require,module,exports){
+},{"../../util/GraphicsUtil":53}],47:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = {
   __init__: [ 'interactionEvents' ],
-  interactionEvents: [ 'type', require('./InteractionEvents') ]
+  interactionEvents: [ 'type', _dereq_('./InteractionEvents') ]
 };
-},{"./InteractionEvents":50}],52:[function(require,module,exports){
+},{"./InteractionEvents":46}],48:[function(_dereq_,module,exports){
 'use strict';
 
 
-var GraphicsUtil = require('../../util/GraphicsUtil');
+var GraphicsUtil = _dereq_('../../util/GraphicsUtil');
 
 
 /**
@@ -10545,14 +10537,14 @@ function Outline(events, styles) {
 Outline.$inject = ['eventBus', 'styles'];
 
 module.exports = Outline;
-},{"../../util/GraphicsUtil":57}],53:[function(require,module,exports){
+},{"../../util/GraphicsUtil":53}],49:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = {
   __init__: [ 'outline' ],
-  outline: [ 'type', require('./Outline') ]
+  outline: [ 'type', _dereq_('./Outline') ]
 };
-},{"./Outline":52}],54:[function(require,module,exports){
+},{"./Outline":48}],50:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -10629,7 +10621,7 @@ function Selection(events) {
 Selection.$inject = [ 'eventBus' ];
 
 module.exports = Selection;
-},{}],55:[function(require,module,exports){
+},{}],51:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -10719,19 +10711,19 @@ SelectionVisuals.$inject = [
 ];
 
 module.exports = SelectionVisuals;
-},{}],56:[function(require,module,exports){
+},{}],52:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = {
   __init__: [ 'selectionVisuals' ],
   __depends__: [
-    require('../interaction-events'),
-    require('../outline')
+    _dereq_('../interaction-events'),
+    _dereq_('../outline')
   ],
-  selection: [ 'type', require('./Selection') ],
-  selectionVisuals: [ 'type', require('./SelectionVisuals') ]
+  selection: [ 'type', _dereq_('./Selection') ],
+  selectionVisuals: [ 'type', _dereq_('./SelectionVisuals') ]
 };
-},{"../interaction-events":51,"../outline":53,"./Selection":54,"./SelectionVisuals":55}],57:[function(require,module,exports){
+},{"../interaction-events":47,"../outline":49,"./Selection":50,"./SelectionVisuals":51}],53:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -10774,7 +10766,7 @@ function getVisual(gfx) {
 }
 
 module.exports.getVisual = getVisual;
-},{}],58:[function(require,module,exports){
+},{}],54:[function(_dereq_,module,exports){
 var _ = (window._);
 
 var DEFAULT_BOX_PADDING = 5;
@@ -11016,7 +11008,7 @@ function LabelUtil(config) {
 
 
 module.exports = LabelUtil;
-},{}],59:[function(require,module,exports){
+},{}],55:[function(_dereq_,module,exports){
 var _ = (window._);
 
 /**
@@ -11145,7 +11137,7 @@ module.exports.selfAndDirectChildren = selfAndDirectChildren;
 module.exports.selfAndAllChildren = selfAndAllChildren;
 module.exports.translateShape = translateShape;
 module.exports.setParent = setParent;
-},{}],60:[function(require,module,exports){
+},{}],56:[function(_dereq_,module,exports){
 
 var isArray = function(obj) {
   return Object.prototype.toString.call(obj) === '[object Array]';
@@ -11195,18 +11187,18 @@ exports.annotate = annotate;
 exports.parse = parse;
 exports.isArray = isArray;
 
-},{}],61:[function(require,module,exports){
+},{}],57:[function(_dereq_,module,exports){
 module.exports = {
-  annotate: require('./annotation').annotate,
-  Module: require('./module'),
-  Injector: require('./injector')
+  annotate: _dereq_('./annotation').annotate,
+  Module: _dereq_('./module'),
+  Injector: _dereq_('./injector')
 };
 
-},{"./annotation":60,"./injector":62,"./module":63}],62:[function(require,module,exports){
-var Module = require('./module');
-var autoAnnotate = require('./annotation').parse;
-var annotate = require('./annotation').annotate;
-var isArray = require('./annotation').isArray;
+},{"./annotation":56,"./injector":58,"./module":59}],58:[function(_dereq_,module,exports){
+var Module = _dereq_('./module');
+var autoAnnotate = _dereq_('./annotation').parse;
+var annotate = _dereq_('./annotation').annotate;
+var isArray = _dereq_('./annotation').isArray;
 
 
 var Injector = function(modules, parent) {
@@ -11418,7 +11410,7 @@ var Injector = function(modules, parent) {
 
 module.exports = Injector;
 
-},{"./annotation":60,"./module":63}],63:[function(require,module,exports){
+},{"./annotation":56,"./module":59}],59:[function(_dereq_,module,exports){
 var Module = function() {
   var providers = [];
 
@@ -11444,4 +11436,6 @@ var Module = function() {
 
 module.exports = Module;
 
-},{}]},{},[])
+},{}]},{},[2])
+(2)
+});
