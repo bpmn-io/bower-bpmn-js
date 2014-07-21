@@ -1,6 +1,6 @@
 {
   "name": "bpmn-js",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "authors": [
     "bpmn.io"
   ],
@@ -18,7 +18,8 @@
     "jquery": "~2.1.1",
     "jquery-mousewheel": "~3.1.11",
     "sax": "https://github.com/isaacs/sax-js/archive/v0.6.0.tar.gz",
-    "Snap.svg": "~0.3.0"
+    "Snap.svg": "~0.3.0",
+    "hammerjs": "~2.0.1"
   },
   "homepage": "http://bpmn.io"
 }

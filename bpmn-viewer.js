@@ -36,11 +36,12 @@ var Importer = _dereq_('./import/Importer'),
 
 
 function getSvgContents(diagram) {
-  var paper = diagram.get('canvas').getPaper();
-  var outerNode = paper.node.parentNode;
+  var outerNode = diagram.get('canvas').getContainer();
 
   var svg = outerNode.innerHTML;
-  return svg.replace(/^<svg[^>]*>|<\/svg>$/g, '');
+  return svg.replace(/^<svg[^>]*>|<\/svg>$/g, '')
+            .replace('<desc>Created with Snap</desc>', '')
+            .replace(/<g class="viewport"( transform="[^"]*")?/, '<g');
 }
 
 function initListeners(diagram, listeners) {
@@ -49,6 +50,23 @@ function initListeners(diagram, listeners) {
   listeners.forEach(function(l) {
     events.on(l.event, l.handler);
   });
+}
+
+function checkValidationError(err) {
+
+  // check if we can help the user by indicating wrong BPMN 2.0 xml
+  // (in case he or the exporting tool did not get that right)
+
+  var pattern = /unparsable content <([^>]+)> detected([\s\S]*)$/;
+  var match = pattern.exec(err.message);
+
+  if (match) {
+    err.message =
+      'unparsable content <' + match[1] + '> detected; ' +
+      'this may indicate an invalid BPMN 2.0 diagram file' + match[2];
+  }
+
+  return err;
 }
 
 /**
@@ -112,7 +130,9 @@ Viewer.prototype.importXML = function(xml, done) {
   var self = this;
 
   BpmnModel.fromXML(xml, 'bpmn:Definitions', function(err, definitions) {
+
     if (err) {
+      err = checkValidationError(err);
       return done(err);
     }
 
@@ -190,22 +210,19 @@ Viewer.prototype.importDefinitions = util.failSafeAsync(function(definitions, do
     this.clear();
   }
 
-  diagram = this.createDiagram(this.options.modules);
-
-  this.initDiagram(diagram);
-
+  this.diagram = diagram = this._createDiagram(this.options.modules);
   this.definitions = definitions;
+
+  this._init(diagram);
 
   Importer.importBpmnDiagram(diagram, definitions, done);
 });
 
-Viewer.prototype.initDiagram = function(diagram) {
-  this.diagram = diagram;
-
+Viewer.prototype._init = function(diagram) {
   initListeners(diagram, this.__listeners || []);
 };
 
-Viewer.prototype.createDiagram = function(modules) {
+Viewer.prototype._createDiagram = function(modules) {
 
   modules = [].concat(modules || this.getModules());
 
@@ -220,10 +237,14 @@ Viewer.prototype.createDiagram = function(modules) {
   });
 };
 
+
 Viewer.prototype.getModules = function() {
   return this._modules;
 };
 
+/**
+ * Remove all drawn elements from the viewer
+ */
 Viewer.prototype.clear = function() {
   var diagram = this.diagram;
 
@@ -232,6 +253,12 @@ Viewer.prototype.clear = function() {
   }
 };
 
+/**
+ * Register an event listener on the viewer
+ *
+ * @param {String} event
+ * @param {Function} handler
+ */
 Viewer.prototype.on = function(event, handler) {
   var diagram = this.diagram,
       listeners = this.__listeners = this.__listeners || [];
@@ -244,83 +271,570 @@ Viewer.prototype.on = function(event, handler) {
   }
 };
 
-// modules that comprise the bpmn viewer
+// modules the viewer is composed of
 Viewer.prototype._modules = [
   _dereq_('./core'),
+  _dereq_('./draw'),
   _dereq_('diagram-js/lib/features/selection')
 ];
 
 module.exports = Viewer;
 
-},{"./Util":1,"./core":4,"./import/Importer":9,"bpmn-moddle":11,"diagram-js":31,"diagram-js/lib/features/selection":52}],3:[function(_dereq_,module,exports){
+},{"./Util":1,"./core":7,"./draw":10,"./import/Importer":4,"bpmn-moddle":13,"diagram-js":43,"diagram-js/lib/features/selection":61}],3:[function(_dereq_,module,exports){
+'use strict';
+
+var _ = (window._);
+
+var Refs = _dereq_('object-refs');
+
+var diRefs = new Refs({ name: 'bpmnElement', enumerable: true }, { name: 'di' });
+
+
+function BpmnTreeWalker(handler) {
+
+  // list of containers already walked
+  var handledProcesses = [];
+
+  ///// Helpers /////////////////////////////////
+
+  function contextual(fn, ctx) {
+    return function(e) {
+      fn(e, ctx);
+    };
+  }
+
+  function is(element, type) {
+    return element.$instanceOf(type);
+  }
+
+  function visit(element, ctx) {
+
+    var gfx = element.gfx;
+
+    // avoid multiple rendering of elements
+    if (gfx) {
+      throw new Error('already rendered <' + element.id + '>');
+    }
+
+    // call handler
+    return handler.element(element, ctx);
+  }
+
+  function visitRoot(element, diagram) {
+    return handler.root(element, diagram);
+  }
+
+  function visitIfDi(element, ctx) {
+    if (element.di) {
+      return visit(element, ctx);
+    }
+  }
+
+  function logError(message, context) {
+    handler.error(message, context);
+  }
+
+  ////// DI handling ////////////////////////////
+
+  function registerDi(di) {
+    var bpmnElement = di.bpmnElement;
+
+    if (bpmnElement) {
+      diRefs.bind(bpmnElement, 'di');
+      bpmnElement.di = di;
+    } else {
+      logError('no bpmnElement for <' + di.$type + '#' + di.id + '>', { element: di });
+    }
+  }
+
+  function handleDiagram(diagram) {
+    handlePlane(diagram.plane);
+  }
+
+  function handlePlane(plane) {
+    registerDi(plane);
+
+    _.forEach(plane.planeElement, handlePlaneElement);
+  }
+
+  function handlePlaneElement(planeElement) {
+    registerDi(planeElement);
+  }
+
+
+  ////// Semantic handling //////////////////////
+
+  function handleDefinitions(definitions, diagram) {
+    // make sure we walk the correct bpmnElement
+
+    var diagrams = definitions.diagrams;
+
+    if (diagram && diagrams.indexOf(diagram) === -1) {
+      throw new Error('diagram not part of bpmn:Definitions');
+    }
+
+    if (!diagram && diagrams && diagrams.length) {
+      diagram = diagrams[0];
+    }
+
+    // no diagram -> nothing to import
+    if (!diagram) {
+      return;
+    }
+
+    // load DI from selected diagram only
+    handleDiagram(diagram);
+
+    var plane = diagram.plane,
+        rootElement = plane.bpmnElement;
+
+    if (!rootElement) {
+      throw new Error('no rootElement referenced in BPMNPlane <' + diagram.plane.id + '>');
+    }
+
+
+    var ctx = visitRoot(rootElement, plane);
+
+    if (is(rootElement, 'bpmn:Process')) {
+      handleProcess(rootElement, ctx);
+    } else if (is(rootElement, 'bpmn:Collaboration')) {
+      handleCollaboration(rootElement, ctx);
+
+      // force drawing of everything not yet drawn that is part of the target DI
+      handleUnhandledProcesses(definitions.rootElements, ctx);
+    } else {
+      throw new Error('unsupported root element for bpmndi:Diagram <' + rootElement.$type + '>');
+    }
+  }
+
+  function handleProcess(process, context) {
+    handleFlowElementsContainer(process, context);
+    handleIoSpecification(process.ioSpecification, context);
+
+    handleArtifacts(process.artifacts, context);
+
+    // log process handled
+    handledProcesses.push(process);
+  }
+
+  function handleUnhandledProcesses(rootElements) {
+
+    // walk through all processes that have not yet been drawn and draw them
+    // if they contain lanes with DI information.
+    // we do this to pass the free-floating lane test cases in the MIWG test suite
+    var processes = _.filter(rootElements, function(e) {
+      return is(e, 'bpmn:Process') && e.laneSets && handledProcesses.indexOf(e) === -1;
+    });
+
+    processes.forEach(contextual(handleProcess));
+  }
+
+  function handleMessageFlow(messageFlow, context) {
+    visitIfDi(messageFlow, context);
+  }
+
+  function handleMessageFlows(messageFlows, context) {
+    if (messageFlows) {
+      _.forEach(messageFlows, contextual(handleMessageFlow, context));
+    }
+  }
+
+  function handleDataAssociation(association, context) {
+    visitIfDi(association, context);
+  }
+
+  function handleDataInput(dataInput, context) {
+    visitIfDi(dataInput, context);
+  }
+
+  function handleDataOutput(dataOutput, context) {
+    visitIfDi(dataOutput, context);
+  }
+
+  function handleArtifact(artifact, context) {
+
+    // bpmn:TextAnnotation
+    // bpmn:Group
+    // bpmn:Association
+
+    visitIfDi(artifact, context);
+  }
+
+  function handleArtifacts(artifacts, context) {
+    _.forEach(artifacts, contextual(handleArtifact, context));
+  }
+
+  function handleIoSpecification(ioSpecification, context) {
+
+    if (!ioSpecification) {
+      return;
+    }
+
+    _.forEach(ioSpecification.dataInputs, contextual(handleDataInput, context));
+    _.forEach(ioSpecification.dataOutputs, contextual(handleDataOutput, context));
+  }
+
+  function handleSubProcess(subProcess, context) {
+    handleFlowElementsContainer(subProcess, context);
+    handleArtifacts(subProcess.artifacts, context);
+  }
+
+  function handleFlowNode(flowNode, context) {
+    var childCtx = visitIfDi(flowNode, context);
+
+    if (is(flowNode, 'bpmn:SubProcess')) {
+      handleSubProcess(flowNode, childCtx || context);
+    }
+
+    if (is(flowNode, 'bpmn:Activity')) {
+      _.forEach(flowNode.dataInputAssociations, contextual(handleDataAssociation, null));
+      _.forEach(flowNode.dataOutputAssociations, contextual(handleDataAssociation, null));
+
+      handleIoSpecification(flowNode.ioSpecification, context);
+    }
+  }
+
+  function handleSequenceFlow(sequenceFlow, context) {
+    visitIfDi(sequenceFlow, context);
+  }
+
+  function handleDataElement(dataObject, context) {
+    visitIfDi(dataObject, context);
+  }
+
+  function handleBoundaryElement(dataObject, context) {
+    visitIfDi(dataObject, context);
+  }
+
+  function handleLane(lane, context) {
+    var newContext = visitIfDi(lane, context);
+
+    if (lane.childLaneSet) {
+      handleLaneSet(lane.childLaneSet, newContext || context);
+    } else {
+      var filterList = _.filter(lane.flowNodeRef, function(e) {
+        return e.$type !== 'bpmn:BoundaryEvent';
+      });
+      handleFlowElements(filterList, newContext || context);
+    }
+  }
+
+  function handleLaneSet(laneSet, context) {
+    _.forEach(laneSet.lanes, contextual(handleLane, context));
+  }
+
+  function handleLaneSets(laneSets, context) {
+    _.forEach(laneSets, contextual(handleLaneSet, context));
+  }
+
+  function handleFlowElementsContainer(container, context) {
+
+    if (container.laneSets) {
+      handleLaneSets(container.laneSets, context);
+      handleNonFlowNodes(container.flowElements);
+    } else {
+      handleFlowElements(container.flowElements, context);
+    }
+  }
+
+  function handleNonFlowNodes(flowElements, context) {
+    var sequenceFlows = [];
+    var boundaryEvents = [];
+
+    _.forEach(flowElements, function(e) {
+      if (is(e, 'bpmn:SequenceFlow')) {
+        sequenceFlows.push(e);
+      } else if (is(e, 'bpmn:DataObject')) {
+        // SKIP (assume correct referencing via DataObjectReference)
+      } else if (is(e, 'bpmn:DataStoreReference')) {
+        handleDataElement(e, context);
+      } else if (is(e, 'bpmn:DataObjectReference')) {
+        handleDataElement(e, context);
+      } else if (is(e, 'bpmn:BoundaryEvent')) {
+        boundaryEvents.push(e);
+      }
+    });
+
+    // handle boundary events
+    _.forEach(boundaryEvents, contextual(handleBoundaryElement, context));
+
+    // handle SequenceFlows
+    _.forEach(sequenceFlows, contextual(handleSequenceFlow, context));
+  }
+
+  function handleFlowElements(flowElements, context) {
+    var sequenceFlows = [];
+    var boundaryEvents = [];
+
+    _.forEach(flowElements, function(e) {
+      if (is(e, 'bpmn:SequenceFlow')) {
+        sequenceFlows.push(e);
+      } else if (is(e, 'bpmn:BoundaryEvent')) {
+        boundaryEvents.push(e);
+      } else if (is(e, 'bpmn:FlowNode')) {
+        handleFlowNode(e, context);
+      } else if (is(e, 'bpmn:DataObject')) {
+        // SKIP (assume correct referencing via DataObjectReference)
+      } else if (is(e, 'bpmn:DataStoreReference')) {
+        handleDataElement(e, context);
+      } else if (is(e, 'bpmn:DataObjectReference')) {
+        handleDataElement(e, context);
+      } else {
+        logError(
+          'unrecognized flowElement <' + e.$type + '> in context ' + (context ? context.id : null),
+          { element: e, context: context });
+      }
+    });
+
+    // handle boundary events
+    _.forEach(boundaryEvents, contextual(handleBoundaryElement, context));
+
+    // handle SequenceFlows
+    _.forEach(sequenceFlows, contextual(handleSequenceFlow, context));
+  }
+
+  function handleParticipant(participant, context) {
+    var newCtx = visitIfDi(participant, context);
+
+    var process = participant.processRef;
+    if (process) {
+      handleProcess(process, newCtx || context);
+    }
+  }
+
+  function handleCollaboration(collaboration) {
+
+    _.forEach(collaboration.participants, contextual(handleParticipant));
+
+    handleArtifacts(collaboration.artifacts);
+
+    handleMessageFlows(collaboration.messageFlows);
+  }
+
+
+  ///// API ////////////////////////////////
+
+  return {
+    handleDefinitions: handleDefinitions
+  };
+}
+
+module.exports = BpmnTreeWalker;
+},{"object-refs":73}],4:[function(_dereq_,module,exports){
+'use strict';
+
+var BpmnTreeWalker = _dereq_('./BpmnTreeWalker');
+
+
+/**
+ * Import the definitions into the given diagram, reporting errors and warnings
+ * via the specified callback.
+ *
+ * @param  {Diagram} diagram
+ * @param  {ModdleElement} definitions
+ * @param  {Function} done the callback, invoked with (err, [ warning ]) once the import is done
+ */
+function importBpmnDiagram(diagram, definitions, done) {
+
+  var importer = diagram.get('bpmnImporter');
+
+  var warnings = [];
+
+  var visitor = {
+
+    root: function(element) {
+      return importer.add(element);
+    },
+
+    element: function(element, parentShape) {
+      return importer.add(element, parentShape);
+    },
+
+    error: function(message, context) {
+      warnings.push({ message: message, context: context });
+    }
+  };
+
+  var walker = new BpmnTreeWalker(visitor);
+
+  try {
+    // import
+    walker.handleDefinitions(definitions);
+
+    done(null, warnings);
+  } catch (e) {
+    done(e);
+  }
+}
+
+module.exports.importBpmnDiagram = importBpmnDiagram;
+},{"./BpmnTreeWalker":3}],5:[function(_dereq_,module,exports){
+'use strict';
+
+var _ = (window._);
+
+var hasExternalLabel = _dereq_('../util/Label').hasExternalLabel,
+    isExpanded = _dereq_('../util/Di').isExpanded;
+
+/**
+ * An importer that adds bpmn elements to the canvas
+ *
+ * @param {EventBus} eventBus
+ * @param {Canvas} canvas
+ */
+function BpmnImporter(eventBus, canvas, elementFactory) {
+  this._eventBus = eventBus;
+  this._canvas = canvas;
+
+  this._elementFactory = elementFactory;
+}
+
+BpmnImporter.$inject = [ 'eventBus', 'canvas', 'elementFactory' ];
+
+
+/**
+ * Add bpmn element (semantic) to the canvas onto the
+ * specified parent shape.
+ */
+BpmnImporter.prototype.add = function(semantic, parentElement) {
+
+  var di = semantic.di,
+      element;
+
+  // handle the special case that we deal with a
+  // invisible root element (process or collaboration)
+  if (di.$instanceOf('bpmndi:BPMNPlane')) {
+
+    // add a virtual element (not being drawn)
+    element = this._elementFactory.createRoot(semantic);
+  }
+
+  // SHAPE
+  else if (di.$instanceOf('bpmndi:BPMNShape')) {
+
+    var collapsed = !isExpanded(semantic);
+    var hidden = parentElement && (parentElement.hidden || parentElement.collapsed);
+
+    element = this._elementFactory.createShape(semantic, {
+      collapsed: collapsed,
+      hidden: hidden
+    });
+
+    this._canvas.addShape(element, parentElement);
+  }
+
+  // CONNECTION
+  else {
+    element = this._elementFactory.createConnection(semantic, parentElement);
+    this._canvas.addConnection(element, parentElement);
+  }
+
+  // (optional) LABEL
+  if (hasExternalLabel(semantic)) {
+    this.addLabel(semantic, element);
+  }
+
+  this._eventBus.fire('bpmnElement.added', { element: element });
+
+  return element;
+};
+
+
+/**
+ * add label for an element
+ */
+BpmnImporter.prototype.addLabel = function (semantic, element) {
+  var label = this._elementFactory.createLabel(semantic, element);
+  return this._canvas.addShape(label, element.parent);
+};
+
+
+module.exports = BpmnImporter;
+},{"../util/Di":11,"../util/Label":12}],6:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
 
 
+var LabelUtil = _dereq_('../util/Label');
+
+var getExternalLabelBounds = LabelUtil.getExternalLabelBounds;
+
+
 /**
- * @class
+ * A factory for diagram-js shapes
  *
- * A registry that keeps track of bpmn semantic / di elements and the
- * corresponding shapes.
- *
- * @param {EventBus} events
- * @param {ElementRegistry} elementRegistry
+ * @param {ElementFactory} canvas
  */
-function BpmnRegistry(events, elementRegistry) {
-
-  var elements = {
-    di: {},
-    semantic: {},
-    diagramElement: {}
-  };
-
-  events.on('bpmn.element.add', function(e) {
-    var semantic = e.semantic,
-        id = semantic.id;
-
-    elements.di[id] = e.di;
-    elements.semantic[id] = e.semantic;
-    elements.diagramElement[id] = e.diagramElement;
-  });
-
-  events.on('bpmn.element.removed', function(e) {
-    var semantic = e.semantic,
-        id = semantic.id;
-
-    delete elements.di[id];
-    delete elements.semantic[id];
-    delete elements.diagramElement[id];
-  });
-
-  function get(type) {
-    var collection = elements[type];
-
-    return function(element) {
-      var id = _.isObject(element) ? element.id : element;
-
-      // strip label suffix
-      id = id.replace(/_label$/, '');
-
-      return collection[id];
-    };
-  }
-
-  // API
-  this.getSemantic = get('semantic');
-  this.getDi = get('di');
-  this.getDiagramElement = get('diagramElement');
+function ElementFactory(canvas) {
+  this._canvas = canvas;
 }
 
-BpmnRegistry.$inject = [ 'eventBus', 'elementRegistry' ];
+ElementFactory.$inject = [ 'canvas' ];
 
-module.exports = BpmnRegistry;
-},{}],4:[function(_dereq_,module,exports){
-module.exports = {
-  __depends__: [ _dereq_('../draw') ],
-  bpmnRegistry: [ 'type', _dereq_('./BpmnRegistry') ]
+module.exports = ElementFactory;
+
+
+ElementFactory.prototype.createRoot = function(semantic) {
+
+  return this._canvas.create('root', _.extend({
+    id: semantic.id,
+    type: semantic.$type,
+    businessObject: semantic
+  }));
 };
-},{"../draw":7,"./BpmnRegistry":3}],5:[function(_dereq_,module,exports){
+
+
+ElementFactory.prototype.createLabel = function(semantic, element) {
+  var labelBounds = getExternalLabelBounds(semantic, element);
+
+  var labelData = _.extend({
+    id: semantic.id + '_label',
+    labelTarget: element,
+    type: 'label',
+    hidden: element.hidden,
+    businessObject: semantic
+  }, labelBounds);
+
+  return this._canvas.create('label', labelData);
+};
+
+
+ElementFactory.prototype.createShape = function(semantic, attrs) {
+  var bounds = semantic.di.bounds;
+
+  var shapeData = _.extend({
+    id: semantic.id,
+    type: semantic.$type,
+    x: bounds.x,
+    y: bounds.y,
+    width: bounds.width,
+    height: bounds.height,
+    businessObject: semantic
+  }, attrs);
+
+  return this._canvas.create('shape', shapeData);
+};
+
+
+ElementFactory.prototype.createConnection = function(semantic) {
+  var waypoints = _.collect(semantic.di.waypoint, function(p) {
+    return { x: p.x, y: p.y };
+  });
+
+  return this._canvas.create('connection', {
+    id: semantic.id,
+    type: semantic.$type,
+    waypoints: waypoints,
+    businessObject: semantic
+  });
+};
+},{"../util/Label":12}],7:[function(_dereq_,module,exports){
+module.exports = {
+  bpmnImporter: [ 'type', _dereq_('./BpmnImporter') ],
+  elementFactory: [ 'type', _dereq_('./ElementFactory') ]
+};
+},{"./BpmnImporter":5,"./ElementFactory":6}],8:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -333,7 +847,7 @@ var DiUtil = _dereq_('../util/Di');
 var flattenPoints = DefaultRenderer.flattenPoints;
 
 
-function BpmnRenderer(events, styles, bpmnRegistry, pathMap) {
+function BpmnRenderer(events, styles, pathMap) {
 
   DefaultRenderer.call(this, styles);
 
@@ -533,8 +1047,8 @@ function BpmnRenderer(events, styles, bpmnRegistry, pathMap) {
   }
 
   function as(type) {
-    return function(p, data) {
-      return handlers[type](p, data);
+    return function(p, element) {
+      return handlers[type](p, element);
     };
   }
 
@@ -542,59 +1056,59 @@ function BpmnRenderer(events, styles, bpmnRegistry, pathMap) {
     return handlers[type];
   }
 
-  function renderEventContent(data, p) {
+  function renderEventContent(element, p) {
 
-    var event = bpmnRegistry.getSemantic(data);
+    var event = getSemantic(element);
     var isThrowing = isThrowEvent(event);
 
     if (isTypedEvent(event, 'bpmn:MessageEventDefinition')) {
-      return renderer('bpmn:MessageEventDefinition')(p, data, isThrowing);
+      return renderer('bpmn:MessageEventDefinition')(p, element, isThrowing);
     }
 
     if (isTypedEvent(event, 'bpmn:TimerEventDefinition')) {
-      return renderer('bpmn:TimerEventDefinition')(p, data, isThrowing);
+      return renderer('bpmn:TimerEventDefinition')(p, element, isThrowing);
     }
 
     if (isTypedEvent(event, 'bpmn:ConditionalEventDefinition')) {
-      return renderer('bpmn:ConditionalEventDefinition')(p, data);
+      return renderer('bpmn:ConditionalEventDefinition')(p, element);
     }
 
     if (isTypedEvent(event, 'bpmn:SignalEventDefinition')) {
-      return renderer('bpmn:SignalEventDefinition')(p, data, isThrowing);
+      return renderer('bpmn:SignalEventDefinition')(p, element, isThrowing);
     }
 
     if (isTypedEvent(event, 'bpmn:CancelEventDefinition') &&
       isTypedEvent(event, 'bpmn:TerminateEventDefinition', { parallelMultiple: false })) {
-      return renderer('bpmn:MultipleEventDefinition')(p, data, isThrowing);
+      return renderer('bpmn:MultipleEventDefinition')(p, element, isThrowing);
     }
 
     if (isTypedEvent(event, 'bpmn:CancelEventDefinition') &&
       isTypedEvent(event, 'bpmn:TerminateEventDefinition', { parallelMultiple: true })) {
-      return renderer('bpmn:ParallelMultipleEventDefinition')(p, data, isThrowing);
+      return renderer('bpmn:ParallelMultipleEventDefinition')(p, element, isThrowing);
     }
 
     if (isTypedEvent(event, 'bpmn:EscalationEventDefinition')) {
-      return renderer('bpmn:EscalationEventDefinition')(p, data, isThrowing);
+      return renderer('bpmn:EscalationEventDefinition')(p, element, isThrowing);
     }
 
     if (isTypedEvent(event, 'bpmn:LinkEventDefinition')) {
-      return renderer('bpmn:LinkEventDefinition')(p, data, isThrowing);
+      return renderer('bpmn:LinkEventDefinition')(p, element, isThrowing);
     }
 
     if (isTypedEvent(event, 'bpmn:ErrorEventDefinition')) {
-      return renderer('bpmn:ErrorEventDefinition')(p, data, isThrowing);
+      return renderer('bpmn:ErrorEventDefinition')(p, element, isThrowing);
     }
 
     if (isTypedEvent(event, 'bpmn:CancelEventDefinition')) {
-      return renderer('bpmn:CancelEventDefinition')(p, data, isThrowing);
+      return renderer('bpmn:CancelEventDefinition')(p, element, isThrowing);
     }
 
     if (isTypedEvent(event, 'bpmn:CompensateEventDefinition')) {
-      return renderer('bpmn:CompensateEventDefinition')(p, data, isThrowing);
+      return renderer('bpmn:CompensateEventDefinition')(p, element, isThrowing);
     }
 
     if (isTypedEvent(event, 'bpmn:TerminateEventDefinition')) {
-      return renderer('bpmn:TerminateEventDefinition')(p, data, isThrowing);
+      return renderer('bpmn:TerminateEventDefinition')(p, element, isThrowing);
     }
 
     return null;
@@ -604,24 +1118,23 @@ function BpmnRenderer(events, styles, bpmnRegistry, pathMap) {
     return labelUtil.createLabel(p, label || '', options).addClass('djs-label');
   }
 
-  function renderEmbeddedLabel(p, data, align) {
-    var element = bpmnRegistry.getSemantic(data);
-
-    return renderLabel(p, element.name, { box: data, align: align });
+  function renderEmbeddedLabel(p, element, align) {
+    var semantic = getSemantic(element);
+    return renderLabel(p, semantic.name, { box: element, align: align });
   }
 
-  function renderExternalLabel(p, data, align) {
-    var element = bpmnRegistry.getSemantic(data.attachedId);
-    return renderLabel(p, element.name, { box: data, align: align, style: { fontSize: '11px' } });
+  function renderExternalLabel(p, element, align) {
+    var semantic = getSemantic(element);
+    return renderLabel(p, semantic.name, { box: element, align: align, style: { fontSize: '11px' } });
   }
 
-  function renderLaneLabel(p, text, data) {
+  function renderLaneLabel(p, text, element) {
     var textBox = renderLabel(p, text, {
-      box: { height: 30, width: data.height },
+      box: { height: 30, width: element.height },
       align: 'center-middle'
     });
 
-    var top = -1 * data.height;
+    var top = -1 * element.height;
     textBox.transform(
       'rotate(270) ' +
       'translate(' + top + ',' + 0 + ')'
@@ -637,12 +1150,12 @@ function BpmnRenderer(events, styles, bpmnRegistry, pathMap) {
   }
 
   var handlers = {
-    'bpmn:Event': function(p, data, attrs) {
-      return drawCircle(p, data.width, data.height,  attrs);
+    'bpmn:Event': function(p, element, attrs) {
+      return drawCircle(p, element.width, element.height,  attrs);
     },
-    'bpmn:StartEvent': function(p, data) {
+    'bpmn:StartEvent': function(p, element) {
       var attrs = {};
-      var semantic = getSemantic(data);
+      var semantic = getSemantic(element);
 
       if (!semantic.isInterrupting) {
         attrs = {
@@ -651,18 +1164,18 @@ function BpmnRenderer(events, styles, bpmnRegistry, pathMap) {
         };
       }
 
-      var circle = renderer('bpmn:Event')(p, data, attrs);
+      var circle = renderer('bpmn:Event')(p, element, attrs);
 
-      renderEventContent(data, p);
+      renderEventContent(element, p);
 
       return circle;
     },
-    'bpmn:MessageEventDefinition': function(p, data, isThrowing) {
+    'bpmn:MessageEventDefinition': function(p, element, isThrowing) {
       var pathData = pathMap.getScaledPath('EVENT_MESSAGE', {
         xScaleFactor: 0.9,
         yScaleFactor: 0.9,
-        containerWidth: data.width,
-        containerHeight: data.height,
+        containerWidth: element.width,
+        containerHeight: element.height,
         position: {
           mx: 0.235,
           my: 0.315
@@ -680,17 +1193,17 @@ function BpmnRenderer(events, styles, bpmnRegistry, pathMap) {
 
       return messagePath;
     },
-    'bpmn:TimerEventDefinition': function(p, data) {
+    'bpmn:TimerEventDefinition': function(p, element) {
 
-      var circle = drawCircle(p, data.width, data.height, 0.2 * data.height, {
+      var circle = drawCircle(p, element.width, element.height, 0.2 * element.height, {
         strokeWidth: 2
       });
 
       var pathData = pathMap.getScaledPath('EVENT_TIMER_WH', {
         xScaleFactor: 0.75,
         yScaleFactor: 0.75,
-        containerWidth: data.width,
-        containerHeight: data.height,
+        containerWidth: element.width,
+        containerHeight: element.height,
         position: {
           mx: 0.5,
           my: 0.5
@@ -865,46 +1378,46 @@ function BpmnRenderer(events, styles, bpmnRegistry, pathMap) {
         strokeWidth: 1
       });
     },
-    'bpmn:EndEvent': function(p, data) {
-      var circle = renderer('bpmn:Event')(p, data, {
+    'bpmn:EndEvent': function(p, element) {
+      var circle = renderer('bpmn:Event')(p, element, {
         strokeWidth: 4
       });
 
-      renderEventContent(data, p, true);
+      renderEventContent(element, p, true);
 
       return circle;
     },
-    'bpmn:TerminateEventDefinition': function(p, data) {
-      var circle = drawCircle(p, data.width, data.height, 8, {
+    'bpmn:TerminateEventDefinition': function(p, element) {
+      var circle = drawCircle(p, element.width, element.height, 8, {
         strokeWidth: 4,
         fill: 'black'
       });
 
       return circle;
     },
-    'bpmn:IntermediateEvent': function(p, data) {
-      var outer = renderer('bpmn:Event')(p, data, { strokeWidth: 1 });
-      var inner = drawCircle(p, data.width, data.height, INNER_OUTER_DIST, { strokeWidth: 1 });
+    'bpmn:IntermediateEvent': function(p, element) {
+      var outer = renderer('bpmn:Event')(p, element, { strokeWidth: 1 });
+      var inner = drawCircle(p, element.width, element.height, INNER_OUTER_DIST, { strokeWidth: 1 });
 
-      renderEventContent(data, p);
+      renderEventContent(element, p);
 
       return outer;
     },
     'bpmn:IntermediateCatchEvent': as('bpmn:IntermediateEvent'),
     'bpmn:IntermediateThrowEvent': as('bpmn:IntermediateEvent'),
 
-    'bpmn:Activity': function(p, data, attrs) {
-      return drawRect(p, data.width, data.height, TASK_BORDER_RADIUS, attrs);
+    'bpmn:Activity': function(p, element, attrs) {
+      return drawRect(p, element.width, element.height, TASK_BORDER_RADIUS, attrs);
     },
 
-    'bpmn:Task': function(p, data) {
-      var rect = renderer('bpmn:Activity')(p, data);
-      renderEmbeddedLabel(p, data, 'center-middle');
-      attachTaskMarkers(p, data);
+    'bpmn:Task': function(p, element) {
+      var rect = renderer('bpmn:Activity')(p, element);
+      renderEmbeddedLabel(p, element, 'center-middle');
+      attachTaskMarkers(p, element);
       return rect;
     },
-    'bpmn:ServiceTask': function(p, data) {
-      var task = renderer('bpmn:Task')(p, data);
+    'bpmn:ServiceTask': function(p, element) {
+      var task = renderer('bpmn:Task')(p, element);
 
       var pathDataBG = pathMap.getScaledPath('TASK_TYPE_SERVICE', {
         abspos: {
@@ -945,8 +1458,8 @@ function BpmnRenderer(events, styles, bpmnRegistry, pathMap) {
 
       return task;
     },
-    'bpmn:UserTask': function(p, data) {
-      var task = renderer('bpmn:Task')(p, data);
+    'bpmn:UserTask': function(p, element) {
+      var task = renderer('bpmn:Task')(p, element);
 
       var x = 15;
       var y = 12;
@@ -989,8 +1502,8 @@ function BpmnRenderer(events, styles, bpmnRegistry, pathMap) {
 
       return task;
     },
-    'bpmn:ManualTask': function(p, data) {
-      var task = renderer('bpmn:Task')(p, data);
+    'bpmn:ManualTask': function(p, element) {
+      var task = renderer('bpmn:Task')(p, element);
 
       var pathData = pathMap.getScaledPath('TASK_TYPE_MANUAL', {
         abspos: {
@@ -1007,8 +1520,8 @@ function BpmnRenderer(events, styles, bpmnRegistry, pathMap) {
 
       return task;
     },
-    'bpmn:SendTask': function(p, data) {
-      var task = renderer('bpmn:Task')(p, data);
+    'bpmn:SendTask': function(p, element) {
+      var task = renderer('bpmn:Task')(p, element);
 
       var pathData = pathMap.getScaledPath('TASK_TYPE_SEND', {
         xScaleFactor: 1,
@@ -1029,10 +1542,10 @@ function BpmnRenderer(events, styles, bpmnRegistry, pathMap) {
 
       return task;
     },
-    'bpmn:ReceiveTask' : function(p, data) {
-      var semantic = getSemantic(data);
+    'bpmn:ReceiveTask' : function(p, element) {
+      var semantic = getSemantic(element);
 
-      var task = renderer('bpmn:Task')(p, data);
+      var task = renderer('bpmn:Task')(p, element);
       var pathData;
 
       if (semantic.instantiate) {
@@ -1064,8 +1577,8 @@ function BpmnRenderer(events, styles, bpmnRegistry, pathMap) {
 
       return task;
     },
-    'bpmn:ScriptTask': function(p, data) {
-      var task = renderer('bpmn:Task')(p, data);
+    'bpmn:ScriptTask': function(p, element) {
+      var task = renderer('bpmn:Task')(p, element);
 
       var pathData = pathMap.getScaledPath('TASK_TYPE_SCRIPT', {
         abspos: {
@@ -1080,8 +1593,8 @@ function BpmnRenderer(events, styles, bpmnRegistry, pathMap) {
 
       return task;
     },
-    'bpmn:BusinessRuleTask': function(p, data) {
-      var task = renderer('bpmn:Task')(p, data);
+    'bpmn:BusinessRuleTask': function(p, element) {
+      var task = renderer('bpmn:Task')(p, element);
 
       var headerPathData = pathMap.getScaledPath('TASK_TYPE_BUSINESS_RULE_HEADER', {
         abspos: {
@@ -1110,127 +1623,129 @@ function BpmnRenderer(events, styles, bpmnRegistry, pathMap) {
 
       return task;
     },
-    'bpmn:SubProcess': function(p, data, attrs) {
-      var rect = renderer('bpmn:Activity')(p, data, attrs);
+    'bpmn:SubProcess': function(p, element, attrs) {
+      var rect = renderer('bpmn:Activity')(p, element, attrs);
 
-      var semantic = getSemantic(data),
-          di = getDi(data);
+      var semantic = getSemantic(element),
+          di = getDi(element);
 
-      var expanded = DiUtil.isExpanded(semantic, di);
+      var expanded = DiUtil.isExpanded(semantic);
 
-      var isEventSubProcess = !!(getSemantic(data).triggeredByEvent);
+      var isEventSubProcess = !!getSemantic(element).triggeredByEvent;
       if (isEventSubProcess) {
         rect.attr({
           strokeDasharray: '1,2'
         });
       }
 
-      renderEmbeddedLabel(p, data, expanded ? 'center-top' : 'center-middle');
+      renderEmbeddedLabel(p, element, expanded ? 'center-top' : 'center-middle');
 
       if (expanded) {
-        attachTaskMarkers(p, data);
+        attachTaskMarkers(p, element);
       } else {
-        attachTaskMarkers(p, data, ['SubProcessMarker']);
+        attachTaskMarkers(p, element, ['SubProcessMarker']);
       }
 
       return rect;
     },
-    'bpmn:AdHocSubProcess': function(p, data) {
-      return renderer('bpmn:SubProcess')(p, data);
+    'bpmn:AdHocSubProcess': function(p, element) {
+      return renderer('bpmn:SubProcess')(p, element);
     },
-    'bpmn:Transaction': function(p, data) {
-      var outer = renderer('bpmn:SubProcess')(p, data);
+    'bpmn:Transaction': function(p, element) {
+      var outer = renderer('bpmn:SubProcess')(p, element);
 
       var innerAttrs = styles.style([ 'no-fill', 'no-events' ]);
-      var inner = drawRect(p, data.width, data.height, TASK_BORDER_RADIUS - 2, INNER_OUTER_DIST, innerAttrs);
+      var inner = drawRect(p, element.width, element.height, TASK_BORDER_RADIUS - 2, INNER_OUTER_DIST, innerAttrs);
 
       return outer;
     },
-    'bpmn:CallActivity': function(p, data) {
-      return renderer('bpmn:SubProcess')(p, data, {
+    'bpmn:CallActivity': function(p, element) {
+      return renderer('bpmn:SubProcess')(p, element, {
         strokeWidth: 5
       });
     },
-    'bpmn:Participant': function(p, data) {
+    'bpmn:Participant': function(p, element) {
 
-      var lane = renderer('bpmn:Lane')(p, data);
+      var lane = renderer('bpmn:Lane')(p, element);
 
-      var expandedPool = DiUtil.isExpandedPool(getSemantic(data));
+      var expandedPool = DiUtil.isExpandedPool(getSemantic(element));
 
       if (expandedPool) {
         drawLine(p, [
           {x: 30, y: 0},
-          {x: 30, y: data.height}
+          {x: 30, y: element.height}
         ]);
-        var text = getSemantic(data).name;
-        renderLaneLabel(p, text, data);
+        var text = getSemantic(element).name;
+        renderLaneLabel(p, text, element);
       } else {
         // Collapsed pool draw text inline
-        var text2 = getSemantic(data).name;
-        renderLabel(p, text2, { box: data, align: 'center-middle' });
+        var text2 = getSemantic(element).name;
+        renderLabel(p, text2, { box: element, align: 'center-middle' });
       }
 
-      var participantMultiplicity = !!(getSemantic(data).participantMultiplicity);
+      var participantMultiplicity = !!(getSemantic(element).participantMultiplicity);
 
       if(participantMultiplicity) {
-        renderer('ParticipantMultiplicityMarker')(p, data);
+        renderer('ParticipantMultiplicityMarker')(p, element);
       }
 
       return lane;
     },
-    'bpmn:Lane': function(p, data) {
-      var rect = drawRect(p, data.width, data.height, 0, {
+    'bpmn:Lane': function(p, element) {
+      var rect = drawRect(p, element.width, element.height, 0, {
         fill: 'none'
       });
 
-      var semantic = getSemantic(data);
+      var semantic = getSemantic(element);
 
       if (semantic.$type === 'bpmn:Lane') {
         var text = semantic.name;
-        renderLaneLabel(p, text, data);
+        renderLaneLabel(p, text, element);
       }
 
       return rect;
     },
-    'bpmn:InclusiveGateway': function(p, data) {
-      var diamond = drawDiamond(p, data.width, data.height);
+    'bpmn:InclusiveGateway': function(p, element) {
+      var diamond = drawDiamond(p, element.width, element.height);
 
-      var circle = drawCircle(p, data.width, data.height, data.height * 0.24, {
+      var circle = drawCircle(p, element.width, element.height, element.height * 0.24, {
         strokeWidth: 2.5,
         fill: 'none'
       });
 
       return diamond;
     },
-    'bpmn:ExclusiveGateway': function(p, data) {
-      var diamond = drawDiamond(p, data.width, data.height);
+    'bpmn:ExclusiveGateway': function(p, element) {
+      var diamond = drawDiamond(p, element.width, element.height);
 
       var pathData = pathMap.getScaledPath('GATEWAY_EXCLUSIVE', {
         xScaleFactor: 0.4,
         yScaleFactor: 0.4,
-        containerWidth: data.width,
-        containerHeight: data.height,
+        containerWidth: element.width,
+        containerHeight: element.height,
         position: {
           mx: 0.32,
           my: 0.3
         }
       });
 
-      var exclusivePath = drawPath(p, pathData, {
-        strokeWidth: 1,
-        fill: 'black'
-      });
+      if (!!(getDi(element).isMarkerVisible)) {
+        drawPath(p, pathData, {
+          strokeWidth: 1,
+          fill: 'black'
+        });
+      }
 
       return diamond;
     },
-    'bpmn:ComplexGateway': function(p, data) {
-      var diamond = drawDiamond(p, data.width, data.height);
+    'bpmn:ComplexGateway': function(p, element) {
+      var diamond = drawDiamond(p, element.width, element.height);
 
       var pathData = pathMap.getScaledPath('GATEWAY_COMPLEX', {
         xScaleFactor: 0.5,
         yScaleFactor:0.5,
-        containerWidth: data.width,
-        containerHeight: data.height,
+        containerWidth: element.width,
+        containerHeight: element.height,
         position: {
           mx: 0.46,
           my: 0.26
@@ -1244,14 +1759,14 @@ function BpmnRenderer(events, styles, bpmnRegistry, pathMap) {
 
       return diamond;
     },
-    'bpmn:ParallelGateway': function(p, data) {
-      var diamond = drawDiamond(p, data.width, data.height);
+    'bpmn:ParallelGateway': function(p, element) {
+      var diamond = drawDiamond(p, element.width, element.height);
 
       var pathData = pathMap.getScaledPath('GATEWAY_PARALLEL', {
         xScaleFactor: 0.6,
         yScaleFactor:0.6,
-        containerWidth: data.width,
-        containerHeight: data.height,
+        containerWidth: element.width,
+        containerHeight: element.height,
         position: {
           mx: 0.46,
           my: 0.2
@@ -1265,13 +1780,13 @@ function BpmnRenderer(events, styles, bpmnRegistry, pathMap) {
 
       return diamond;
     },
-    'bpmn:EventBasedGateway': function(p, data) {
+    'bpmn:EventBasedGateway': function(p, element) {
 
-      var semantic = getSemantic(data);
+      var semantic = getSemantic(element);
 
-      var diamond = drawDiamond(p, data.width, data.height);
+      var diamond = drawDiamond(p, element.width, element.height);
 
-      var outerCircle = drawCircle(p, data.width, data.height, data.height * 0.20, {
+      var outerCircle = drawCircle(p, element.width, element.height, element.height * 0.20, {
         strokeWidth: 1,
         fill: 'none'
       });
@@ -1284,8 +1799,8 @@ function BpmnRenderer(events, styles, bpmnRegistry, pathMap) {
         var pathData = pathMap.getScaledPath('GATEWAY_EVENT_BASED', {
           xScaleFactor: 0.18,
           yScaleFactor: 0.18,
-          containerWidth: data.width,
-          containerHeight: data.height,
+          containerWidth: element.width,
+          containerHeight: element.height,
           position: {
             mx: 0.36,
             my: 0.44
@@ -1303,8 +1818,8 @@ function BpmnRenderer(events, styles, bpmnRegistry, pathMap) {
         var pathData = pathMap.getScaledPath('GATEWAY_PARALLEL', {
           xScaleFactor: 0.4,
           yScaleFactor:0.4,
-          containerWidth: data.width,
-          containerHeight: data.height,
+          containerWidth: element.width,
+          containerHeight: element.height,
           position: {
             mx: 0.474,
             my: 0.296
@@ -1319,7 +1834,7 @@ function BpmnRenderer(events, styles, bpmnRegistry, pathMap) {
       } else if (type === 'Exclusive') {
 
         if (!instantiate) {
-          var innerCircle = drawCircle(p, data.width, data.height, data.height * 0.26);
+          var innerCircle = drawCircle(p, element.width, element.height, element.height * 0.26);
           innerCircle.attr({
             strokeWidth: 1,
             fill: 'none'
@@ -1332,16 +1847,16 @@ function BpmnRenderer(events, styles, bpmnRegistry, pathMap) {
 
       return diamond;
     },
-    'bpmn:Gateway': function(p, data) {
-      return drawDiamond(p, data.width, data.height);
+    'bpmn:Gateway': function(p, element) {
+      return drawDiamond(p, element.width, element.height);
     },
-    'bpmn:SequenceFlow': function(p, data) {
-      var pathData = createPathFromWaypoints(data.waypoints);
+    'bpmn:SequenceFlow': function(p, element) {
+      var pathData = createPathFromWaypoints(element.waypoints);
       var path = drawPath(p, pathData, {
         markerEnd: marker('sequenceflow-end')
       });
 
-      var sequenceFlow = bpmnRegistry.getSemantic(data.id);
+      var sequenceFlow = getSemantic(element);
       var source = sequenceFlow.sourceRef;
 
       // conditional flow marker
@@ -1360,7 +1875,7 @@ function BpmnRenderer(events, styles, bpmnRegistry, pathMap) {
 
       return path;
     },
-    'bpmn:Association': function(p, data, attrs) {
+    'bpmn:Association': function(p, element, attrs) {
 
       attrs = _.extend({
         strokeDasharray: '1,6',
@@ -1368,23 +1883,23 @@ function BpmnRenderer(events, styles, bpmnRegistry, pathMap) {
       }, attrs || {});
 
       // TODO(nre): style according to directed state
-      return drawLine(p, data.waypoints, attrs);
+      return drawLine(p, element.waypoints, attrs);
     },
-    'bpmn:DataInputAssociation': function(p, data) {
-      return renderer('bpmn:Association')(p, data, {
-        markerEnd: marker('data-association-end')
+    'bpmn:DataInputAssociation': function(p, element) {
+      return renderer('bpmn:Association')(p, element, {
+        markerEnd: marker('element-association-end')
       });
     },
-    'bpmn:DataOutputAssociation': function(p, data) {
-      return renderer('bpmn:Association')(p, data, {
-        markerEnd: marker('data-association-end')
+    'bpmn:DataOutputAssociation': function(p, element) {
+      return renderer('bpmn:Association')(p, element, {
+        markerEnd: marker('element-association-end')
       });
     },
-    'bpmn:MessageFlow': function(p, data) {
+    'bpmn:MessageFlow': function(p, element) {
 
-      var di = getDi(data);
+      var di = getDi(element);
 
-      var pathData = createPathFromWaypoints(data.waypoints);
+      var pathData = createPathFromWaypoints(element.waypoints);
       var path = drawPath(p, pathData, {
         markerEnd: marker('messageflow-end'),
         markerStart: marker('messageflow-start'),
@@ -1418,77 +1933,77 @@ function BpmnRenderer(events, styles, bpmnRegistry, pathMap) {
 
       return path;
     },
-    'bpmn:DataObject': function(p, data) {
+    'bpmn:DataObject': function(p, element) {
       var pathData = pathMap.getScaledPath('DATA_OBJECT_PATH', {
         xScaleFactor: 1,
         yScaleFactor: 1,
-        containerWidth: data.width,
-        containerHeight: data.height,
+        containerWidth: element.width,
+        containerHeight: element.height,
         position: {
           mx: 0.474,
           my: 0.296
         }
       });
 
-      var dataObject = drawPath(p, pathData, { fill: 'white' });
+      var elementObject = drawPath(p, pathData, { fill: 'white' });
 
-      var semantic = getSemantic(data);
+      var semantic = getSemantic(element);
 
       if (isCollection(semantic)) {
-        renderDataItemCollection(p, data);
+        renderDataItemCollection(p, element);
       }
 
-      return dataObject;
+      return elementObject;
     },
     'bpmn:DataObjectReference': as('bpmn:DataObject'),
-    'bpmn:DataInput': function(p, data) {
+    'bpmn:DataInput': function(p, element) {
 
       var arrowPathData = pathMap.getRawPath('DATA_ARROW');
 
       // page
-      var dataObject = renderer('bpmn:DataObject')(p, data);
+      var elementObject = renderer('bpmn:DataObject')(p, element);
 
       // arrow
-      var dataInput = drawPath(p, arrowPathData, { strokeWidth: 1 });
+      var elementInput = drawPath(p, arrowPathData, { strokeWidth: 1 });
 
-      return dataObject;
+      return elementObject;
     },
-    'bpmn:DataOutput': function(p, data) {
+    'bpmn:DataOutput': function(p, element) {
       var arrowPathData = pathMap.getRawPath('DATA_ARROW');
 
       // page
-      var dataObject = renderer('bpmn:DataObject')(p, data);
+      var elementObject = renderer('bpmn:DataObject')(p, element);
 
       // arrow
-      var dataInput = drawPath(p, arrowPathData, {
+      var elementInput = drawPath(p, arrowPathData, {
         strokeWidth: 1,
         fill: 'black'
       });
 
-      return dataObject;
+      return elementObject;
     },
-    'bpmn:DataStoreReference': function(p, data) {
+    'bpmn:DataStoreReference': function(p, element) {
       var DATA_STORE_PATH = pathMap.getScaledPath('DATA_STORE', {
         xScaleFactor: 1,
         yScaleFactor: 1,
-        containerWidth: data.width,
-        containerHeight: data.height,
+        containerWidth: element.width,
+        containerHeight: element.height,
         position: {
           mx: 0,
           my: 0.133
         }
       });
 
-      var dataStore = drawPath(p, DATA_STORE_PATH, {
+      var elementStore = drawPath(p, DATA_STORE_PATH, {
         strokeWidth: 2,
         fill: 'white'
       });
 
-      return dataStore;
+      return elementStore;
     },
-    'bpmn:BoundaryEvent': function(p, data) {
+    'bpmn:BoundaryEvent': function(p, element) {
 
-      var semantic = getSemantic(data),
+      var semantic = getSemantic(element),
           cancel = semantic.cancelActivity;
 
       var attrs = {
@@ -1500,30 +2015,30 @@ function BpmnRenderer(events, styles, bpmnRegistry, pathMap) {
         attrs.strokeDasharray = '6';
       }
 
-      var outer = renderer('bpmn:Event')(p, data, attrs);
-      var inner = drawCircle(p, data.width, data.height, INNER_OUTER_DIST, attrs);
+      var outer = renderer('bpmn:Event')(p, element, attrs);
+      var inner = drawCircle(p, element.width, element.height, INNER_OUTER_DIST, attrs);
 
-      renderEventContent(data, p);
+      renderEventContent(element, p);
 
       return outer;
     },
-    'bpmn:Group': function(p, data) {
-      return drawRect(p, data.width, data.height, TASK_BORDER_RADIUS, {
+    'bpmn:Group': function(p, element) {
+      return drawRect(p, element.width, element.height, TASK_BORDER_RADIUS, {
         strokeWidth: 1,
         strokeDasharray: '8,3,1,3',
         fill: 'none',
         pointerEvents: 'none'
       });
     },
-    'label': function(p, data) {
-      return renderExternalLabel(p, data, '');
+    'label': function(p, element) {
+      return renderExternalLabel(p, element, '');
     },
-    'bpmn:TextAnnotation': function(p, data) {
+    'bpmn:TextAnnotation': function(p, element) {
       var textPathData = pathMap.getScaledPath('TEXT_ANNOTATION', {
         xScaleFactor: 1,
         yScaleFactor: 1,
-        containerWidth: data.width,
-        containerHeight: data.height,
+        containerWidth: element.width,
+        containerHeight: element.height,
         position: {
           mx: 0.0,
           my: 0.0
@@ -1531,95 +2046,95 @@ function BpmnRenderer(events, styles, bpmnRegistry, pathMap) {
       });
       drawPath(p, textPathData);
 
-      var text = getSemantic(data).text || '';
-      var label = renderLabel(p, text, { box: data, align: 'left-middle' });
+      var text = getSemantic(element).text || '';
+      var label = renderLabel(p, text, { box: element, align: 'left-middle' });
 
       return label;
     },
-    'ParticipantMultiplicityMarker': function(p, data) {
+    'ParticipantMultiplicityMarker': function(p, element) {
       var subProcessPath = pathMap.getScaledPath('MARKER_PARALLEL', {
         xScaleFactor: 1,
         yScaleFactor: 1,
-        containerWidth: data.width,
-        containerHeight: data.height,
+        containerWidth: element.width,
+        containerHeight: element.height,
         position: {
-          mx: ((data.width / 2) / data.width),
-          my: (data.height - 15) / data.height
+          mx: ((element.width / 2) / element.width),
+          my: (element.height - 15) / element.height
         }
       });
 
       drawPath(p, subProcessPath);
     },
-    'SubProcessMarker': function(p, data) {
+    'SubProcessMarker': function(p, element) {
       var markerRect = drawRect(p, 14, 14, 0, {
         strokeWidth: 1
       });
 
       // Process marker is placed in the middle of the box
       // therefore fixed values can be used here
-      markerRect.transform('translate(' + (data.width / 2 - 7.5) + ',' + (data.height - 20) + ')');
+      markerRect.transform('translate(' + (element.width / 2 - 7.5) + ',' + (element.height - 20) + ')');
 
       var subProcessPath = pathMap.getScaledPath('MARKER_SUB_PROCESS', {
         xScaleFactor: 1.5,
         yScaleFactor: 1.5,
-        containerWidth: data.width,
-        containerHeight: data.height,
+        containerWidth: element.width,
+        containerHeight: element.height,
         position: {
-          mx: (data.width / 2 - 7.5) / data.width,
-          my: (data.height - 20) / data.height
+          mx: (element.width / 2 - 7.5) / element.width,
+          my: (element.height - 20) / element.height
         }
       });
 
       drawPath(p, subProcessPath);
     },
-    'ParallelMarker': function(p, data, position) {
+    'ParallelMarker': function(p, element, position) {
       var subProcessPath = pathMap.getScaledPath('MARKER_PARALLEL', {
         xScaleFactor: 1,
         yScaleFactor: 1,
-        containerWidth: data.width,
-        containerHeight: data.height,
+        containerWidth: element.width,
+        containerHeight: element.height,
         position: {
-          mx: ((data.width / 2 + position.parallel) / data.width),
-          my: (data.height - 20) / data.height
+          mx: ((element.width / 2 + position.parallel) / element.width),
+          my: (element.height - 20) / element.height
         }
       });
       drawPath(p, subProcessPath);
     },
-    'SequentialMarker': function(p, data, position) {
+    'SequentialMarker': function(p, element, position) {
       var sequentialPath = pathMap.getScaledPath('MARKER_SEQUENTIAL', {
         xScaleFactor: 1,
         yScaleFactor: 1,
-        containerWidth: data.width,
-        containerHeight: data.height,
+        containerWidth: element.width,
+        containerHeight: element.height,
         position: {
-          mx: ((data.width / 2 + position.seq) / data.width),
-          my: (data.height - 19) / data.height
+          mx: ((element.width / 2 + position.seq) / element.width),
+          my: (element.height - 19) / element.height
         }
       });
       drawPath(p, sequentialPath);
     },
-    'CompensationMarker': function(p, data, position) {
+    'CompensationMarker': function(p, element, position) {
       var compensationPath = pathMap.getScaledPath('MARKER_COMPENSATION', {
         xScaleFactor: 1,
         yScaleFactor: 1,
-        containerWidth: data.width,
-        containerHeight: data.height,
+        containerWidth: element.width,
+        containerHeight: element.height,
         position: {
-          mx: ((data.width / 2 + position.compensation) / data.width),
-          my: (data.height - 13) / data.height
+          mx: ((element.width / 2 + position.compensation) / element.width),
+          my: (element.height - 13) / element.height
         }
       });
       drawPath(p, compensationPath, { strokeWidth: 1 });
     },
-    'LoopMarker': function(p, data, position) {
+    'LoopMarker': function(p, element, position) {
       var loopPath = pathMap.getScaledPath('MARKER_LOOP', {
         xScaleFactor: 1,
         yScaleFactor: 1,
-        containerWidth: data.width,
-        containerHeight: data.height,
+        containerWidth: element.width,
+        containerHeight: element.height,
         position: {
-          mx: ((data.width / 2 + position.loop) / data.width),
-          my: (data.height - 7) / data.height
+          mx: ((element.width / 2 + position.loop) / element.width),
+          my: (element.height - 7) / element.height
         }
       });
 
@@ -1630,15 +2145,15 @@ function BpmnRenderer(events, styles, bpmnRegistry, pathMap) {
         strokeMiterlimit: 0.5
       });
     },
-    'AdhocMarker': function(p, data, position) {
+    'AdhocMarker': function(p, element, position) {
       var loopPath = pathMap.getScaledPath('MARKER_ADHOC', {
         xScaleFactor: 1,
         yScaleFactor: 1,
-        containerWidth: data.width,
-        containerHeight: data.height,
+        containerWidth: element.width,
+        containerHeight: element.height,
         position: {
-          mx: ((data.width / 2 + position.adhoc) / data.width),
-          my: (data.height - 15) / data.height
+          mx: ((element.width / 2 + position.adhoc) / element.width),
+          my: (element.height - 15) / element.height
         }
       });
 
@@ -1649,8 +2164,8 @@ function BpmnRenderer(events, styles, bpmnRegistry, pathMap) {
     }
   };
 
-  function attachTaskMarkers(p, data, taskMarkers) {
-    var obj = getSemantic(data);
+  function attachTaskMarkers(p, element, taskMarkers) {
+    var obj = getSemantic(element);
 
     var subprocess = _.contains(taskMarkers, 'SubProcessMarker');
     var position;
@@ -1674,62 +2189,62 @@ function BpmnRenderer(events, styles, bpmnRegistry, pathMap) {
     }
 
     _.forEach(taskMarkers, function(marker) {
-      renderer(marker)(p, data, position);
+      renderer(marker)(p, element, position);
     });
 
     if (obj.$type === 'bpmn:AdHocSubProcess') {
-      renderer('AdhocMarker')(p, data, position);
+      renderer('AdhocMarker')(p, element, position);
     }
     if (obj.loopCharacteristics && obj.loopCharacteristics.isSequential === undefined) {
-      renderer('LoopMarker')(p, data, position);
+      renderer('LoopMarker')(p, element, position);
       return;
     }
     if (obj.loopCharacteristics &&
       obj.loopCharacteristics.isSequential !== undefined &&
       !obj.loopCharacteristics.isSequential) {
-      renderer('ParallelMarker')(p, data, position);
+      renderer('ParallelMarker')(p, element, position);
     }
     if (obj.loopCharacteristics && !!obj.loopCharacteristics.isSequential) {
-      renderer('SequentialMarker')(p, data, position);
+      renderer('SequentialMarker')(p, element, position);
     }
     if (!!obj.isForCompensation) {
-      renderer('CompensationMarker')(p, data, position);
+      renderer('CompensationMarker')(p, element, position);
     }
   }
 
-  function drawShape(parent, data) {
-    var type = data.type;
+  function drawShape(parent, element) {
+    var type = element.type;
     var h = handlers[type];
 
     /* jshint -W040 */
     if (!h) {
-      return DefaultRenderer.prototype.drawShape.apply(this, [ parent, data ]);
+      return DefaultRenderer.prototype.drawShape.apply(this, [ parent, element ]);
     } else {
-      return h(parent, data);
+      return h(parent, element);
     }
   }
 
-  function drawConnection(parent, data) {
-    var type = data.type;
+  function drawConnection(parent, element) {
+    var type = element.type;
     var h = handlers[type];
 
     /* jshint -W040 */
     if (!h) {
-      return DefaultRenderer.prototype.drawConnection.apply(this, [ parent, data ]);
+      return DefaultRenderer.prototype.drawConnection.apply(this, [ parent, element ]);
     } else {
-      return h(parent, data);
+      return h(parent, element);
     }
   }
 
-  function renderDataItemCollection(p, data) {
+  function renderDataItemCollection(p, element) {
 
-    var yPosition = (data.height - 16) / data.height;
+    var yPosition = (element.height - 16) / element.height;
 
     var pathData = pathMap.getScaledPath('DATA_OBJECT_COLLECTION_PATH', {
       xScaleFactor: 1,
       yScaleFactor: 1,
-      containerWidth: data.width,
-      containerHeight: data.height,
+      containerWidth: element.width,
+      containerHeight: element.height,
       position: {
         mx: 0.451,
         my: yPosition
@@ -1743,15 +2258,15 @@ function BpmnRenderer(events, styles, bpmnRegistry, pathMap) {
 
   function isCollection(element, filter) {
     return element.isCollection ||
-           (element.dataObjectRef && element.dataObjectRef.isCollection);
+           (element.elementObjectRef && element.elementObjectRef.isCollection);
   }
 
   function getDi(element) {
-    return bpmnRegistry.getDi(_.isString(element) ? element : element.id);
+    return element.businessObject.di;
   }
 
   function getSemantic(element) {
-    return bpmnRegistry.getSemantic(_.isString(element) ? element : element.id);
+    return element.businessObject;
   }
 
   /**
@@ -1795,10 +2310,10 @@ function BpmnRenderer(events, styles, bpmnRegistry, pathMap) {
 BpmnRenderer.prototype = Object.create(DefaultRenderer.prototype);
 
 
-BpmnRenderer.$inject = [ 'eventBus', 'styles', 'bpmnRegistry', 'pathMap' ];
+BpmnRenderer.$inject = [ 'eventBus', 'styles', 'pathMap' ];
 
 module.exports = BpmnRenderer;
-},{"../util/Di":10,"diagram-js/lib/draw/Renderer":41,"diagram-js/lib/util/LabelUtil":54}],6:[function(_dereq_,module,exports){
+},{"../util/Di":11,"diagram-js/lib/draw/Renderer":50,"diagram-js/lib/util/LabelUtil":65}],9:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -2245,366 +2760,52 @@ function PathMap(Snap) {
 PathMap.$inject = [ 'snap' ];
 
 module.exports = PathMap;
-},{}],7:[function(_dereq_,module,exports){
+},{}],10:[function(_dereq_,module,exports){
 module.exports = {
+  __depends__: [ _dereq_('../core') ],
   renderer: [ 'type', _dereq_('./BpmnRenderer') ],
   pathMap: [ 'type', _dereq_('./PathMap') ]
 };
-},{"./BpmnRenderer":5,"./PathMap":6}],8:[function(_dereq_,module,exports){
-var _ = (window._);
-
-function BpmnTraverser(handler) {
-
-  var elementDiMap = {};
-  var elementGfxMap = {};
-
-  // list of containers already walked
-  var handledProcesses = [];
-
-  ///// Helpers /////////////////////////////////
-
-  function contextual(fn, ctx) {
-    return function(e) {
-      fn(e, ctx);
-    };
-  }
-
-  function is(element, type) {
-    return element.$instanceOf(type);
-  }
-
-  function visit(element, di, ctx) {
-
-    var gfx = elementGfxMap[element.id];
-
-    // avoid multiple rendering of elements
-    if (gfx) {
-      return gfx;
-    }
-
-    // call handler
-    gfx = handler.element(element, di, ctx);
-
-    // and log returned result
-    elementGfxMap[element.id] = gfx;
-
-    return gfx;
-  }
-
-  function visitIfDi(element, ctx) {
-    var di = getDi(element);
-
-    if (di) {
-      return visit(element, di, ctx);
-    }
-  }
-
-  function logError(message, context) {
-    handler.error(message, context);
-  }
-
-  ////// DI handling ////////////////////////////
-
-  function buildDiMap(definitions) {
-    _.forEach(definitions.diagrams, handleDiagram);
-  }
-
-  function registerDi(element) {
-    var bpmnElement = element.bpmnElement;
-    if (bpmnElement) {
-      elementDiMap[bpmnElement.id] = element;
-    } else {
-      logError('no bpmnElement for <' + element.$type + '#' + element.id + '>', { element: element });
-    }
-  }
-
-  function getDi(bpmnElement) {
-    var id = bpmnElement.id;
-    return id ? elementDiMap[id] : null;
-  }
-
-  function handleDiagram(diagram) {
-    handlePlane(diagram.plane);
-  }
-
-  function handlePlane(plane) {
-    registerDi(plane);
-
-    _.forEach(plane.planeElement, handlePlaneElement);
-  }
-
-  function handlePlaneElement(planeElement) {
-    registerDi(planeElement);
-  }
-
-
-  ////// Semantic handling //////////////////////
-
-  function handleDefinitions(definitions, diagram) {
-    // make sure we walk the correct bpmnElement
-
-    var diagrams = definitions.diagrams;
-
-    if (diagram && diagrams.indexOf(diagram) === -1) {
-      throw new Error('diagram not part of bpmn:Definitions');
-    }
-
-    if (!diagram) {
-      if (diagrams && diagrams.length) {
-        diagram = diagrams[0];
-      }
-    }
-
-    // no diagram -> nothing to import
-    if (!diagram) {
-      return;
-    }
-
-    // load DI from selected diagram only
-    handleDiagram(diagram);
-
-    var rootElement = diagram.plane.bpmnElement;
-
-    if (!rootElement) {
-      throw new Error('no rootElement referenced in BPMNPlane <' + diagram.plane.id + '>');
-    }
-
-    if (is(rootElement, 'bpmn:Process')) {
-      handleProcess(rootElement);
-    } else
-    if (is(rootElement, 'bpmn:Collaboration')) {
-      handleCollaboration(rootElement);
-
-      // force drawing of everything not yet drawn that is part of the target DI
-      handleUnhandledProcesses(definitions.rootElements);
-    } else {
-      throw new Error('unsupported root element for bpmndi:Diagram <' + rootElement.$type + '>');
-    }
-  }
-
-  function handleUnhandledProcesses(rootElements) {
-
-    // walk through all processes that have not yet been drawn and draw them
-    // (in case they contain lanes with DI information)
-    var processes = _.forEach(rootElements, function(e) {
-      return e.$type === 'bpmn:Process' && e.laneSets && handledProcesses.indexOf(e) !== -1;
-    });
-
-    processes.forEach(contextual(handleProcess));
-  }
-
-  function handleDataAssociation(association, context) {
-    visitIfDi(association, context);
-  }
-
-  function handleDataInput(dataInput, context) {
-    visitIfDi(dataInput, context);
-  }
-
-  function handleDataOutput(dataOutput, context) {
-    visitIfDi(dataOutput, context);
-  }
-
-  function handleArtifact(artifact, context) {
-
-    // bpmn:TextAnnotation
-    // bpmn:Group
-    // bpmn:Association
-
-    visitIfDi(artifact, context);
-  }
-
-  function handleArtifacts(artifacts, context) {
-    _.forEach(artifacts, contextual(handleArtifact, context));
-  }
-
-  function handleIoSpecification(ioSpecification, context) {
-
-    if (!ioSpecification) {
-      return;
-    }
-
-    _.forEach(ioSpecification.dataInputs, contextual(handleDataInput, context));
-    _.forEach(ioSpecification.dataOutputs, contextual(handleDataOutput, context));
-  }
-
-  function handleSubProcess(subProcess, context) {
-    handleFlowElementsContainer(subProcess, context);
-    handleArtifacts(subProcess.artifacts, context);
-  }
-
-  function handleFlowNode(flowNode, context) {
-    var childCtx = visitIfDi(flowNode, context);
-
-    if (is(flowNode, 'bpmn:SubProcess')) {
-      handleSubProcess(flowNode, childCtx || context);
-    }
-
-    if (is(flowNode, 'bpmn:Activity')) {
-      _.forEach(flowNode.dataInputAssociations, contextual(handleDataAssociation, null));
-      _.forEach(flowNode.dataOutputAssociations, contextual(handleDataAssociation, null));
-
-      handleIoSpecification(flowNode.ioSpecification, context);
-    }
-  }
-
-  function handleSequenceFlow(sequenceFlow, context) {
-    visitIfDi(sequenceFlow, context);
-  }
-
-  function handleDataElement(dataObject, context) {
-    visitIfDi(dataObject, context);
-  }
-
-  function handleLane(lane, context) {
-    var newContext = visitIfDi(lane, context);
-
-    if (lane.childLaneSet) {
-      handleLaneSet(lane.childLaneSet, newContext || context);
-    } else {
-      handleFlowElements(lane.flowNodeRef, newContext || context);
-    }
-  }
-
-  function handleLaneSet(laneSet, context) {
-    _.forEach(laneSet.lanes, contextual(handleLane, context));
-  }
-
-  function handleLaneSets(laneSets, context) {
-    _.forEach(laneSets, contextual(handleLaneSet, context));
-  }
-
-  function handleFlowElementsContainer(container, context) {
-
-    if (container.laneSets) {
-      handleLaneSets(container.laneSets, context);
-      handleNonFlowNodes(container.flowElements);
-    } else {
-      handleFlowElements(container.flowElements, context);
-    }
-  }
-
-  function handleNonFlowNodes(flowElements, context) {
-    var sequenceFlows = [];
-
-    _.forEach(flowElements, function(e) {
-      if (is(e, 'bpmn:SequenceFlow')) {
-        sequenceFlows.push(e);
-      } else
-      if (is(e, 'bpmn:DataObject')) {
-        // SKIP (assume correct referencing via DataObjectReference)
-      } else
-      if (is(e, 'bpmn:DataStoreReference')) {
-        handleDataElement(e, context);
-      } else
-      if (is(e, 'bpmn:DataObjectReference')) {
-        handleDataElement(e, context);
-      }
-    });
-
-    // handle SequenceFlows
-    _.forEach(sequenceFlows, contextual(handleSequenceFlow, context));
-  }
-
-  function handleFlowElements(flowElements, context) {
-    var sequenceFlows = [];
-
-    _.forEach(flowElements, function(e) {
-      if (is(e, 'bpmn:SequenceFlow')) {
-        sequenceFlows.push(e);
-      } else
-      if (is(e, 'bpmn:FlowNode')) {
-        handleFlowNode(e, context);
-      } else
-      if (is(e, 'bpmn:DataObject')) {
-        // SKIP (assume correct referencing via DataObjectReference)
-      } else
-      if (is(e, 'bpmn:DataStoreReference')) {
-        handleDataElement(e, context);
-      } else
-      if (is(e, 'bpmn:DataObjectReference')) {
-        handleDataElement(e, context);
-      } else {
-        throw new Error('unrecognized element <' + e.$type + '> in context ' + (context ? context.id : null));
-      }
-    });
-
-    // handle SequenceFlows
-    _.forEach(sequenceFlows, contextual(handleSequenceFlow, context));
-  }
-
-  function handleParticipant(participant, context) {
-    var newCtx = visitIfDi(participant, context);
-
-    var process = participant.processRef;
-    if (process) {
-      handleProcess(process, newCtx || context);
-    }
-  }
-
-  function handleProcess(process, context) {
-    handleFlowElementsContainer(process, context);
-    handleIoSpecification(process.ioSpecification, context);
-
-    handleArtifacts(process.artifacts, context);
-
-    // log process handled
-    handledProcesses.push(process);
-  }
-
-  function handleMessageFlow(messageFlow, context) {
-    visitIfDi(messageFlow, context);
-  }
-
-  function handleMessageFlows(messageFlows, context) {
-    if (messageFlows) {
-      _.forEach(messageFlows, contextual(handleMessageFlow, context));
-    }
-  }
-
-  function handleCollaboration(collaboration) {
-
-    _.forEach(collaboration.participants, contextual(handleParticipant));
-
-    handleArtifacts(collaboration.artifacts);
-
-    handleMessageFlows(collaboration.messageFlows);
-  }
-
-
-  ///// API ////////////////////////////////
-
-  return {
-    handleDefinitions: handleDefinitions
-  };
-}
-
-module.exports = BpmnTraverser;
-},{}],9:[function(_dereq_,module,exports){
+},{"../core":7,"./BpmnRenderer":8,"./PathMap":9}],11:[function(_dereq_,module,exports){
+'use strict';
+
+module.exports.isExpandedPool = function(semantic) {
+  return !!semantic.processRef;
+};
+
+module.exports.isExpanded = function(semantic) {
+  return !semantic.$instanceOf('bpmn:SubProcess') || semantic.di.isExpanded;
+};
+},{}],12:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
 
-var BpmnTreeWalker = _dereq_('./BpmnTreeWalker'),
-    Util = _dereq_('../Util');
+
+/**
+ * Returns true if the given semantic has an external label
+ *
+ * @param {BpmnElement} semantic
+ * @return {Boolean} true if has label
+ */
+module.exports.hasExternalLabel = function(semantic) {
+
+  return semantic.$instanceOf('bpmn:Event') ||
+         semantic.$instanceOf('bpmn:Gateway') ||
+         semantic.$instanceOf('bpmn:DataStoreReference') ||
+         semantic.$instanceOf('bpmn:DataObjectReference') ||
+         semantic.$instanceOf('bpmn:SequenceFlow') ||
+         semantic.$instanceOf('bpmn:MessageFlow');
+};
 
 
-function hasLabel(element) {
-
-  return element.$instanceOf('bpmn:Event') ||
-         element.$instanceOf('bpmn:Gateway') ||
-         element.$instanceOf('bpmn:DataStoreReference') ||
-         element.$instanceOf('bpmn:DataObjectReference') ||
-         element.$instanceOf('bpmn:SequenceFlow') ||
-         element.$instanceOf('bpmn:MessageFlow');
-}
-
-
-function isCollapsed(element, di) {
-  return element.$instanceOf('bpmn:SubProcess') && di && !di.isExpanded;
-}
-
-function getWaypointsMid(waypoints) {
+/**
+ * Get the middle of a number of waypoints
+ *
+ * @param  {Array<Point>} waypoints
+ * @return {Point} the mid point
+ */
+module.exports.getWaypointsMid = function(waypoints) {
 
   var mid = waypoints.length / 2 - 1;
 
@@ -2615,21 +2816,26 @@ function getWaypointsMid(waypoints) {
     x: first.x + (second.x - first.x) / 2,
     y: first.y + (second.y - first.y) / 2
   };
-}
+};
 
 
 /**
  * Returns the bounds of an elements label, parsed from the elements DI or
  * generated from its bounds.
+ *
+ * @param {BpmnElement} semantic
+ * @param {djs.model.Base} element
  */
-function getLabelBounds(di, data) {
+module.exports.getExternalLabelBounds = function(semantic, element) {
 
   var mid,
-      size;
+      size,
+      bounds,
+      di = semantic.di,
+      label = di.label;
 
-  var label = di.label;
   if (label && label.bounds) {
-    var bounds = label.bounds;
+    bounds = label.bounds;
 
     size = {
       width: Math.max(150, bounds.width),
@@ -2642,12 +2848,12 @@ function getLabelBounds(di, data) {
     };
   } else {
 
-    if (data.waypoints) {
-      mid = getWaypointsMid(data.waypoints);
+    if (element.waypoints) {
+      mid = module.exports.getWaypointsMid(element.waypoints);
     } else {
       mid = {
-        x: data.x + data.width / 2,
-        y: data.y + data.height - 5
+        x: element.x + element.width / 2,
+        y: element.y + element.height - 5
       };
     }
 
@@ -2661,118 +2867,10 @@ function getLabelBounds(di, data) {
     x: mid.x - size.width / 2,
     y: mid.y
   }, size);
-}
-
-
-function importBpmnDiagram(diagram, definitions, done) {
-
-  var canvas = diagram.get('canvas');
-  var events = diagram.get('eventBus');
-  var commandStack = diagram.get('commandStack');
-
-
-  function addLabel(element, di, data) {
-    if (!hasLabel(element)) {
-      return;
-    }
-
-    var labelBounds = getLabelBounds(di, data);
-
-    var label = _.extend({
-      id: element.id + '_label',
-      attachedId: element.id,
-      type: 'label',
-      hidden: data.hidden
-    }, labelBounds);
-
-    canvas.addShape(label);
-
-    // we wire data and label so that
-    // the label of a BPMN element can be quickly accessed via
-    // element.label in various components
-    data.label = label;
-  }
-
-
-  var visitor = {
-
-    element: function(element, di, parent) {
-
-      var shape;
-
-      function fire(type, shape) {
-        events.fire('bpmn.element.' + type, {
-          semantic: element, di: di, diagramElement: shape
-        });
-      }
-
-      if (di.$type === 'bpmndi:BPMNShape') {
-        var bounds = di.bounds;
-
-        var collapsed = isCollapsed(element, di);
-        var hidden = parent && (parent.hidden || parent.collapsed);
-
-        shape = {
-          id: element.id, type: element.$type,
-          x: bounds.x, y: bounds.y,
-          width: bounds.width, height: bounds.height,
-          collapsed: collapsed,
-          hidden: hidden,
-          parent: parent
-        };
-
-        fire('add', shape);
-        canvas.addShape(shape);
-      } else {
-
-        var waypoints = _.collect(di.waypoint, function(p) {
-          return { x: p.x, y: p.y };
-        });
-
-        shape = { id: element.id, type: element.$type, waypoints: waypoints };
-
-        fire('add', shape);
-        canvas.addConnection(shape);
-      }
-
-      fire('added', shape);
-
-      // add label if needed
-      addLabel(element, di, shape);
-
-      return shape;
-    },
-
-    error: function(message, context) {
-      console.warn('[import]', message, context);
-    }
-  };
-
-  var walker = new BpmnTreeWalker(visitor);
-  walker.handleDefinitions(definitions);
-
-  commandStack.clear();
-
-  done();
-}
-
-module.exports.importBpmnDiagram = Util.failSafeAsync(importBpmnDiagram);
-},{"../Util":1,"./BpmnTreeWalker":8}],10:[function(_dereq_,module,exports){
-'use strict';
-
-function isExpandedPool(semantic) {
-  return !!semantic.processRef;
-}
-
-function isExpanded(semantic, di) {
-  return di.isExpanded;
-}
-
-module.exports.isExpandedPool = isExpandedPool;
-module.exports.isExpanded = isExpanded;
-},{}],11:[function(_dereq_,module,exports){
+};
+},{}],13:[function(_dereq_,module,exports){
 module.exports = _dereq_('./lib/model/Simple');
-},{"./lib/model/Simple":13}],12:[function(_dereq_,module,exports){
+},{"./lib/model/Simple":15}],14:[function(_dereq_,module,exports){
 var _ = (window._);
 
 var Moddle = _dereq_('moddle'),
@@ -2871,7 +2969,7 @@ function Bpmn(packages) {
 
 
 module.exports = Bpmn;
-},{"moddle":23,"moddle-xml":14}],13:[function(_dereq_,module,exports){
+},{"moddle":30,"moddle-xml":16}],15:[function(_dereq_,module,exports){
 var BpmnModdle = _dereq_('../Bpmn');
 
 var packages = {
@@ -2882,29 +2980,21 @@ var packages = {
 };
 
 module.exports = new BpmnModdle(packages);
-},{"../../resources/bpmn/json/bpmn.json":27,"../../resources/bpmn/json/bpmndi.json":28,"../../resources/bpmn/json/dc.json":29,"../../resources/bpmn/json/di.json":30,"../Bpmn":12}],14:[function(_dereq_,module,exports){
+},{"../../resources/bpmn/json/bpmn.json":39,"../../resources/bpmn/json/bpmndi.json":40,"../../resources/bpmn/json/dc.json":41,"../../resources/bpmn/json/di.json":42,"../Bpmn":14}],16:[function(_dereq_,module,exports){
 'use strict';
 
-var Reader = _dereq_('./lib/Reader'),
-    Writer = _dereq_('./lib/Writer');
-
-module.exports.Reader = Reader;
-module.exports.Writer = Writer;
-},{"./lib/Reader":15,"./lib/Writer":16}],15:[function(_dereq_,module,exports){
+module.exports.Reader = _dereq_('./lib/Reader');
+module.exports.Writer = _dereq_('./lib/Writer');
+},{"./lib/Reader":17,"./lib/Writer":18}],17:[function(_dereq_,module,exports){
 'use strict';
 
 var sax = (window.sax),
     _ = (window._);
 
 var common = _dereq_('./common'),
-    util = _dereq_('moddle/lib/util'),
+    Types = _dereq_('moddle').types,
     Stack = _dereq_('tiny-stack'),
-
-    logger = util.logger,
-
-    parseNameNs = util.parseNameNs,
-    coerceType = util.coerceType,
-    isSimpleType = util.isSimpleType,
+    parseNameNs = _dereq_('moddle').ns.parseName,
     aliasToName = common.aliasToName;
 
 
@@ -2985,7 +3075,6 @@ function Context(parseRoot) {
   };
 
   this.addWarning = function (w) {
-    logger.debug('[warning]', w.message, w);
     warnings.push(w);
   };
 
@@ -3057,7 +3146,7 @@ ValueHandler.prototype.handleEnd = function() {
       element = this.element,
       propertyDesc = this.propertyDesc;
 
-  value = coerceType(propertyDesc.type, value);
+  value = Types.coerceType(propertyDesc.type, value);
 
   if (propertyDesc.isMany) {
     element.get(propertyDesc.name).push(value);
@@ -3067,9 +3156,7 @@ ValueHandler.prototype.handleEnd = function() {
 };
 
 
-function BaseElementHandler(model, type, context) {
-
-}
+function BaseElementHandler() {}
 
 BaseElementHandler.prototype = Object.create(BodyHandler.prototype);
 
@@ -3114,7 +3201,7 @@ ElementHandler.prototype.handleEnd = function() {
       bodyProperty = descriptor.bodyProperty;
 
   if (bodyProperty && value !== undefined) {
-    value = coerceType(bodyProperty.type, value);
+    value = Types.coerceType(bodyProperty.type, value);
     element.set(bodyProperty.name, value);
   }
 };
@@ -3143,7 +3230,7 @@ ElementHandler.prototype.createElement = function(node) {
       });
     } else {
       if (prop) {
-        value = coerceType(prop.type, value);
+        value = Types.coerceType(prop.type, value);
       }
 
       instance.set(name, value);
@@ -3179,7 +3266,7 @@ ElementHandler.prototype.getPropertyForElement = function(nameNs) {
 
     // search for collection members later
     property = _.find(descriptor.properties, function(p) {
-      return !p.isVirtual && !p.isReference && !p.isAttribute && elementType.isA(p.type);
+      return !p.isVirtual && !p.isReference && !p.isAttribute && elementType.hasType(p.type);
     });
 
     if (property) {
@@ -3227,14 +3314,15 @@ ElementHandler.prototype.handler = function(type) {
 ElementHandler.prototype.handleChild = function(node) {
   var nameNs = parseNameNs(node.local, node.prefix);
 
-  var propertyDesc, type, childHandler;
+  var propertyDesc, type, element, childHandler;
 
   propertyDesc = this.getPropertyForElement(nameNs);
+  element = this.element;
 
   type = propertyDesc.effectiveType || propertyDesc.type;
 
-  if (isSimpleType(propertyDesc.type)) {
-    return this.valueHandler(propertyDesc, this.element);
+  if (Types.isSimple(propertyDesc.type)) {
+    return this.valueHandler(propertyDesc, element);
   }
 
   if (propertyDesc.isReference) {
@@ -3246,21 +3334,24 @@ ElementHandler.prototype.handleChild = function(node) {
   var newElement = childHandler.getElement();
 
   // child handles may decide to skip elements
-  // by not returning anythign
+  // by not returning anything
   if (newElement !== undefined) {
 
     if (propertyDesc.isMany) {
-      this.element.get(propertyDesc.name).push(newElement);
+      element.get(propertyDesc.name).push(newElement);
     } else {
-      this.element.set(propertyDesc.name, newElement);
+      element.set(propertyDesc.name, newElement);
     }
 
     if (propertyDesc.isReference) {
       _.extend(newElement, {
-        element: this.element
+        element: element
       });
 
       this.context.addReference(newElement);
+    } else {
+      // establish child -> parent relationship
+      newElement.$parent = element;
     }
   }
 
@@ -3287,18 +3378,18 @@ GenericElementHandler.prototype.createElement = function(node) {
 
 GenericElementHandler.prototype.handleChild = function(node) {
 
-  var handler = new GenericElementHandler(this.model, 'Element', this.context).handleNode(node);
+  var handler = new GenericElementHandler(this.model, 'Element', this.context).handleNode(node),
+      element = this.element;
 
-  var child = handler.getElement();
+  var newElement = handler.getElement(),
+      children;
 
-  if (child !== undefined) {
+  if (newElement !== undefined) {
+    children = element.$children = element.$children || [];
+    children.push(newElement);
 
-    var children = this.element.$children;
-    if (!children) {
-      children = this.element.$children = [];
-    }
-
-    children.push(child);
+    // establish child -> parent relationship
+    newElement.$parent = element;
   }
 
   return handler;
@@ -3431,16 +3522,14 @@ function XMLReader(model) {
 
 module.exports = XMLReader;
 module.exports.ElementHandler = ElementHandler;
-},{"./common":17,"moddle/lib/util":21,"tiny-stack":22}],16:[function(_dereq_,module,exports){
+},{"./common":19,"moddle":20,"tiny-stack":29}],18:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
 
-var util = _dereq_('moddle').util,
+var Types = _dereq_('moddle').types,
     common = _dereq_('./common'),
-
-    parseNameNs = util.parseNameNs,
-    isSimpleType = util.isSimpleType,
+    parseNameNs = _dereq_('moddle').ns.parseName,
     nameToAlias = common.nameToAlias;
 
 var XML_PREAMBLE = '<?xml version="1.0" encoding="UTF-8"?>\n';
@@ -3738,7 +3827,7 @@ ElementSerializer.prototype.parseContainments = function(properties) {
     if (p.isBody) {
       body.push(new BodySerializer().build(p, value[0]));
     } else
-    if (isSimpleType(p.type)) {
+    if (Types.isSimple(p.type)) {
       _.forEach(value, function(v) {
         body.push(new ValueSerializer(ns).build(p, v));
       });
@@ -4003,163 +4092,321 @@ function XMLWriter(options) {
 }
 
 module.exports = XMLWriter;
-},{"./common":17,"moddle":18}],17:[function(_dereq_,module,exports){
+},{"./common":19,"moddle":20}],19:[function(_dereq_,module,exports){
 'use strict';
 
-
-function hasLowerCaseAlias(pkg) {
-  return pkg.xml && pkg.xml.alias === 'lowerCase';
-}
 
 function capitalize(string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
-function aliasToName(alias, pkg) {
+function lower(string) {
+  return string.charAt(0).toLowerCase() + string.slice(1);
+}
+
+function hasLowerCaseAlias(pkg) {
+  return pkg.xml && pkg.xml.alias === 'lowerCase';
+}
+
+
+module.exports.aliasToName = function(alias, pkg) {
   if (hasLowerCaseAlias(pkg)) {
     return capitalize(alias);
   } else {
     return alias;
   }
-}
+};
 
-
-function lower(string) {
-  return string.charAt(0).toLowerCase() + string.slice(1);
-}
-
-function nameToAlias(name, pkg) {
+module.exports.nameToAlias = function(name, pkg) {
   if (hasLowerCaseAlias(pkg)) {
     return lower(name);
   } else {
     return name;
   }
-}
+};
 
-
-module.exports.aliasToName = aliasToName;
-module.exports.nameToAlias = nameToAlias;
-
-
-var DEFAULT_NS_MAP = {
+module.exports.DEFAULT_NS_MAP = {
   'xsi': 'http://www.w3.org/2001/XMLSchema-instance'
+};
+},{}],20:[function(_dereq_,module,exports){
+'use strict';
+
+module.exports = _dereq_('./lib/moddle');
+
+module.exports.types = _dereq_('./lib/types');
+
+module.exports.ns = _dereq_('./lib/ns');
+},{"./lib/moddle":24,"./lib/ns":25,"./lib/types":28}],21:[function(_dereq_,module,exports){
+'use strict';
+
+function Base() { }
+
+Base.prototype.get = function(name) {
+  return this.$model.properties.get(this, name);
+};
+
+Base.prototype.set = function(name, value) {
+  this.$model.properties.set(this, name, value);
 };
 
 
-module.exports.DEFAULT_NS_MAP = DEFAULT_NS_MAP;
-},{}],18:[function(_dereq_,module,exports){
-'use strict';
-
-module.exports = _dereq_('./lib/Model');
-
-module.exports.util = _dereq_('./lib/util');
-},{"./lib/Model":19,"./lib/util":21}],19:[function(_dereq_,module,exports){
+module.exports = Base;
+},{}],22:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
 
-var util = _dereq_('./util'),
-    logger = util.logger,
-    isBuiltInType = util.isBuiltInType,
-    parseNameNs = util.parseNameNs;
+var parseNameNs = _dereq_('./ns').parseName;
 
-var DESCRIPTOR = '$descriptor',
-    MODEL = '$model',
-    PACKAGE = '$pkg';
 
-function $descriptor(type) {
-  return type[DESCRIPTOR];
+function DescriptorBuilder(nameNs) {
+  this.ns = nameNs;
+  this.name = nameNs.name;
+  this.allTypes = [];
+  this.properties = [];
+  this.propertiesByName = {};
 }
 
-function $model(type) {
-  return type[MODEL];
-}
+module.exports = DescriptorBuilder;
 
-function $pkg(type) {
-  return type[PACKAGE];
-}
 
-function $define(element, name, value) {
-  Object.defineProperty(element, name, {
-    value: value
-  });
-}
-
-function $defineDescriptor(element, descriptor) {
-  $define(element, DESCRIPTOR, descriptor);
-}
-
-function $defineModel(element, model) {
-  $define(element, MODEL, model);
-}
-
-function $definePackage(element, pkg) {
-  $define(element, PACKAGE, pkg);
-}
-
-function isA(name) {
-  /* jshint -W040 */
-  return !!_.find($descriptor(this).allTypes, function(t) {
-    return t.name === name;
-  });
-}
-
-//// BaseType implementation /////////////////////////////////////////////////
-
-function BaseType(descriptor, model) {
-  $defineDescriptor(this, descriptor);
-  $defineModel(this, model);
-}
-
-BaseType.prototype.$propertyDescriptor = function(name) {
-  return $descriptor(this).propertiesByName[name];
+DescriptorBuilder.prototype.build = function() {
+  return _.pick(this, [ 'ns', 'name', 'allTypes', 'properties', 'propertiesByName', 'bodyProperty' ]);
 };
 
-BaseType.prototype.$instanceOf = isA;
+DescriptorBuilder.prototype.addProperty = function(p, idx) {
+  this.addNamedProperty(p, true);
 
-BaseType.prototype.get = function(name) {
+  var properties = this.properties;
 
-  var property = this.$propertyDescriptor(name),
-      propertyName;
-
-  if (!property) {
-    return this[name];
-  }
-
-  propertyName = property.name;
-
-  // check if access to collection property and lazily initialize it
-  if (!this[propertyName]) {
-    if (property.isMany) {
-      Object.defineProperty(this, propertyName, {
-        enumerable: !property.isReference,
-        writable: true,
-        value: []
-      });
-    }
-  }
-
-  return this[propertyName];
-};
-
-BaseType.prototype.set = function(name, value) {
-  var property = this.$propertyDescriptor(name);
-
-  if (!property) {
-    this.$attrs[name] = value;
+  if (idx !== undefined) {
+    properties.splice(idx, 0, p);
   } else {
-    Object.defineProperty(this, property.name, {
-      enumerable: !property.isReference,
-      writable: true,
-      value: value
-    });
+    properties.push(p);
   }
 };
 
-//// Model implementation /////////////////////////////////////////////////
+
+DescriptorBuilder.prototype.replaceProperty = function(oldProperty, newProperty) {
+  var oldNameNs = oldProperty.ns;
+
+  var props = this.properties,
+      propertiesByName = this.propertiesByName;
+
+  if (oldProperty.isBody) {
+
+    if (!newProperty.isBody) {
+      throw new Error(
+        'property <' + newProperty.ns.name + '> must be body property ' +
+        'to refine <' + oldProperty.ns.name + '>');
+    }
+
+    // TODO: Check compatibility
+    this.setBodyProperty(newProperty, false);
+  }
+
+  this.addNamedProperty(newProperty, true);
+
+  // replace old property at index with new one
+  var idx = props.indexOf(oldProperty);
+  if (idx === -1) {
+    throw new Error('property <' + oldNameNs.name + '> not found in property list');
+  }
+
+  props[idx] = newProperty;
+
+  // replace propertiesByName entry with new property
+  propertiesByName[oldNameNs.name] = propertiesByName[oldNameNs.localName] = newProperty;
+};
+
+
+DescriptorBuilder.prototype.redefineProperty = function(p) {
+
+  var nsPrefix = p.ns.prefix;
+  var parts = p.redefines.split('#');
+
+  var name = parseNameNs(parts[0], nsPrefix);
+  var attrName = parseNameNs(parts[1], name.prefix).name;
+
+  var redefinedProperty = this.propertiesByName[attrName];
+  if (!redefinedProperty) {
+    throw new Error('refined property <' + attrName + '> not found');
+  } else {
+    this.replaceProperty(redefinedProperty, p);
+  }
+
+  delete p.redefines;
+};
+
+DescriptorBuilder.prototype.addNamedProperty = function(p, validate) {
+  var ns = p.ns,
+      propsByName = this.propertiesByName;
+
+  if (validate) {
+    this.assertNotDefined(p, ns.name);
+    this.assertNotDefined(p, ns.localName);
+  }
+
+  propsByName[ns.name] = propsByName[ns.localName] = p;
+};
+
+DescriptorBuilder.prototype.removeNamedProperty = function(p) {
+  var ns = p.ns,
+      propsByName = this.propertiesByName;
+
+  delete propsByName[ns.name];
+  delete propsByName[ns.localName];
+};
+
+DescriptorBuilder.prototype.setBodyProperty = function(p, validate) {
+
+  if (validate && this.bodyProperty) {
+    throw new Error(
+      'body property defined multiple times ' +
+      '(<' + this.bodyProperty.ns.name + '>, <' + p.ns.name + '>)');
+  }
+
+  this.bodyProperty = p;
+};
+
+DescriptorBuilder.prototype.addIdProperty = function(name) {
+  var nameNs = parseNameNs(name, this.ns.prefix);
+
+  var p = {
+    name: nameNs.localName,
+    type: 'String',
+    isAttr: true,
+    ns: nameNs
+  };
+
+  // ensure that id is always the first attribute (if present)
+  this.addProperty(p, 0);
+};
+
+DescriptorBuilder.prototype.assertNotDefined = function(p, name) {
+  var propertyName = p.name,
+      definedProperty = this.propertiesByName[propertyName];
+
+  if (definedProperty) {
+    throw new Error(
+      'property <' + propertyName + '> already defined; ' +
+      'override of <' + definedProperty.definedBy.ns.name + '#' + definedProperty.ns.name + '> by ' +
+      '<' + p.definedBy.ns.name + '#' + p.ns.name + '> not allowed without redefines');
+  }
+};
+
+DescriptorBuilder.prototype.hasProperty = function(name) {
+  return this.propertiesByName[name];
+};
+
+DescriptorBuilder.prototype.addTrait = function(t) {
+
+  var allTypes = this.allTypes;
+
+  if (allTypes.indexOf(t) !== -1) {
+    return;
+  }
+
+  _.forEach(t.properties, function(p) {
+
+    // clone property to allow extensions
+    p = _.extend({}, p, {
+      name: p.ns.localName
+    });
+
+    Object.defineProperty(p, 'definedBy', {
+      value: t
+    });
+
+    // add redefine support
+    if (p.redefines) {
+      this.redefineProperty(p);
+    } else {
+      if (p.isBody) {
+        this.setBodyProperty(p);
+      }
+      this.addProperty(p);
+    }
+  }, this);
+
+  allTypes.push(t);
+};
+
+},{"./ns":25}],23:[function(_dereq_,module,exports){
+'use strict';
+
+var _ = (window._);
+
+var Base = _dereq_('./base');
+
+
+function Factory(model, properties) {
+  this.model = model;
+  this.properties = properties;
+}
+
+module.exports = Factory;
+
+
+Factory.prototype.createType = function(descriptor) {
+
+  var model = this.model;
+
+  var props = this.properties,
+      prototype = Object.create(Base.prototype);
+
+  // initialize default values
+  _.forEach(descriptor.properties, function(p) {
+    if (!p.isMany && p.default !== undefined) {
+      prototype[p.name] = p.default;
+    }
+  });
+
+  props.defineModel(prototype, model);
+  props.defineDescriptor(prototype, descriptor);
+
+  var name = descriptor.ns.name;
+
+  /**
+   * The new type constructor
+   */
+  function ModdleElement(attrs) {
+    props.define(this, '$type', { value: name, enumerable: true });
+    props.define(this, '$attrs', { value: {} });
+    props.define(this, '$parent', { writable: true });
+
+    _.forEach(attrs, function(val, key) {
+      this.set(key, val);
+    }, this);
+  }
+
+  ModdleElement.prototype = prototype;
+
+  ModdleElement.hasType = prototype.$instanceOf = this.model.hasType;
+
+  // static links
+  props.defineModel(ModdleElement, model);
+  props.defineDescriptor(ModdleElement, descriptor);
+
+  return ModdleElement;
+};
+},{"./base":21}],24:[function(_dereq_,module,exports){
+'use strict';
+
+var _ = (window._);
+
+var Types = _dereq_('./types'),
+    Factory = _dereq_('./factory'),
+    Registry = _dereq_('./registry'),
+    Properties = _dereq_('./properties');
+
+var parseNameNs = _dereq_('./ns').parseName;
+
+
+//// Moddle implementation /////////////////////////////////////////////////
 
 /**
- * @class Model
+ * @class Moddle
  *
  * A model that can be used to create elements of a specific type.
  *
@@ -4180,543 +4427,201 @@ BaseType.prototype.set = function(name, value) {
  * @param {Array<Package>} packages  the packages to contain
  * @param {Object} options  additional options to pass to the model
  */
-function Model(packages, options) {
+function Moddle(packages, options) {
 
-  var modelInstance = {};
+  options = options || [];
 
-  var packageMap = {};
-  var elementsByName = {};
+  this.properties = options.properties || new Properties(this);
 
-  var typeCache = {};
+  this.factory = options.factory || new Factory(this, this.properties);
+  this.registry = options.registry || new Registry(packages, this.properties, options);
 
-  options = _.extend({ defaultId: 'id', generateIdProperty: true }, options || {});
-
-  function getElementByName(name) {
-    return elementsByName[name];
-  }
-
-  function createType(descriptor) {
-    var proto = new BaseType(descriptor, modelInstance);
-
-    // early initialize default values via prototype
-
-    _.forEach(descriptor.properties, function(p) {
-      if (!p.isMany && p.default !== undefined) {
-        proto[p.name] = p.default;
-      }
-    });
-
-    function ModelElement(attrs) {
-
-      var descriptor = $descriptor(this);
-
-      Object.defineProperty(this, '$attrs', {
-        value: {}
-      });
-
-      Object.defineProperty(this, '$type', {
-        value: descriptor.ns.name,
-        enumerable: true
-      });
-
-      _.forEach(attrs, function(val, key) {
-        this.set(key, val);
-      }, this);
-    }
-
-    ModelElement.prototype = proto;
-
-    // static accessor of the model descriptor
-    $defineModel(ModelElement, modelInstance);
-    $defineDescriptor(ModelElement, descriptor);
-
-    ModelElement.isA = isA;
-
-    return ModelElement;
-  }
-
-  function init() {
-    _.forEach(packages, function(pkg) {
-      var prefix = pkg.prefix;
-
-      packageMap[pkg.uri] = pkg;
-      packageMap[pkg.prefix] = pkg;
-
-      function registerType(t) {
-
-        // namespace types
-        var typeNs = parseNameNs(t.name, prefix),
-            nsName = typeNs.name;
-
-        _.extend(t, {
-          ns: typeNs,
-          name: nsName
-        });
-
-        elementsByName[nsName] = t;
-
-        // add back link to package
-        $definePackage(t, pkg);
-
-        t.propertiesByName = {};
-
-        _.forEach(t.properties, function(p) {
-
-          // namespace property names
-          var propertyNs = parseNameNs(p.name, typeNs.prefix),
-              propertyName = propertyNs.name;
-
-          // namespace property types
-          if (!isBuiltInType(p.type)) {
-            var propertyTypeNs = parseNameNs(p.type, propertyNs.prefix);
-            p.type = propertyTypeNs.name;
-          }
-
-          _.extend(p, {
-            ns: propertyNs,
-            name: propertyName
-          });
-
-          t.propertiesByName[propertyNs.name] = p;
-        });
-      }
-
-      _.forEach(pkg.types, registerType);
-    });
-  }
-
-  function collectEffectiveTypes(nameNs, result) {
-
-    var type = elementsByName[nameNs.name];
-
-    if (!type) {
-      throw new Error('unknown type <' + nameNs.name + '>');
-    }
-
-    _.forEach(type.superClass, function(cls) {
-      var parentNs = parseNameNs(cls, nameNs.prefix);
-      collectEffectiveTypes(parentNs, result);
-    });
-
-    result.push(type);
-
-    return result;
-  }
-
-  function getEffectiveDescriptor(type) {
-
-    var nameNs = parseNameNs(type);
-
-    // filter types for uniqueness
-    var allTypes = _.unique(collectEffectiveTypes(nameNs, []));
-
-    function redefineProperty(descriptor, p) {
-      var nsPrefix = p.ns.prefix;
-      var parts = p.redefines.split('#');
-
-      var name = parseNameNs(parts[0], nsPrefix);
-      var attrName = parseNameNs(parts[1], name.prefix).name;
-
-      var redefinedProperty = descriptor.propertiesByName[attrName];
-      if (!redefinedProperty) {
-        logger.error('[model] ' + type + ' : property <' + attrName + '> ' +
-                     'redefined by <' + p.ns.name + '> does not exist');
-
-        throw new Error('[model] refined property not found');
-      } else {
-        replaceProperty(descriptor, redefinedProperty, p);
-      }
-
-      delete p.redefines;
-    }
-
-    function addProperty(descriptor, p, idx) {
-      addNamedProperty(descriptor, p, true);
-
-      var properties = descriptor.properties;
-
-      if (idx !== undefined) {
-        properties.splice(idx, 0, p);
-      } else {
-        properties.push(p);
-      }
-    }
-
-    function replaceProperty(descriptor, oldProperty, newProperty) {
-      var oldNameNs = oldProperty.ns,
-          props = descriptor.properties,
-          propsByName = descriptor.propertiesByName;
-
-      if (oldProperty.isBody) {
-
-        if (!newProperty.isBody) {
-          throw new Error(
-            '[model] property <' + newProperty.ns.name + '> must be body property ' +
-            'to refine <' + oldProperty.ns.name + '>');
-        }
-
-        // TODO: Check compatibility
-        setBodyProperty(descriptor, newProperty, false);
-      }
-
-      addNamedProperty(descriptor, newProperty, true);
-
-      // replace old property at index with new one
-      var idx = props.indexOf(oldProperty);
-      if (idx === -1) {
-        throw new Error('[model] property <' + oldNameNs.name + '> not found in property list');
-      }
-
-      props[idx] = newProperty;
-
-      // replace propsByName entry with new property
-      propsByName[oldNameNs.name] = newProperty;
-      propsByName[oldNameNs.localName] = newProperty;
-    }
-
-    function addNamedProperty(descriptor, p, validate) {
-      var ns = p.ns,
-          propsByName = descriptor.propertiesByName;
-
-      if (validate) {
-        assertNotDefined(descriptor, p, ns.name);
-        assertNotDefined(descriptor, p, ns.localName);
-      }
-
-      propsByName[ns.name] = p;
-      propsByName[ns.localName] = p;
-    }
-
-    function setBodyProperty(descriptor, p, validate) {
-
-      if (descriptor.bodyProperty) {
-        throw new Error(
-          '[model] body property defined multiple times ' +
-          '(<' + descriptor.bodyProperty.ns.name + '>, <' + p.ns.name + '>)');
-      }
-
-      descriptor.bodyProperty = p;
-    }
-
-    function removeNamedProperty(descriptor, p) {
-      var ns = p.ns,
-          propsByName = descriptor.propertiesByName;
-
-      delete propsByName[ns.name];
-      delete propsByName[ns.localName];
-    }
-
-    function createIdProperty(descriptor) {
-      var nameNs = parseNameNs(options.defaultId, descriptor.ns.prefix);
-
-      var idProperty = {
-        name: nameNs.localName,
-        type: 'String',
-        isAttr: true,
-        ns: nameNs
-      };
-
-      // ensure that id is always the first attribute (if present)
-      addProperty(descriptor, idProperty, 0);
-    }
-
-    function assertNotDefined(descriptor, property, name) {
-      var propertyName = property.name,
-          definedProperty = descriptor.propertiesByName[propertyName];
-
-      if (definedProperty) {
-        console.error(
-          '[model] property <', propertyName, '> already defined. Override of ' +
-          '<', definedProperty.definedBy, '>#<', definedProperty, '> by ' +
-          '<', property.definedBy, '>#<', property, '> not allowed without redefines.');
-
-        throw new Error(
-          '[model] property <' + propertyName + '> already defined. Override of ' +
-          '<' + definedProperty.definedBy.ns.name + '>#<' + definedProperty.ns.name + '> by ' +
-          '<' + property.definedBy.ns.name + '>#<' + property.ns.name + '> not allowed without redefines.');
-      }
-    }
-
-    function needsId(descriptor) {
-      return options.generateIdProperty && !descriptor.propertiesByName[options.defaultId];
-    }
-
-    var descriptor = {
-      name: nameNs.name,
-      ns: nameNs,
-      allTypes: allTypes,
-      properties: [],
-      propertiesByName: {},
-      constraints: []
-    };
-
-    var last = _.last(allTypes);
-
-    $definePackage(descriptor, $pkg(last));
-
-    allTypes.forEach(function(t) {
-      (t.properties || []).forEach(function(p) {
-
-        // clone property to allow extensions
-        p = _.extend({}, p);
-
-        //if (p.ns.prefix === descriptor.ns.prefix) {
-          // remove prefix if namespace == type namespace
-          p.name = p.ns.localName;
-        //}
-
-        Object.defineProperty(p, 'definedBy', {
-          value: t
-        });
-
-        // add redefine support
-        if (p.redefines) {
-          redefineProperty(descriptor, p);
-        } else {
-          if (p.isBody) {
-            setBodyProperty(descriptor, p);
-          }
-          addProperty(descriptor, p);
-        }
-      });
-
-      (t.constraints || []).forEach(function(c) {
-        descriptor.constraints.push(c);
-      });
-    });
-
-    if (needsId(descriptor)) {
-      // create default ns id property unless it exists
-      // confirms with the general schema abilities of xml / json
-      createIdProperty(descriptor);
-    }
-
-    return descriptor;
-  }
-
-  function getPackage(uriOrPrefix) {
-    return packageMap[uriOrPrefix];
-  }
-
-  function getPackages() {
-    return _.clone(packages);
-  }
-
-  /**
-   * Returns the type representing a given descriptor
-   *
-   * @method Model#getType
-   *
-   * @example
-   *
-   * var Foo = moddle.getType('my:Foo');
-   * var foo = new Foo({ 'id' : 'FOO_1' });
-   *
-   * @param  {String|Object} descriptor the type descriptor or name know to the model
-   * @return {Object}         the type representing the descriptor
-   */
-  function getType(descriptor) {
-
-    var name = _.isString(descriptor) ? descriptor : descriptor.ns.name;
-
-    var type = typeCache[name];
-
-    if (!type) {
-      descriptor = getEffectiveDescriptor(name);
-      type = typeCache[descriptor.name] = createType(descriptor);
-    }
-
-    return type;
-  }
-
-  /**
-   * Create an instance of the specified type.
-   *
-   * @method Model#create
-   *
-   * @example
-   *
-   * var foo = moddle.create('my:Foo');
-   * var bar = moddle.create('my:Bar', { id: 'BAR_1' });
-   *
-   * @param  {String|Object} descriptor the type descriptor or name know to the model
-   * @param  {Object} attrs   a number of attributes to initialize the model instance with
-   * @return {Object}         model instance
-   */
-  function create(descriptor, attrs) {
-
-    var Type = getType(descriptor);
-
-    var instance = new Type(attrs);
-
-    return instance;
-  }
-
-  /**
-   * Creates an any-element type to be used within model instances.
-   *
-   * This can be used to create custom elements that lie outside the meta-model.
-   * The created element contains all the meta-data required to serialize it
-   * as part of meta-model elements.
-   *
-   * @method Model#createAny
-   *
-   * @example
-   *
-   * var foo = moddle.createAny('vendor:Foo', 'http://vendor', {
-   *   value: 'bar'
-   * });
-   *
-   * var container = moddle.create('my:Container', 'http://my', {
-   *   any: [ foo ]
-   * });
-   *
-   * // go ahead and serialize the stuff
-   *
-   *
-   * @param  {String} name  the name of the element
-   * @param  {String} nsUri the namespace uri of the element
-   * @param  {Object} [properties] a map of properties to initialize the instance with
-   * @return {Object} the any type instance
-   */
-  function createAny(name, nsUri, properties) {
-
-    var nameNs = parseNameNs(name);
-
-    var element = {
-      $type: name
-    };
-
-    var descriptor = {
-      name: name,
-      isGeneric: true,
-      ns: {
-        prefix: nameNs.prefix,
-        localName: nameNs.localName,
-        uri: nsUri
-      }
-    };
-
-    Object.defineProperty(element, '$descriptor', {
-      enumerable: false,
-      value: descriptor
-    });
-
-    _.forEach(properties, function(a, key) {
-      if (_.isObject(a) && a.value !== undefined) {
-        element[a.name] = a.value;
-      } else {
-        element[key] = a;
-      }
-    });
-
-    return element;
-  }
-
-  init();
-
-  return _.extend(modelInstance, {
-    create: create,
-    createAny: createAny,
-    getDescriptor: $descriptor,
-    getType: getType,
-    getPackage: getPackage,
-    getPackages: getPackages
-  });
+  this.typeCache = {};
 }
 
-module.exports = Model;
-},{"./util":21}],20:[function(_dereq_,module,exports){
-'use strict';
+module.exports = Moddle;
 
-var LEVEL_MAP = {
-  'trace': 0,
-  'debug': 1,
-  'info': 2,
-  'warn': 3,
-  'error': 4,
-  'none': 5
+
+/**
+ * Create an instance of the specified type.
+ *
+ * @method Moddle#create
+ *
+ * @example
+ *
+ * var foo = moddle.create('my:Foo');
+ * var bar = moddle.create('my:Bar', { id: 'BAR_1' });
+ *
+ * @param  {String|Object} descriptor the type descriptor or name know to the model
+ * @param  {Object} attrs   a number of attributes to initialize the model instance with
+ * @return {Object}         model instance
+ */
+Moddle.prototype.create = function(descriptor, attrs) {
+  var Type = this.getType(descriptor);
+
+  if (!Type) {
+    throw new Error('unknown type <' + descriptor + '>');
+  }
+
+  return new Type(attrs);
 };
 
-var DEFAULT_LEVEL = 'warn';
 
-function Logger(defaultLevel, handler) {
+/**
+ * Returns the type representing a given descriptor
+ *
+ * @method Moddle#getType
+ *
+ * @example
+ *
+ * var Foo = moddle.getType('my:Foo');
+ * var foo = new Foo({ 'id' : 'FOO_1' });
+ *
+ * @param  {String|Object} descriptor the type descriptor or name know to the model
+ * @return {Object}         the type representing the descriptor
+ */
+Moddle.prototype.getType = function(descriptor) {
 
-  var level;
+  var cache = this.typeCache;
 
-  function setLevel(l) {
-    level = LEVEL_MAP[l || DEFAULT_LEVEL] || LEVEL_MAP[DEFAULT_LEVEL];
+  var name = _.isString(descriptor) ? descriptor : descriptor.ns.name;
+
+  var type = cache[name];
+
+  if (!type) {
+    descriptor = this.registry.getEffectiveDescriptor(name);
+    type = cache[descriptor.name] = this.factory.createType(descriptor);
   }
 
-  function setHandler(h) {
-    handler = h || console;
-  }
+  return type;
+};
 
-  function log(type, args) {
 
-    var requestedLevel = LEVEL_MAP[type] || LEVEL_MAP.none,
-        logArgs,
-        fn;
+/**
+ * Creates an any-element type to be used within model instances.
+ *
+ * This can be used to create custom elements that lie outside the meta-model.
+ * The created element contains all the meta-data required to serialize it
+ * as part of meta-model elements.
+ *
+ * @method Moddle#createAny
+ *
+ * @example
+ *
+ * var foo = moddle.createAny('vendor:Foo', 'http://vendor', {
+ *   value: 'bar'
+ * });
+ *
+ * var container = moddle.create('my:Container', 'http://my', {
+ *   any: [ foo ]
+ * });
+ *
+ * // go ahead and serialize the stuff
+ *
+ *
+ * @param  {String} name  the name of the element
+ * @param  {String} nsUri the namespace uri of the element
+ * @param  {Object} [properties] a map of properties to initialize the instance with
+ * @return {Object} the any type instance
+ */
+Moddle.prototype.createAny = function(name, nsUri, properties) {
 
-    if (level <= requestedLevel) {
-      if (handler) {
-        logArgs = Array.prototype.slice.call(args);
+  var nameNs = parseNameNs(name);
 
-        fn = handler[type] || handler.log;
-        if (fn) {
-          fn.apply(handler, logArgs);
-        }
-      }
-    }
-  }
+  var element = {
+    $type: name
+  };
 
-  setLevel(defaultLevel);
-  setHandler(handler || console);
-
-  return {
-    info: function() {
-      log('info', arguments);
-    },
-
-    warn: function() {
-      log('warn', arguments);
-    },
-
-    error: function() {
-      log('error', arguments);
-    },
-
-    debug: function() {
-      log('debug', arguments);
-    },
-
-    setLevel: setLevel,
-
-    getLevels: function() {
-      return LEVEL_MAP;
-    },
-
-    logging: function(temporaryLevel, fn) {
-      var old = level;
-
-      setLevel(temporaryLevel);
-
-      fn();
-
-      level = old;
+  var descriptor = {
+    name: name,
+    isGeneric: true,
+    ns: {
+      prefix: nameNs.prefix,
+      localName: nameNs.localName,
+      uri: nsUri
     }
   };
-}
 
-module.exports = Logger;
-},{}],21:[function(_dereq_,module,exports){
+  this.properties.defineDescriptor(element, descriptor);
+  this.properties.defineModel(element, this);
+  this.properties.define(element, '$parent', { enumerable: false, writable: true });
+
+  _.forEach(properties, function(a, key) {
+    if (_.isObject(a) && a.value !== undefined) {
+      element[a.name] = a.value;
+    } else {
+      element[key] = a;
+    }
+  });
+
+  return element;
+};
+
+/**
+ * Returns a registered package by uri or prefix
+ *
+ * @return {Object} the package
+ */
+Moddle.prototype.getPackage = function(uriOrPrefix) {
+  return this.registry.getPackage(uriOrPrefix);
+};
+
+/**
+ * Returns a snapshot of all known packages
+ *
+ * @return {Object} the package
+ */
+Moddle.prototype.getPackages = function() {
+  return this.registry.getPackages();
+};
+
+/**
+ * Returns the descriptor for an element
+ */
+Moddle.prototype.getElementDescriptor = function(element) {
+  return element.$descriptor;
+};
+
+/**
+ * Returns true if the given descriptor or instance
+ * represents the given type.
+ *
+ * May be applied to this, if element is omitted.
+ */
+Moddle.prototype.hasType = function(element, type) {
+  if (type === undefined) {
+    type = element;
+    element = this;
+  }
+
+  var descriptor = element.$model.getElementDescriptor(element);
+
+  return !!_.find(descriptor.allTypes, function(t) {
+    return t.name === type;
+  });
+};
+
+
+/**
+ * Returns the descriptor of an elements named property
+ */
+Moddle.prototype.getPropertyDescriptor = function(element, property) {
+  return this.getElementDescriptor(element).propertiesByName[property];
+};
+
+},{"./factory":23,"./ns":25,"./properties":26,"./registry":27,"./types":28}],25:[function(_dereq_,module,exports){
 'use strict';
 
 /**
  * Parses a namespaced attribute name of the form (ns:)localName to an object,
  * given a default prefix to assume in case no explicit namespace is given.
+ *
+ * @param {String} name
+ * @param {String} [defaultPrefix] the default prefix to take, if none is present.
+ *
+ * @return {Object} the parsed name
  */
-function parseNameNs(name, defaultPrefix) {
+module.exports.parseName = function(name, defaultPrefix) {
   var parts = name.split(/:/),
       localName, prefix;
 
@@ -4730,7 +4635,7 @@ function parseNameNs(name, defaultPrefix) {
     localName = parts[1];
     prefix = parts[0];
   } else {
-    throw new Error('expected <prefix:localName> or <localName>');
+    throw new Error('expected <prefix:localName> or <localName>, got ' + name);
   }
 
   name = (prefix ? prefix + ':' : '') + localName;
@@ -4740,30 +4645,276 @@ function parseNameNs(name, defaultPrefix) {
     prefix: prefix,
     localName: localName
   };
-}
+};
+},{}],26:[function(_dereq_,module,exports){
+'use strict';
+
 
 /**
- * Built in moddle types
+ * A utility that gets and sets properties of model elements.
+ *
+ * @param {Model} model
  */
-var BUILD_IN_TYPES = {
-  'String': true,
-  'Boolean': true,
-  'Integer': true,
-  'Real': true,
-  'Element': true,
+function Properties(model) {
+  this.model = model;
+}
+
+module.exports = Properties;
+
+
+/**
+ * Sets a named property on the target element
+ *
+ * @param {Object} target
+ * @param {String} name
+ * @param {Object} value
+ */
+Properties.prototype.set = function(target, name, value) {
+
+  var property = this.model.getPropertyDescriptor(target, name);
+
+  if (!property) {
+    target.$attrs[name] = value;
+  } else {
+    Object.defineProperty(target, property.name, {
+      enumerable: !property.isReference,
+      writable: true,
+      value: value
+    });
+  }
+};
+
+/**
+ * Returns the named property of the given element
+ *
+ * @param  {Object} target
+ * @param  {String} name
+ *
+ * @return {Object}
+ */
+Properties.prototype.get = function(target, name) {
+
+  var property = this.model.getPropertyDescriptor(target, name),
+      propertyName = property.name;
+
+  if (!property) {
+    return target[name];
+  }
+
+  // check if access to collection property and lazily initialize it
+  if (!target[propertyName] && property.isMany) {
+    Object.defineProperty(target, propertyName, {
+      enumerable: !property.isReference,
+      writable: true,
+      value: []
+    });
+  }
+
+  return target[propertyName];
+};
+
+
+/**
+ * Define a property on the target element
+ *
+ * @param  {Object} target
+ * @param  {String} name
+ * @param  {Object} options
+ */
+Properties.prototype.define = function(target, name, options) {
+  Object.defineProperty(target, name, options);
+};
+
+
+/**
+ * Define the descriptor for an element
+ */
+Properties.prototype.defineDescriptor = function(target, descriptor) {
+  this.define(target, '$descriptor', { value: descriptor });
+};
+
+/**
+ * Define the model for an element
+ */
+Properties.prototype.defineModel = function(target, model) {
+  this.define(target, '$model', { value: model });
+};
+},{}],27:[function(_dereq_,module,exports){
+'use strict';
+
+var _ = (window._);
+
+var Types = _dereq_('./types'),
+    DescriptorBuilder = _dereq_('./descriptor-builder');
+
+var parseNameNs = _dereq_('./ns').parseName;
+
+
+function Registry(packages, properties, options) {
+  this.options = _.extend({ generateId: 'id' }, options || {});
+
+  this.packageMap = {};
+  this.typeMap = {};
+
+  this.packages = [];
+
+  this.properties = properties;
+
+  _.forEach(packages, this.registerPackage, this);
+}
+
+module.exports = Registry;
+
+
+Registry.prototype.getPackage = function(uriOrPrefix) {
+  return this.packageMap[uriOrPrefix];
+};
+
+Registry.prototype.getPackages = function() {
+  return this.packages;
+};
+
+
+Registry.prototype.registerPackage = function(pkg) {
+
+  // register types
+  _.forEach(pkg.types, function(descriptor) {
+    this.registerType(descriptor, pkg);
+  }, this);
+
+  this.packageMap[pkg.uri] = this.packageMap[pkg.prefix] = pkg;
+  this.packages.push(pkg);
+};
+
+
+/**
+ * Register a type from a specific package with us
+ */
+Registry.prototype.registerType = function(type, pkg) {
+
+  var ns = parseNameNs(type.name, pkg.prefix),
+      name = ns.name,
+      propertiesByName = {};
+
+  // parse properties
+  _.forEach(type.properties, function(p) {
+
+    // namespace property names
+    var propertyNs = parseNameNs(p.name, ns.prefix),
+        propertyName = propertyNs.name;
+
+    // namespace property types
+    if (!Types.isBuiltIn(p.type)) {
+      p.type = parseNameNs(p.type, propertyNs.prefix).name;
+    }
+
+    _.extend(p, {
+      ns: propertyNs,
+      name: propertyName
+    });
+
+    propertiesByName[propertyName] = p;
+  });
+
+  // update ns + name
+  _.extend(type, {
+    ns: ns,
+    name: name,
+    propertiesByName: propertiesByName
+  });
+
+  // link to package
+  this.definePackage(type, pkg);
+
+  // register
+  this.typeMap[name] = type;
+};
+
+
+/**
+ * Traverse the type hierarchy from bottom to top.
+ */
+Registry.prototype.mapTypes = function(nsName, iterator) {
+
+  var type = this.typeMap[nsName.name];
+
+  if (!type) {
+    throw new Error('unknown type <' + nsName.name + '>');
+  }
+
+  _.forEach(type.superClass, function(cls) {
+    var parentNs = parseNameNs(cls, nsName.prefix);
+    this.mapTypes(parentNs, iterator);
+  }, this);
+
+  iterator(type);
+};
+
+
+/**
+ * Returns the effective descriptor for a type.
+ *
+ * @param  {String} type the namespaced name (ns:localName) of the type
+ *
+ * @return {Descriptor} the resulting effective descriptor
+ */
+Registry.prototype.getEffectiveDescriptor = function(name) {
+
+  var options = this.options,
+      nsName = parseNameNs(name);
+
+  var builder = new DescriptorBuilder(nsName);
+
+  this.mapTypes(nsName, function(type) {
+    builder.addTrait(type);
+  });
+
+  // check we have an id assigned
+  var id = this.options.generateId;
+  if (id && !builder.hasProperty(id)) {
+    builder.addIdProperty(id);
+  }
+
+  var descriptor = builder.build();
+
+  // define package link
+  this.definePackage(descriptor, descriptor.allTypes[descriptor.allTypes.length - 1].$pkg);
+
+  return descriptor;
+};
+
+
+Registry.prototype.definePackage = function(target, pkg) {
+  this.properties.define(target, '$pkg', { value: pkg });
+};
+},{"./descriptor-builder":22,"./ns":25,"./types":28}],28:[function(_dereq_,module,exports){
+'use strict';
+
+/**
+ * Built-in moddle types
+ */
+var BUILTINS = {
+  String: true,
+  Boolean: true,
+  Integer: true,
+  Real: true,
+  Element: true,
 };
 
 /**
  * Converters for built in types from string representations
  */
 var TYPE_CONVERTERS = {
-  'String': function(s) { return s; },
-  'Boolean': function(s) { return s === 'true'; },
-  'Integer': function(s) { return parseInt(s, 10); },
-  'Real': function(s) { return parseFloat(s, 10); }
+  String: function(s) { return s; },
+  Boolean: function(s) { return s === 'true'; },
+  Integer: function(s) { return parseInt(s, 10); },
+  Real: function(s) { return parseFloat(s, 10); }
 };
 
-function coerceType(type, value) {
+/**
+ * Convert a type to its real representation
+ */
+module.exports.coerceType = function(type, value) {
 
   var converter = TYPE_CONVERTERS[type];
 
@@ -4772,25 +4923,22 @@ function coerceType(type, value) {
   } else {
     return value;
   }
-}
+};
 
-function isBuiltInType(type) {
-  return !!BUILD_IN_TYPES[type];
-}
+/**
+ * Return whether the given type is built-in
+ */
+module.exports.isBuiltIn = function(type) {
+  return !!BUILTINS[type];
+};
 
-function isSimpleType(type) {
+/**
+ * Return whether the given type is simple
+ */
+module.exports.isSimple = function(type) {
   return !!TYPE_CONVERTERS[type];
-}
-
-module.exports.coerceType = coerceType;
-module.exports.isBuiltInType = isBuiltInType;
-module.exports.isSimpleType = isSimpleType;
-module.exports.parseNameNs = parseNameNs;
-
-var Logger = _dereq_('./Logger');
-
-module.exports.logger = new Logger();
-},{"./Logger":20}],22:[function(_dereq_,module,exports){
+};
+},{}],29:[function(_dereq_,module,exports){
 /**
  * Tiny stack for browser or server
  *
@@ -4907,15 +5055,25 @@ else {
 }
 } )( this );
 
-},{}],23:[function(_dereq_,module,exports){
-module.exports=_dereq_(18)
-},{"./lib/Model":24,"./lib/util":26}],24:[function(_dereq_,module,exports){
-module.exports=_dereq_(19)
-},{"./util":26}],25:[function(_dereq_,module,exports){
+},{}],30:[function(_dereq_,module,exports){
 module.exports=_dereq_(20)
-},{}],26:[function(_dereq_,module,exports){
+},{"./lib/moddle":34,"./lib/ns":35,"./lib/types":38}],31:[function(_dereq_,module,exports){
 module.exports=_dereq_(21)
-},{"./Logger":25}],27:[function(_dereq_,module,exports){
+},{}],32:[function(_dereq_,module,exports){
+module.exports=_dereq_(22)
+},{"./ns":35}],33:[function(_dereq_,module,exports){
+module.exports=_dereq_(23)
+},{"./base":31}],34:[function(_dereq_,module,exports){
+module.exports=_dereq_(24)
+},{"./factory":33,"./ns":35,"./properties":36,"./registry":37,"./types":38}],35:[function(_dereq_,module,exports){
+module.exports=_dereq_(25)
+},{}],36:[function(_dereq_,module,exports){
+module.exports=_dereq_(26)
+},{}],37:[function(_dereq_,module,exports){
+module.exports=_dereq_(27)
+},{"./descriptor-builder":32,"./ns":35,"./types":38}],38:[function(_dereq_,module,exports){
+module.exports=_dereq_(28)
+},{}],39:[function(_dereq_,module,exports){
 module.exports={
   "name": "BPMN20",
   "uri": "http://www.omg.org/spec/BPMN/20100524/MODEL",
@@ -4940,7 +5098,8 @@ module.exports={
         },
         {
           "name": "implementationRef",
-          "type": "Element"
+          "type": "String",
+          "isAttr": true
         }
       ]
     },
@@ -4978,7 +5137,8 @@ module.exports={
         },
         {
           "name": "implementationRef",
-          "type": "Element"
+          "type": "String",
+          "isAttr": true
         }
       ]
     },
@@ -6563,7 +6723,8 @@ module.exports={
         },
         {
           "name": "structureRef",
-          "type": "Element"
+          "type": "String",
+          "isAttr": true
         },
         {
           "name": "isCollection",
@@ -7510,11 +7671,10 @@ module.exports={
       ],
       "properties": [
         {
-          "name": "calledElementRef",
-          "type": "CallableElement",
+          "name": "calledElement",
+          "type": "String",
           "association": "A_calledElementRef_callActivity",
-          "isAttr": true,
-          "isReference": true
+          "isAttr": true
         }
       ]
     },
@@ -7991,7 +8151,7 @@ module.exports={
     "alias": "lowerCase"
   }
 }
-},{}],28:[function(_dereq_,module,exports){
+},{}],40:[function(_dereq_,module,exports){
 module.exports={
   "name": "BPMNDI",
   "uri": "http://www.omg.org/spec/BPMN/20100524/DI",
@@ -8195,7 +8355,7 @@ module.exports={
   "associations": [],
   "prefix": "bpmndi"
 }
-},{}],29:[function(_dereq_,module,exports){
+},{}],41:[function(_dereq_,module,exports){
 module.exports={
   "name": "DC",
   "uri": "http://www.omg.org/spec/DD/20100524/DC",
@@ -8295,7 +8455,7 @@ module.exports={
   "prefix": "dc",
   "associations": []
 }
-},{}],30:[function(_dereq_,module,exports){
+},{}],42:[function(_dereq_,module,exports){
 module.exports={
   "name": "DI",
   "uri": "http://www.omg.org/spec/DD/20100524/DI",
@@ -8507,9 +8667,9 @@ module.exports={
   "associations": [],
   "prefix": "di"
 }
-},{}],31:[function(_dereq_,module,exports){
+},{}],43:[function(_dereq_,module,exports){
 module.exports = _dereq_('./lib/Diagram');
-},{"./lib/Diagram":32}],32:[function(_dereq_,module,exports){
+},{"./lib/Diagram":44}],44:[function(_dereq_,module,exports){
 'use strict';
 
 var di = _dereq_('didi');
@@ -8684,7 +8844,6 @@ function Diagram(options, injector) {
    * });
    *
    * @type {Object}
-   * @property {snapsvg.Paper} paper the initialized drawing paper
    */
   this.get('eventBus').fire('diagram.init');
 }
@@ -8700,26 +8859,31 @@ module.exports = Diagram;
 Diagram.prototype.destroy = function() {
   this.get('eventBus').fire('diagram.destroy');
 };
-},{"./core":40,"didi":57}],33:[function(_dereq_,module,exports){
+},{"./core":49,"didi":67}],45:[function(_dereq_,module,exports){
 'use strict';
 
 
 var _ = (window._);
 
-var AddShapeHandler = _dereq_('./cmd/AddShapeHandler'),
-    AddConnectionHandler = _dereq_('./cmd/AddConnectionHandler');
+var Model = _dereq_('../model');
+
+var remove = _dereq_('../util/Collections').remove;
 
 
-/**
- * @type djs.ShapeDescriptor
- */
+function round(number, resolution) {
+  return Math.round(number * resolution) / resolution;
+}
+
+function ensurePx(number) {
+  return _.isNumber(number) ? number + 'px' : number;
+}
 
 /**
  * Creates a HTML container element for a SVG element with
  * the given configuration
  *
  * @param  {Object} options
- * @return {DOMElement} the container element
+ * @return {HTMLElement} the container element
  */
 function createContainer(options) {
 
@@ -8733,9 +8897,11 @@ function createContainer(options) {
   var parent = document.createElement('div');
   parent.setAttribute('class', 'djs-container');
 
-  parent.style.position = 'relative';
-  parent.style.width = _.isNumber(options.width) ? options.width + 'px' : options.width;
-  parent.style.height = _.isNumber(options.height) ? options.height + 'px' : options.height;
+  _.extend(parent.style, {
+    position: 'relative',
+    width: ensurePx(options.width),
+    height: ensurePx(options.height)
+  });
 
   container.appendChild(parent);
 
@@ -8749,15 +8915,18 @@ function createContainer(options) {
  * @emits Canvas#canvas.init
  *
  * @param {Object} config
- * @param {EventBus} events
- * @param {CommandStack} commandStack
+ * @param {EventBus} eventBus
  * @param {GraphicsFactory} graphicsFactory
  * @param {ElementRegistry} elementRegistry
  */
-function Canvas(config, events, commandStack, graphicsFactory, elementRegistry) {
+function Canvas(config, eventBus, graphicsFactory, elementRegistry, snap) {
 
   var options = _.extend(config.canvas || {});
 
+  this._snap = snap;
+  this._eventBus = eventBus;
+  this._elementRegistry = elementRegistry;
+  this._graphicsFactory = graphicsFactory;
 
   // Creates a <svg> element that is wrapped into a <div>.
   // This way we are always able to correctly figure out the size of the svg element
@@ -8771,96 +8940,17 @@ function Canvas(config, events, commandStack, graphicsFactory, elementRegistry) 
   //   </svg>
   // </div>
 
-  var container = createContainer(options);
-  var paper = createPaper(container);
+  var container = this._container = createContainer(options);
+
+  // svg root
+  var paper = this._paper = createPaper(container);
+
+  // drawing root
+  var root = this._root = paper.group().attr({ 'class' : 'viewport' });
 
 
   function createPaper(container) {
     return graphicsFactory.createPaper({ container: container, width: '100%', height: '100%' });
-  }
-
-  /**
-   * Validate the id of an element, ensuring it is present and not yet assigned
-   */
-  function validateId(element) {
-
-    if (!element.id) {
-      throw new Error('element must have an id');
-    }
-
-    if (elementRegistry.getById(element.id)) {
-      throw new Error('element with id ' + element.id + ' already exists');
-    }
-  }
-
-
-  // register shape add handlers
-  commandStack.registerHandler('shape.add', AddShapeHandler);
-
-  // register connection add handlers
-  commandStack.registerHandler('connection.add', AddConnectionHandler);
-
-
-
-  /**
-   * Adds a shape to the canvas
-   *
-   * @method Canvas#addShape
-   *
-   * @param {djs.ShapeDescriptor} shape a descriptor for the shape
-   *
-   * @return {Canvas} the canvas api
-   */
-  function addShape(shape) {
-
-    validateId(shape);
-
-    /**
-     * An event indicating that a new shape has been added to the canvas.
-     *
-     * @memberOf Canvas
-     *
-     * @event shape.added
-     * @type {Object}
-     * @property {djs.ElementDescriptor} element the shape descriptor
-     * @property {Object} gfx the graphical representation of the shape
-     */
-
-    commandStack.execute('shape.add', { shape: shape });
-
-    /* jshint -W040 */
-    return this;
-  }
-
-
-  /**
-   * Adds a connection to the canvas
-   *
-   * @method Canvas#addConnection
-   *
-   * @param {djs.ElementDescriptor} connection a descriptor for the connection
-   *
-   * @return {Canvas} the canvas api
-   */
-  function addConnection(connection) {
-
-    validateId(connection);
-
-    /**
-     * An event indicating that a new connection has been added to the canvas.
-     *
-     * @memberOf Canvas
-     *
-     * @event connection.added
-     * @type {Object}
-     * @property {djs.ElementDescriptor} element the connection descriptor
-     * @property {Object} gfx the graphical representation of the connection
-     */
-
-    commandStack.execute('connection.add', { connection: connection });
-
-    /* jshint -W040 */
-    return this;
   }
 
   /**
@@ -8908,196 +8998,18 @@ function Canvas(config, events, commandStack, graphicsFactory, elementRegistry) 
   }
 
   /**
-   * Returns the underlaying graphics context.
+   * Returns the root rendering context on which
+   * all elements have to be drawn.
    *
-   * @method Canvas#getPaper
+   * @method Canvas#getRoot
    *
-   * @returns {snapsvg.Paper} the global paper object
+   * @returns {snapsvg.Group}
    */
-  function getPaper() {
-    return paper;
+  function getRoot() {
+    return root;
   }
 
-  /**
-   * Returns the size of the canvas
-   *
-   * @return {Object} with x/y coordinates
-   */
-  function getSize() {
-
-    return {
-      width: container.clientWidth,
-      height: container.clientHeight
-    };
-  }
-
-  function parseViewBox(str) {
-    if (!str) {
-      return;
-    }
-
-    var value = str.split(/\s/);
-
-    return {
-      x: parseInt(value[0], 10),
-      y: parseInt(value[1], 10),
-      width: parseInt(value[2], 10),
-      height: parseInt(value[3], 10),
-    };
-  }
-
-  /**
-   * Gets or sets the view box of the canvas, i.e. the area that is currently displayed
-   *
-   * @method Canvas#viewbox
-   *
-   * @param  {Object} [box] the new view box to set
-   * @return {Object} the current view box
-   */
-  function viewbox(box) {
-
-    var svg = paper.node,
-        bbox = svg.getBBox();
-
-    function round(i, accuracy) {
-      if (!i) {
-        return i;
-      }
-
-      accuracy = accuracy || 100;
-      return Math.round(i * accuracy) / accuracy;
-    }
-
-    var inner = {
-      width: round(bbox.width + bbox.x),
-      height: round(bbox.height + bbox.y)
-    };
-
-    // returns the acutal embedded size of the SVG element
-    // would be awesome to be able to use svg.client(Width|Height) or
-    // svg.getBoundingClientRect(). Not supported in IE/Firefox though
-    var outer = getSize(svg);
-
-    if (box === undefined) {
-      box = parseViewBox(svg.getAttribute('viewBox'));
-
-      if (!box) {
-        box = { x: 0, y: 0, width: outer.width, height: outer.height };
-      }
-
-      // calculate current scale based on svg bbox (inner) and viewbox (outer)
-      box.scale = round(Math.min(outer.width / box.width, outer.height / box.height));
-
-      box.inner = inner;
-      box.outer = outer;
-    } else {
-      svg.setAttribute('viewBox', [ box.x, box.y, box.width, box.height ].join(' '));
-      events.fire('canvas.viewbox.changed', { viewbox: viewbox() });
-    }
-
-    return box;
-  }
-
-  /**
-   * Gets or sets the scroll of the canvas.
-   *
-   * @param {Object} [delta] the new scroll to apply.
-   *
-   * @param {Number} [delta.dx]
-   * @param {Number} [delta.dy]
-   *
-   * @return {Point} the new scroll
-   */
-  function scroll(delta) {
-
-    var vbox = viewbox();
-
-    if (delta) {
-      if (delta.dx) {
-        vbox.x += delta.dx;
-      }
-
-      if (delta.dy) {
-        vbox.y += delta.dy;
-      }
-
-      viewbox(vbox);
-    }
-
-    return { x: vbox.x, y: vbox.y };
-  }
-
-  /**
-   * Gets or sets the current zoom of the canvas, optionally zooming to the specified position.
-   *
-   * @method Canvas#zoom
-   *
-   * @param {String|Number} [newScale] the new zoom level, either a number, i.e. 0.9,
-   *                                   or `fit-viewport` to adjust the size to fit the current viewport
-   * @param {String|Point} [center] the reference point { x: .., y: ..} to zoom to, 'auto' to zoom into mid or null
-   *
-   * @return {Number} the current scale
-   */
-  function zoom(newScale, center) {
-
-    var vbox = viewbox(),
-        inner = vbox.inner,
-        outer = vbox.outer;
-
-    if (newScale === undefined) {
-      return vbox.scale;
-    }
-
-    if (newScale === 'fit-viewport') {
-      newScale = Math.min(outer.width / inner.width, outer.height / inner.height, 1.0);
-
-      // reset viewbox so that everything is visible
-      _.extend(vbox, { x: 0, y: 0 });
-    }
-
-    if (center === 'auto') {
-      center = {
-        x: outer.width / 2 - 1,
-        y: outer.height / 2 - 1
-      };
-    }
-
-    if (center) {
-
-      // zoom to center (i.e. simulate a maps like behavior)
-
-      // center on old zoom
-      var pox = center.x / vbox.scale + vbox.x;
-      var poy = center.y / vbox.scale + vbox.y;
-
-      // center on new zoom
-      var pnx = center.x / newScale;
-      var pny = center.y / newScale;
-
-      // delta = new offset
-      var px = pox - pnx;
-      var py = poy - pny;
-
-      var position = {
-        x: px,
-        y: py
-      };
-
-      _.extend(vbox, position);
-    }
-
-    _.extend(vbox, {
-      width: outer.width / newScale,
-      height: outer.height / newScale
-    });
-
-    viewbox(vbox);
-
-    // return current scale
-    return newScale;
-  }
-
-  events.on('diagram.init', function(event) {
+  eventBus.on('diagram.init', function(event) {
 
     /**
      * An event indicating that the canvas is ready to be drawn on.
@@ -9109,18 +9021,19 @@ function Canvas(config, events, commandStack, graphicsFactory, elementRegistry) 
      * @type {Object}
      * @property {snapsvg.Paper} paper the initialized drawing paper
      */
-    events.fire('canvas.init', { paper: paper });
+    eventBus.fire('canvas.init', { root: root, paper: paper });
   });
 
-  events.on('diagram.destroy', function() {
+  eventBus.on('diagram.destroy', function() {
 
     if (container) {
       var parent = container.parentNode;
       parent.removeChild(container);
     }
 
-    container = null;
-    paper = null;
+    container = this._container = null;
+    paper = this._paper = null;
+    root = this._root = null;
   });
 
 
@@ -9128,39 +9041,438 @@ function Canvas(config, events, commandStack, graphicsFactory, elementRegistry) 
 
   var self = this;
 
-  events.on('element.changed', function(event) {
+  eventBus.on('element.changed', function(event) {
 
     if (event.element.waypoints) {
-      events.fire('connection.changed', event);
+      eventBus.fire('connection.changed', event);
     } else {
-      events.fire('shape.changed', event);
+      eventBus.fire('shape.changed', event);
     }
   });
 
-  events.on('shape.changed', function(event) {
+  eventBus.on('shape.changed', function(event) {
     var element = event.element;
     graphicsFactory.updateShape(element, event.gfx || self.getGraphics(element));
   });
 
-  events.on('connection.changed', function(event) {
+  eventBus.on('connection.changed', function(event) {
     var element = event.element;
     graphicsFactory.updateConnection(element, event.gfx || self.getGraphics(element));
   });
 
+  this.getRoot  = getRoot;
 
-  this.zoom = zoom;
-  this.scroll = scroll;
-
-  this.viewbox = viewbox;
-  this.addShape = addShape;
-
-  this.addConnection = addConnection;
-  this.getPaper = getPaper;
+  this.getContainer = function() {
+    return this._container;
+  };
 
   this.getGraphics = getGraphics;
 
   this.sendToFront = sendToFront;
 }
+
+
+/**
+ * Create a model element with the given type and
+ * a number of pre-set attributes.
+ *
+ * @param  {String} type
+ * @param  {Object} attrs
+ * @return {djs.model.Base} the newly created model instance
+ */
+Canvas.prototype.create = function(type, attrs) {
+  return Model.create(type, attrs);
+};
+
+
+/**
+ * Ensure that an element has a valid, unique id
+ *
+ * @param {djs.model.Base} element
+ */
+Canvas.prototype._ensureValidId = function(element) {
+  if (!element.id) {
+    throw new Error('element must have an id');
+  }
+
+  if (this._elementRegistry.getById(element.id)) {
+    throw new Error('element with id ' + element.id + ' already exists');
+  }
+};
+
+
+/**
+ * Adds a shape to the canvas
+ *
+ * @method Canvas#addShape
+ *
+ * @param {Object|djs.model.Shape} shape to add to the diagram
+ *
+ * @return {djs.model.Shape} the added shape
+ */
+Canvas.prototype.addShape = function(shape, parent) {
+
+  this._ensureValidId(shape);
+
+  if (parent) {
+    shape.parent = parent;
+    parent.children.push(shape);
+  }
+
+  // create shape gfx
+  var gfx = this._graphicsFactory.createShape(this._root, shape);
+
+  // update its visual
+  this._graphicsFactory.updateShape(shape, gfx);
+
+  /**
+   * An event indicating that a new shape has been added to the canvas.
+   *
+   * @memberOf Canvas
+   *
+   * @event shape.added
+   * @type {Object}
+   * @property {djs.Shape} element the shape descriptor
+   * @property {Object} gfx the graphical representation of the shape
+   */
+  this._eventBus.fire('shape.added', { element: shape, gfx: gfx });
+
+  return shape;
+};
+
+/**
+ * Adds a connection to the canvas
+ *
+ * @method Canvas#addConnection
+ *
+ * @param {djs.model.Connection} connection to add to the diagram
+ *
+ * @return {djs.model.Connection} the added connection
+ */
+Canvas.prototype.addConnection = function(connection, parent) {
+
+  this._ensureValidId(connection);
+
+  if (parent) {
+    connection.parent = parent;
+    parent.children.push(connection);
+  }
+
+  // create connection gfx
+  var gfx = this._graphicsFactory.createConnection(this._root, connection);
+
+  // update its visual
+  this._graphicsFactory.updateConnection(connection, gfx);
+
+  /**
+   * An event indicating that a new connection has been added to the canvas.
+   *
+   * @memberOf Canvas
+   *
+   * @event connection.added
+   * @type {Object}
+   * @property {djs.ElementDescriptor} element the connection descriptor
+   * @property {Object} gfx the graphical representation of the connection
+   */
+  this._eventBus.fire('connection.added', { element: connection, gfx: gfx });
+
+  return connection;
+};
+
+
+/**
+ * Internal remove element
+ */
+Canvas.prototype._removeElement = function(element, type) {
+
+  if (_.isString(element)) {
+    element = this._elementRegistry.getById(element);
+  }
+
+  var gfx = this._elementRegistry.getGraphicsByElement(element);
+
+  this._eventBus.fire(type + '.remove', { element: element, gfx: gfx });
+
+  if (gfx) {
+    gfx.remove();
+  }
+
+  remove(element.parent && element.parent.children, element);
+  element.parent = null;
+
+  this._eventBus.fire(type + '.removed', { element: element, gfx: gfx });
+
+  return element;
+};
+
+/**
+ * Removes a shape from the canvas
+ *
+ * @method Canvas#removeShape
+ *
+ * @param {String|djs.model.Shape} shape or shape id to be removed
+ *
+ * @return {djs.model.Shape} the removed shape
+ */
+Canvas.prototype.removeShape = function(shape) {
+
+  /**
+   * An event indicating that a shape is about to be removed from the canvas.
+   *
+   * @memberOf Canvas
+   *
+   * @event shape.remove
+   * @type {Object}
+   * @property {djs.model.Shape} element the shape descriptor
+   * @property {Object} gfx the graphical representation of the shape
+   */
+
+  /**
+   * An event indicating that a shape has been removed from the canvas.
+   *
+   * @memberOf Canvas
+   *
+   * @event shape.removed
+   * @type {Object}
+   * @property {djs.model.Shape} element the shape descriptor
+   * @property {Object} gfx the graphical representation of the shape
+   */
+  return this._removeElement(shape, 'shape');
+};
+
+/**
+ * Removes a connection from the canvas
+ *
+ * @method Canvas#removeConnection
+ *
+ * @param {String|djs.model.Connection} connection or connection id to be removed
+ *
+ * @return {djs.model.Connection} the removed connection
+ */
+Canvas.prototype.removeConnection = function(connection) {
+
+  /**
+   * An event indicating that a connection is about to be removed from the canvas.
+   *
+   * @memberOf Canvas
+   *
+   * @event connection.remove
+   * @type {Object}
+   * @property {djs.model.Connection} element the connection descriptor
+   * @property {Object} gfx the graphical representation of the connection
+   */
+
+  /**
+   * An event indicating that a connection has been removed from the canvas.
+   *
+   * @memberOf Canvas
+   *
+   * @event connection.removed
+   * @type {Object}
+   * @property {djs.model.Connection} element the connection descriptor
+   * @property {Object} gfx the graphical representation of the connection
+   */
+  return this._removeElement(connection, 'connection');
+};
+
+
+Canvas.prototype._fireViewboxChange = function(viewbox) {
+  this._eventBus.fire('canvas.viewbox.changed', { viewbox: viewbox || this.viewbox() });
+};
+
+/**
+ * Gets or sets the view box of the canvas, i.e. the area that is currently displayed
+ *
+ * @method Canvas#viewbox
+ *
+ * @param  {Object} [box] the new view box to set
+ * @param  {Number} box.x the top left X coordinate of the canvas visible in view box
+ * @param  {Number} box.y the top left Y coordinate of the canvas visible in view box
+ * @param  {Number} box.width the visible width
+ * @param  {Number} box.height
+ *
+ * @example
+ *
+ * canvas.viewbox({ x: 100, y: 100, width: 500, height: 500 })
+ *
+ * // sets the visible area of the diagram to (100|100) -> (600|100)
+ * // and and scales it according to the diagram width
+ *
+ * @return {Object} the current view box
+ */
+Canvas.prototype.viewbox = function(box) {
+
+  var root = this._root,
+      eventBus = this._eventBus;
+
+  var innerBox,
+      outerBox = this.getSize(),
+      matrix,
+      scale,
+      x, y,
+      width, height;
+
+  if (!box) {
+    innerBox = root.getBBox(true);
+
+    matrix = root.transform().localMatrix;
+    scale = round(matrix.a, 1000);
+
+    x = round(-matrix.e || 0, 1000);
+    y = round(-matrix.f || 0, 1000);
+
+    return {
+      x: x ? x / scale : 0,
+      y: y ? y / scale : 0,
+      width: outerBox.width / scale,
+      height: outerBox.height / scale,
+      scale: scale,
+      inner: {
+        width: innerBox.width,
+        height: innerBox.height
+      },
+      outer: outerBox
+    };
+  } else {
+    scale = Math.max(outerBox.width / box.width, outerBox.height / box.height);
+
+    matrix = new this._snap.Matrix().scale(scale).translate(-box.x, -box.y);
+    root.transform(matrix);
+
+    this._fireViewboxChange();
+  }
+
+  return box;
+};
+
+
+/**
+ * Gets or sets the scroll of the canvas.
+ *
+ * @param {Object} [delta] the new scroll to apply.
+ *
+ * @param {Number} [delta.dx]
+ * @param {Number} [delta.dy]
+ */
+Canvas.prototype.scroll = function(delta) {
+
+  var node = this._root.node;
+  var matrix = node.getCTM();
+
+  if (delta) {
+    delta = _.extend({ dx: 0, dy: 0 }, delta || {});
+
+    matrix = this._paper.node.createSVGMatrix().translate(delta.dx, delta.dy).multiply(matrix);
+
+    setCTM(node, matrix);
+
+    this._fireViewboxChange();
+  }
+
+  return { x: matrix.e, y: matrix.f };
+};
+
+
+/**
+ * Gets or sets the current zoom of the canvas, optionally zooming to the specified position.
+ *
+ * @method Canvas#zoom
+ *
+ * @param {String|Number} [newScale] the new zoom level, either a number, i.e. 0.9,
+ *                                   or `fit-viewport` to adjust the size to fit the current viewport
+ * @param {String|Point} [center] the reference point { x: .., y: ..} to zoom to, 'auto' to zoom into mid or null
+ *
+ * @return {Number} the current scale
+ */
+Canvas.prototype.zoom = function(newScale, center) {
+
+  var snap = this._snap;
+
+  var vbox = this.viewbox();
+
+  if (newScale === undefined) {
+    return vbox.scale;
+  }
+
+  var outer = vbox.outer;
+
+  if (newScale === 'fit-viewport') {
+    newScale = Math.min(1, outer.width / vbox.inner.width);
+  }
+
+  if (center === 'auto') {
+    center = {
+      x: outer.width / 2,
+      y: outer.height / 2
+    };
+  }
+
+  var matrix = this._setZoom(newScale, center);
+
+  this._fireViewboxChange();
+
+  return round(matrix.a, 1000);
+};
+
+function setCTM(node, m) {
+  var mstr = 'matrix(' + m.a + ',' + m.b + ',' + m.c + ',' + m.d + ',' + m.e + ',' + m.f + ')';
+  node.setAttribute('transform', mstr);
+}
+
+Canvas.prototype._setZoom = function(scale, center) {
+
+  var svg = this._paper.node,
+      viewport = this._root.node;
+
+  var matrix = svg.createSVGMatrix();
+  var point = svg.createSVGPoint();
+
+  var centerPoint,
+      originalPoint,
+      currentMatrix,
+      scaleMatrix,
+      newMatrix;
+
+  currentMatrix = viewport.getCTM();
+
+
+  var currentScale = currentMatrix.a;
+
+  if (center) {
+    centerPoint = _.extend(point, center);
+
+    // revert applied viewport transformations
+    originalPoint = centerPoint.matrixTransform(currentMatrix.inverse());
+
+    // create scale matrix
+    scaleMatrix = matrix
+                    .translate(originalPoint.x, originalPoint.y)
+                    .scale(1 / currentScale * scale)
+                    .translate(-originalPoint.x, -originalPoint.y);
+
+    newMatrix = currentMatrix.multiply(scaleMatrix);
+  } else {
+    newMatrix = matrix.scale(scale);
+  }
+
+  setCTM(this._root.node, newMatrix);
+
+  return newMatrix;
+};
+
+
+/**
+ * Returns the size of the canvas
+ *
+ * @return {Dimensions}
+ */
+Canvas.prototype.getSize = function () {
+  return {
+    width: this._container.clientWidth,
+    height: this._container.clientHeight
+  };
+};
+
 
 /**
  * Return the absolute bounding box for the given element
@@ -9197,225 +9509,12 @@ Canvas.prototype.getAbsoluteBBox = function(element) {
 Canvas.$inject = [
   'config',
   'eventBus',
-  'commandStack',
   'graphicsFactory',
-  'elementRegistry' ];
+  'elementRegistry',
+  'snap' ];
 
 module.exports = Canvas;
-},{"./cmd/AddConnectionHandler":38,"./cmd/AddShapeHandler":39}],34:[function(_dereq_,module,exports){
-'use strict';
-
-var _ = (window._);
-
-
-/**
- * @namespace djs
- */
-
-/**
- * @class
- *
- * This service offer an action history for the application.
- * So that the diagram can support undo/redo. All actions applied
- * to the diagram must be invoked through this Service.
- *
- * @param {Injector} injector
- * @param {EventBus} events
- */
-function CommandStack(injector, events) {
-
-  /**
-   *
-   * @type {Object} Key is the command id and value is a list of registered handler methods}
-   */
-  var handlerMap = {};
-
-  /**
-   * The stack containing all re/undoable actions on the diagram
-   * @type {Array<Object>}
-   */
-  var stack = [];
-
-  /**
-   * The current index on the stack
-   * @type {Number}
-   */
-  var stackIdx = -1;
-
-
-  function redoAction() {
-    return stack[stackIdx + 1];
-  }
-
-  function undoAction() {
-    return stack[stackIdx];
-  }
-
-  /**
-   * Execute all registered actions for this command id
-   *
-   * @param {String} id of the action
-   * @param {Object} ctx is a parameter object for the executed action
-   */
-  function execute(id, ctx) {
-    var action = { id: id, ctx: ctx };
-
-    internalExecute(action);
-  }
-
-  /**
-   * Execute all registered actions for this command id
-   *
-   * @param {String} id of the action
-   * @param {Object} ctx is a parameter object for the executed action
-   * @param {Boolean} saveRedoStack if true the redo stack is not reset.
-   *                  This must be set when an redo action is applied.
-   */
-  function internalExecute(action) {
-    var id = action.id,
-        ctx = action.ctx;
-
-    if (!action.id) {
-      throw new Error('action has no id');
-    }
-
-    events.fire('commandStack.execute', { id: id });
-
-    var handlers = getHandlers(id);
-
-    if (!(handlers && handlers.length)) {
-      console.warn('no command handler registered for ', id);
-    }
-
-    var executedHandlers = [];
-
-    _.forEach(handlers, function(handler) {
-      if (handler.execute(ctx)) {
-        executedHandlers.push(handler);
-      } else {
-        // TODO(nre): handle revert case, i.e. the situation that one of a number of handlers fail
-      }
-    });
-
-    executeFinished(action);
-  }
-
-  function executeFinished(action) {
-    if (redoAction() !== action) {
-      stack.splice(stackIdx + 1, stack.length, action);
-    }
-
-    stackIdx++;
-
-    events.fire('commandStack.changed');
-  }
-
-
-  function undo() {
-
-    var action = undoAction();
-    if (!action) {
-      return false;
-    }
-
-    events.fire('commandStack.revert', { id: action.id });
-
-    var handlers = getHandlers(action.id);
-    _.forEach(handlers, function(handler) {
-      handler.revert(action.ctx);
-    });
-
-    revertFinished(action);
-  }
-
-  function revertFinished(action) {
-    stackIdx--;
-
-    events.fire('commandStack.changed');
-  }
-
-  function redo() {
-
-    var action = redoAction();
-    if (action) {
-      internalExecute(action);
-    }
-
-    return action;
-  }
-
-  function getHandlers(id) {
-    if (id) {
-      return handlerMap[id];
-    } else {
-      return handlerMap;
-    }
-  }
-
-  function addHandler(id, handler) {
-    assertValidId(id);
-
-    var handlers = handlerMap[id];
-    if (!handlers) {
-      handlerMap[id] = handlers = [];
-    }
-
-    handlers.push(handler);
-  }
-
-  function getStack() {
-    return stack;
-  }
-
-  function getStackIndex() {
-    return stackIdx;
-  }
-
-  function clear() {
-    stack.length = 0;
-    stackIdx = -1;
-
-    events.fire('commandStack.changed');
-  }
-
-
-  ////// registration ////////////////////////////////////////
-
-  function assertValidId(id) {
-    if (!id) {
-      throw new Error('no id specified');
-    }
-  }
-
-  function register(id, handler) {
-    addHandler(id, handler);
-  }
-
-  function registerHandler(command, handlerCls) {
-
-    if (!command || !handlerCls) {
-      throw new Error('command and handlerCls must be defined');
-    }
-
-    var handler = injector.instantiate(handlerCls);
-    register(command, handler);
-  }
-
-  this.execute = execute;
-  this.undo = undo;
-  this.redo = redo;
-  this.clear = clear;
-  this.getStack = getStack;
-  this.getStackIndex = getStackIndex;
-  this.getHandlers = getHandlers;
-  this.registerHandler = registerHandler;
-  this.register = register;
-}
-
-CommandStack.$inject = [ 'injector', 'eventBus' ];
-
-module.exports = CommandStack;
-},{}],35:[function(_dereq_,module,exports){
+},{"../model":62,"../util/Collections":63}],46:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -9430,44 +9529,37 @@ var _ = (window._);
  */
 function ElementRegistry(eventBus) {
 
-  // mapping shape.id -> container
-  var shapeMap = {};
+  // mapping element.id -> container
+  var elementMap = {};
 
   // mapping gfx.id -> container
   var graphicsMap = {};
 
-  function addShape(shape, gfx) {
-    if (!shape.id) {
-      throw new Error('[shapes] shape has no id');
+
+  function add(element, gfx) {
+    if (!element.id) {
+      throw new Error('element has no id');
     }
 
     if (!gfx.id) {
-      throw new Error('[shapes] graphics has no id');
+      throw new Error('graphics has no id');
     }
 
     if (graphicsMap[gfx.id]) {
       throw new Error('graphics with id ' + gfx.id + ' already registered');
     }
 
-    if (shapeMap[shape.id]) {
-      throw new Error('shape with id ' + shape.id + ' already added');
+    if (elementMap[element.id]) {
+      throw new Error('element with id ' + element.id + ' already added');
     }
 
-    shapeMap[shape.id] = graphicsMap[gfx.id] = { shape: shape, gfx: gfx };
+    elementMap[element.id] = graphicsMap[gfx.id] = { element: element, gfx: gfx };
   }
 
-  function removeShape(shape) {
-    var gfx = getGraphicsByElement(shape);
+  function remove(element) {
+    var gfx = getGraphicsByElement(element);
 
-    if (shape.parent) {
-      for(var i = 0; i < shape.parent.children.length;i++) {
-        if(shape.parent.children[i].id === shape.id) {
-          shape.parent.children.splice(i, 1);
-        }
-      }
-    }
-   // delete shape.parent.children[];
-    delete shapeMap[shape.id];
+    delete elementMap[element.id];
     delete graphicsMap[gfx.id];
   }
 
@@ -9478,47 +9570,42 @@ function ElementRegistry(eventBus) {
     var id = _.isString(gfx) ? gfx : gfx.id;
 
     var container = graphicsMap[id];
-    if (container) {
-      return container.shape;
-    }
+    return container && container.element;
   }
 
   /**
    * @method ElementRegistry#getById
    */
   function getById(id) {
-    var container = shapeMap[id];
-    if (container) {
-      return container.shape;
-    }
+    var container = elementMap[id];
+    return container && container.element;
   }
 
   /**
    * @method ElementRegistry#getGraphicsByElement
    */
-  function getGraphicsByElement(shape) {
-    var id = _.isString(shape) ? shape : shape.id;
+  function getGraphicsByElement(element) {
+    var id = _.isString(element) ? element : element.id;
 
-    var container = shapeMap[id];
-    if (container) {
-      return container.gfx;
-    }
+    var container = elementMap[id];
+    return container && container.gfx;
   }
 
-  eventBus.on('shape.added', function(event) {
-    addShape(event.element, event.gfx);
+
+  _.forEach([ 'shape', 'connection' ], function(type) {
+    eventBus.on(type + '.added', function(event) {
+      add(event.element, event.gfx);
+    });
+
+    eventBus.on(type + '.removed', function(event) {
+      remove(event.element, event.gfx);
+    });
   });
 
-  eventBus.on('connection.added', function(event) {
-    addShape(event.element, event.gfx);
-  });
 
-  eventBus.on('shape.removed', function(event) {
-    removeShape(event.element);
-  });
-
-  eventBus.on('connection.removed', function(event) {
-    removeShape(event.element);
+  eventBus.on('diagram.destroy', function(event) {
+    elementMap = null;
+    graphicsMap = null;
   });
 
   return {
@@ -9531,7 +9618,7 @@ function ElementRegistry(eventBus) {
 ElementRegistry.$inject = [ 'eventBus' ];
 
 module.exports = ElementRegistry;
-},{}],36:[function(_dereq_,module,exports){
+},{}],47:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -9597,22 +9684,26 @@ function EventBus() {
    * The callback will be invoked with `event, ...additionalArguments`
    * that have been passed to the evented element.
    *
-   * @method Events#on
+   * @method EventBus#on
    *
    * @param {String} event
+   * @param {Number} [priority] the priority in which this listener is called,
+   *                            defaults to 1000 but may be changed to override execution order of callbacks
+   *                            (> {@link EventPriority#overwrite})
+   *
    * @param {Function} callback
-   * @param {Number} Set priority to influence the execution order of the callbacks.
-   * The default priority is 1000. It should only set to higher values (> {@link EventPriority#overwrite}) if
-   * there is real need for a changed execution priority.
    */
-  function on(event, callback, priority) {
-    if(priority && !_.isNumber(priority)) {
-      console.error('Priority needs to be a number');
+  function on(event, priority, callback) {
+
+    if (_.isFunction(priority)) {
+      callback = priority;
       priority = EventPriority.standard;
     }
-    if(!priority) {
-      priority = EventPriority.standard;
+
+    if (!_.isNumber(priority)) {
+      throw new Error('priority needs to be a number');
     }
+
     var listeners = getListeners(event);
     addEventToArray(listeners, callback, priority);
   }
@@ -9620,12 +9711,12 @@ function EventBus() {
   /**
    * Register an event listener that is executed only once.
    *
-   * @method Events#once
+   * @method EventBus#once
    *
    * @param {String} event the event name to register for
    * @param {Function} callback the callback to execute
    *
-   * @see Events#on
+   * @see EventBus#on
    */
   function once(event, callback) {
 
@@ -9646,7 +9737,7 @@ function EventBus() {
    *
    * If no callback is given, all listeners for a given event name are being removed.
    *
-   * @method Events#off
+   * @method EventBus#off
    *
    * @param {String} event
    * @param {Function} [callback]
@@ -9673,7 +9764,7 @@ function EventBus() {
   /**
    * Fires a named event.
    *
-   * @method Events#fire
+   * @method EventBus#fire
    *
    * @example
    *
@@ -9746,7 +9837,7 @@ function EventBus() {
     });
 
     array.sort(function(a, b) {
-      if(a.priority < b.priority) {
+      if (a.priority < b.priority) {
         return 1;
       } else if (a.priority > b.priority) {
         return -1;
@@ -9764,7 +9855,7 @@ function EventBus() {
 
 
 module.exports = EventBus;
-},{}],37:[function(_dereq_,module,exports){
+},{}],48:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -9870,174 +9961,16 @@ GraphicsFactory.prototype.updateConnection = function(element, gfx) {
 GraphicsFactory.$inject = [ 'renderer', 'snap' ];
 
 module.exports = GraphicsFactory;
-},{}],38:[function(_dereq_,module,exports){
-'use strict';
-
-
-var _ = (window._);
-
-
-/**
- * Implements re- and undoable addition of connections to the diagram
- *
- * @param {EventBus} events
- * @param {GraphicsFactory} graphicsFactory
- * @param {ElementRegistry} shapes
- */
-function AddConnectionHandler(events, graphicsFactory, shapes) {
-
-  var paper;
-
-  /**
-   * Execute add
-   */
-  function execute(ctx) {
-
-    var connection = ctx.connection;
-
-    var gfx = graphicsFactory.createConnection(paper, connection);
-
-    events.fire('connection.changed', { element: connection, gfx: gfx });
-    events.fire('connection.added', { element: connection, gfx: gfx });
-
-    return gfx;
-  }
-
-
-  /**
-   * Execute revert
-   */
-  function revert(ctx) {
-
-    var connection = ctx.connection,
-        gfx = shapes.getGraphicsByElement(connection);
-
-    events.fire('connection.removed', { element: connection, gfx: gfx });
-
-    gfx.remove();
-  }
-
-
-  function canExecute(ctx) {
-    return true;
-  }
-
-
-  // load paper from canvas init event
-  events.on('canvas.init', function(e) {
-    paper = e.paper;
-  });
-
-
-  // API
-
-  this.execute = execute;
-  this.revert = revert;
-
-  this.canExecute = canExecute;
-}
-
-
-AddConnectionHandler.$inject = ['eventBus', 'graphicsFactory', 'elementRegistry'];
-
-// export
-module.exports = AddConnectionHandler;
-},{}],39:[function(_dereq_,module,exports){
-'use strict';
-
-
-var _ = (window._),
-    setParent = _dereq_('../../util/ShapeUtil').setParent;
-
-
-/**
- * Implements re- and undoable addition of shapes to the diagram
- *
- * @param {EventBus} events
- * @param {GraphicsFactory} graphicsFactory
- * @param {ElementRegistry} shapes
- */
-function AddShapeHandler(events, graphicsFactory, shapes) {
-
-  var paper;
-
-  /**
-   * Execute add
-   */
-  function execute(ctx) {
-
-    var shape = ctx.shape,
-        parent = ctx.parent || shape.parent;
-
-    // remember parent outside shape
-    ctx.parent = parent;
-
-    // establish shape -> parent -> shape relationship
-    setParent(shape, parent);
-
-    var gfx = graphicsFactory.createShape(paper, shape);
-
-    events.fire('shape.changed', { element: shape, gfx: gfx });
-
-    events.fire('shape.added', { element: shape, gfx: gfx });
-
-    return gfx;
-  }
-
-
-  /**
-   * Execute revert
-   */
-  function revert(ctx) {
-
-    var shape = ctx.shape,
-        gfx = shapes.getGraphicsByElement(shape);
-
-    setParent(shape, null);
-
-    events.fire('shape.removed', { element: shape, gfx: gfx });
-
-    gfx.remove();
-  }
-
-
-  function canExecute(ctx) {
-    return true;
-  }
-
-
-  // load paper from canvas init event
-  events.on('canvas.init', function(e) {
-    paper = e.paper;
-  });
-
-
-  // API
-
-  this.execute = execute;
-  this.revert = revert;
-
-  this.canExecute = canExecute;
-}
-
-
-AddShapeHandler.$inject = ['eventBus', 'graphicsFactory', 'elementRegistry'];
-
-// export
-module.exports = AddShapeHandler;
-},{"../../util/ShapeUtil":55}],40:[function(_dereq_,module,exports){
-'use strict';
-
+},{}],49:[function(_dereq_,module,exports){
 module.exports = {
   __depends__: [ _dereq_('../draw') ],
   __init__: [ 'canvas' ],
   canvas: [ 'type', _dereq_('./Canvas') ],
-  commandStack: [ 'type', _dereq_('./CommandStack') ],
   elementRegistry: [ 'type', _dereq_('./ElementRegistry') ],
   eventBus: [ 'type', _dereq_('./EventBus') ],
   graphicsFactory: [ 'type', _dereq_('./GraphicsFactory') ]
 };
-},{"../draw":44,"./Canvas":33,"./CommandStack":34,"./ElementRegistry":35,"./EventBus":36,"./GraphicsFactory":37}],41:[function(_dereq_,module,exports){
+},{"../draw":53,"./Canvas":45,"./ElementRegistry":46,"./EventBus":47,"./GraphicsFactory":48}],50:[function(_dereq_,module,exports){
 'use strict';
 
 // required components
@@ -10062,12 +9995,14 @@ function flattenPoints(points) {
  * @param {Styles} styles
  */
 function Renderer(styles) {
-  this.CONNECTION_STYLE = styles.style([ 'no-fill' ]);
-  this.SHAPE_STYLE = styles.style({ fill: 'fuchsia' });
+  this.CONNECTION_STYLE = styles.style([ 'no-fill' ], { strokeWidth: 5 });
+  this.SHAPE_STYLE = styles.style({ fill: 'white', stroke: 'fuchsia', strokeWidth: 2 });
 }
 
 Renderer.prototype.drawShape = function drawShape(gfxGroup, data) {
-  if (!data.width || !data.height) {
+  if (data.width === undefined ||
+      data.height === undefined) {
+
     throw new Error('must specify width and height properties for new shape');
   }
 
@@ -10085,14 +10020,14 @@ Renderer.$inject = ['styles'];
 
 module.exports = Renderer;
 module.exports.flattenPoints = flattenPoints;
-},{}],42:[function(_dereq_,module,exports){
+},{}],51:[function(_dereq_,module,exports){
 var snapsvg = (window.Snap);
 
 // require snapsvg extensions
 _dereq_('./snapsvg-extensions');
 
 module.exports = snapsvg;
-},{"./snapsvg-extensions":45}],43:[function(_dereq_,module,exports){
+},{"./snapsvg-extensions":54}],52:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -10155,7 +10090,7 @@ function Styles() {
 }
 
 module.exports = Styles;
-},{}],44:[function(_dereq_,module,exports){
+},{}],53:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = {
@@ -10163,7 +10098,7 @@ module.exports = {
   snap: [ 'value', _dereq_('./Snap') ],
   styles: [ 'type', _dereq_('./Styles') ]
 };
-},{"./Renderer":41,"./Snap":42,"./Styles":43}],45:[function(_dereq_,module,exports){
+},{"./Renderer":50,"./Snap":51,"./Styles":52}],54:[function(_dereq_,module,exports){
 'use strict';
 
 var Snap = (window.Snap);
@@ -10312,7 +10247,7 @@ Snap.plugin(function (Snap, Element, Paper, global) {
   Element.prototype.translate = function(x, y) {
     var matrix = new Snap.Matrix();
     matrix.translate(x, y);
-    this.transform(matrix);
+    return this.transform(matrix);
   };
 });
 
@@ -10350,7 +10285,7 @@ Snap.plugin(function (Snap, Element, Paper, global) {
     return new Snap(svg);
   };
 });
-},{}],46:[function(_dereq_,module,exports){
+},{}],55:[function(_dereq_,module,exports){
 'use strict';
 
 
@@ -10364,9 +10299,9 @@ var GraphicsUtil = _dereq_('../../util/GraphicsUtil');
  *
  * A plugin that provides interactivity in terms of events (mouse over and selection to a diagram).
  *
- * @param {EventBus} events the event bus to attach to
+ * @param {EventBus} eventBus
  */
-function InteractionEvents(events, styles) {
+function InteractionEvents(eventBus, styles) {
 
   var HIT_STYLE = styles.cls('djs-hit', [ 'no-fill', 'no-border' ], {
     pointerEvents: 'stroke',
@@ -10380,21 +10315,18 @@ function InteractionEvents(events, styles) {
 
   function fire(event, baseEvent, eventName) {
     var e = _.extend({}, baseEvent, event);
-    events.fire(eventName, e);
+    eventBus.fire(eventName, e);
   }
 
   function makeSelectable(element, gfx, options) {
-    var dblclick = options.dblclick,
-        type = options.type;
-
-    var baseEvent = { element: element, gfx: gfx };
-
-    var visual = GraphicsUtil.getVisual(gfx);
-
-    var hit;
+    var type = options.type,
+        baseEvent = { element: element, gfx: gfx },
+        visual = GraphicsUtil.getVisual(gfx),
+        hit,
+        bbox;
 
     if (type === 'shape') {
-      var bbox = visual.getBBox();
+      bbox = visual.getBBox();
       hit = gfx.rect(bbox.x, bbox.y, bbox.width, bbox.height);
     } else {
       hit = visual.select('*').clone().attr('style', '');
@@ -10417,30 +10349,22 @@ function InteractionEvents(events, styles) {
       }
     });
 
-    gfx.click(function(e) {
+    visual.click(function(e) {
       fire(e, baseEvent, type + '.click');
     });
 
-    gfx.dblclick(function(e) {
+    visual.dblclick(function(e) {
       fire(e, baseEvent, type + '.dblclick');
     });
   }
 
-  function makeConnectionSelectable(connection, gfx) {
-    makeSelectable(connection, gfx, { type: 'connection' });
-  }
+  function registerEvents(eventBus) {
 
-  function makeShapeSelectable(shape, gfx) {
-    makeSelectable(shape, gfx, { type: 'shape' });
-  }
-
-  function registerEvents(events) {
-
-    events.on('canvas.init', function(event) {
-      var paper = event.paper;
+    eventBus.on('canvas.init', function(event) {
+      var root = event.root;
 
       // implement direct canvas click
-      paper.click(function(event) {
+      root.click(function(event) {
 
         /**
          * An event indicating that the canvas has been directly clicked
@@ -10451,34 +10375,32 @@ function InteractionEvents(events, styles) {
          *
          * @type {Object}
          */
-        events.fire('canvas.click', _.extend({}, event, { paper: paper }));
+        eventBus.fire('canvas.click', _.extend({}, event, { root: root }));
       });
     });
 
-    events.on('shape.added', function(event) {
-      makeShapeSelectable(event.element, event.gfx);
+    eventBus.on('shape.added', function(event) {
+      makeSelectable(event.element, event.gfx, { type: 'shape' });
     });
 
-    events.on('connection.added', function(event) {
-      makeConnectionSelectable(event.element, event.gfx);
+    eventBus.on('connection.added', function(event) {
+      makeSelectable(event.element, event.gfx, { type: 'connection' });
     });
   }
 
-  registerEvents(events);
+  registerEvents(eventBus);
 }
 
 
 InteractionEvents.$inject = [ 'eventBus', 'styles' ];
 
 module.exports = InteractionEvents;
-},{"../../util/GraphicsUtil":53}],47:[function(_dereq_,module,exports){
-'use strict';
-
+},{"../../util/GraphicsUtil":64}],56:[function(_dereq_,module,exports){
 module.exports = {
   __init__: [ 'interactionEvents' ],
   interactionEvents: [ 'type', _dereq_('./InteractionEvents') ]
 };
-},{"./InteractionEvents":46}],48:[function(_dereq_,module,exports){
+},{"./InteractionEvents":55}],57:[function(_dereq_,module,exports){
 'use strict';
 
 
@@ -10537,14 +10459,14 @@ function Outline(events, styles) {
 Outline.$inject = ['eventBus', 'styles'];
 
 module.exports = Outline;
-},{"../../util/GraphicsUtil":53}],49:[function(_dereq_,module,exports){
+},{"../../util/GraphicsUtil":64}],58:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = {
   __init__: [ 'outline' ],
   outline: [ 'type', _dereq_('./Outline') ]
 };
-},{"./Outline":48}],50:[function(_dereq_,module,exports){
+},{"./Outline":57}],59:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -10621,7 +10543,7 @@ function Selection(events) {
 Selection.$inject = [ 'eventBus' ];
 
 module.exports = Selection;
-},{}],51:[function(_dereq_,module,exports){
+},{}],60:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -10698,7 +10620,7 @@ function SelectionVisuals(events, selection, elementRegistry) {
 
   // deselect all selected shapes on canvas click
   events.on('canvas.click', function(event) {
-    if (event.srcElement === event.paper.node) {
+    if (event.srcElement === event.root.node) {
       selection.select(null);
     }
   });
@@ -10711,7 +10633,7 @@ SelectionVisuals.$inject = [
 ];
 
 module.exports = SelectionVisuals;
-},{}],52:[function(_dereq_,module,exports){
+},{}],61:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = {
@@ -10723,7 +10645,194 @@ module.exports = {
   selection: [ 'type', _dereq_('./Selection') ],
   selectionVisuals: [ 'type', _dereq_('./SelectionVisuals') ]
 };
-},{"../interaction-events":47,"../outline":49,"./Selection":50,"./SelectionVisuals":51}],53:[function(_dereq_,module,exports){
+},{"../interaction-events":56,"../outline":58,"./Selection":59,"./SelectionVisuals":60}],62:[function(_dereq_,module,exports){
+'use strict';
+
+var _ = (window._);
+
+var Refs = _dereq_('object-refs');
+
+var parentRefs = new Refs({ name: 'children', enumerable: true, collection: true }, { name: 'parent' }),
+    labelRefs = new Refs({ name: 'label', enumerable: true }, { name: 'labelTarget' }),
+    outgoingRefs = new Refs({ name: 'outgoing', collection: true }, { name: 'source' }),
+    incomingRefs = new Refs({ name: 'incoming', collection: true }, { name: 'target' });
+
+/**
+ * The basic graphical representation
+ *
+ * @class djs.model.Base
+ *
+ * @abstract
+ */
+function Base() {
+
+  /**
+   * @property {Object} businessObject the object that backs up the shape
+   */
+  Object.defineProperty(this, 'businessObject', {
+    writable: true
+  });
+
+  /**
+   * @property {djs.model.Shape} parent
+   */
+  parentRefs.bind(this, 'parent');
+
+  /**
+   * @property {djs.model.Label} label
+   */
+  labelRefs.bind(this, 'label');
+
+  /**
+   * @property {Array<djs.model.Connection>} outgoing the list of incoming connections
+   */
+  outgoingRefs.bind(this, 'outgoing');
+
+  /**
+   * @property {Array<djs.model.Connection>} incoming the list of outgoing connections
+   */
+  incomingRefs.bind(this, 'incoming');
+}
+
+
+/**
+ * A graphical object
+ *
+ * @class djs.model.Shape
+ *
+ * @augments {djs.model.Base}
+ */
+function Shape() {
+  Base.call(this);
+
+  /**
+   * @property {Array<djs.model.Base>} children list of children
+   */
+  parentRefs.bind(this, 'children');
+}
+
+Shape.prototype = Object.create(Base.prototype);
+
+
+/**
+ * The root graphical object
+ *
+ * @class djs.model.Root
+ *
+ * @augments {djs.model.Shape}
+ */
+function Root() {
+  Shape.call(this);
+}
+
+Root.prototype = Object.create(Shape.prototype);
+
+
+/**
+ * A label for an element
+ *
+ * @class djs.model.Label
+ *
+ * @augments {djs.model.Shape}
+ */
+function Label() {
+  Shape.call(this);
+
+  /**
+   * @property {djs.model.Base} labelTarget the element labeled
+   */
+  labelRefs.bind(this, 'labelTarget');
+}
+
+Label.prototype = Object.create(Shape.prototype);
+
+
+/**
+ * A connection between two elements
+ *
+ * @class djs.model.Connection
+ *
+ * @augments {djs.model.Base}
+ */
+function Connection() {
+  Base.call(this);
+
+  /**
+   * @property {djs.model.Base} source the element this connection originates from
+   */
+  outgoingRefs.bind(this, 'source');
+
+  /**
+   * @property {djs.model.Base} target the element this connection points to
+   */
+  incomingRefs.bind(this, 'target');
+}
+
+Connection.prototype = Object.create(Base.prototype);
+
+
+var types = {
+  connection: Connection,
+  shape: Shape,
+  label: Label,
+  root: Root
+};
+
+/**
+ * Creates a new model element of the specified type
+ *
+ * @example
+ *
+ * var shape1 = Model.create('shape', { x: 10, y: 10, width: 100, height: 100 });
+ * var shape2 = Model.create('shape', { x: 210, y: 210, width: 100, height: 100 });
+ *
+ * var connection = Model.create('connection', { waypoints: [ { x: 110, y: 55 }, {x: 210, y: 55 } ] });
+ *
+ * @param  {String} type lower-cased model name
+ * @param  {Object} attrs attributes to initialize the new model instance with
+ *
+ * @return {djs.model.Base} the new model instance
+ */
+module.exports.create = function(type, attrs) {
+  var Type = types[type];
+  if (!Type) {
+    throw new Error('unknown type: <' + type + '>');
+  }
+  return _.extend(new Type(), attrs);
+};
+
+
+module.exports.Root = Root;
+module.exports.Shape = Shape;
+module.exports.Connection = Connection;
+module.exports.Label = Label;
+},{"object-refs":70}],63:[function(_dereq_,module,exports){
+'use strict';
+
+/**
+ * Failsafe remove an element from a collection
+ *
+ * @param  {Array<Object>} [collection]
+ * @param  {Object} [element]
+ *
+ * @return {Object} the element that got removed or undefined
+ */
+module.exports.remove = function(collection, element) {
+
+  if (!collection || !element) {
+    return;
+  }
+
+  var idx = collection.indexOf(element);
+  if (idx === -1) {
+    return;
+  }
+
+  collection.splice(idx, 1);
+
+  return element;
+};
+},{}],64:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -10766,7 +10875,7 @@ function getVisual(gfx) {
 }
 
 module.exports.getVisual = getVisual;
-},{}],54:[function(_dereq_,module,exports){
+},{}],65:[function(_dereq_,module,exports){
 var _ = (window._);
 
 var DEFAULT_BOX_PADDING = 5;
@@ -11008,136 +11117,7 @@ function LabelUtil(config) {
 
 
 module.exports = LabelUtil;
-},{}],55:[function(_dereq_,module,exports){
-var _ = (window._);
-
-/**
- * Adds an element to a collection and returns true if the
- * element was added.
- *
- * @param {Object[]} elements
- * @param {Object} e
- * @param {Boolean} unique
- */
-function add(elements, e, unique) {
-  var canAdd = !unique || elements.indexOf(e) === -1;
-
-  if (canAdd) {
-    elements.push(e);
-  }
-
-  return canAdd;
-}
-
-function each(shapes, fn, depth) {
-
-  depth = depth || 0;
-
-  _.forEach(shapes, function(s, i) {
-    var filter = fn(s, i, depth);
-
-    if (_.isArray(filter) && filter.length) {
-      each(filter, fn, depth + 1);
-    }
-  });
-}
-
-/**
- * Collects self + child shapes up to a given depth from a list of shapes.
- *
- * @param  {djs.ShapeDescriptor[]} shapes the shapes to select the children from
- * @param  {Boolean} unique whether to return a unique result set (no duplicates)
- * @param  {Number} maxDepth the depth to search through or -1 for infinite
- *
- * @return {djs.ShapeDescriptor[]} found shapes
- */
-function selfAndChildren(shapes, unique, maxDepth) {
-  var result = [],
-      processedChildren = [];
-
-  each(shapes, function(shape, i, depth) {
-    add(result, shape, unique);
-
-    var children = shape.children;
-
-    // max traversal depth not reached yet
-    if (maxDepth === -1 || depth < maxDepth) {
-
-      // children exist && children not yet processed
-      if (children && add(processedChildren, children, unique)) {
-        return children;
-      }
-    }
-  });
-
-  return result;
-}
-
-/**
- * Return self + direct children for a number of shapes
- *
- * @param  {djs.ShapeDescriptor[]} shapes to query
- * @param  {Boolean} allowDuplicates to allow duplicates in the result set
- *
- * @return {djs.ShapeDescriptor[]} the collected shapes
- */
-function selfAndDirectChildren(shapes, allowDuplicates) {
-  return selfAndChildren(shapes, !allowDuplicates, 1);
-}
-
-/**
- * Return self + ALL children for a number of shapes
- *
- * @param  {djs.ShapeDescriptor[]} shapes to query
- * @param  {Boolean} allowDuplicates to allow duplicates in the result set
- *
- * @return {djs.ShapeDescriptor[]} the collected shapes
- */
-function selfAndAllChildren(shapes, allowDuplicates) {
-  return selfAndChildren(shapes, !allowDuplicates, -1);
-}
-
-/**
- * Translate a shape
- * Move shape to shape.x + x and shape.y + y
- */
-function translateShape(shape, x, y) {
-  'use strict';
-
-  shape.x += x;
-  shape.y += y;
-}
-
-function setParent(shape, newParent) {
-  // TODO(nre): think about parent->child magic
-
-  var old = shape.parent;
-  if (old && old.children) {
-    var idx = old.children.indexOf(shape);
-    if (idx !== -1) {
-      old.children.splice(idx, 1);
-    }
-  }
-
-  if (newParent) {
-    if (!newParent.children) {
-      newParent.children = [];
-    }
-
-    newParent.children.push(shape);
-  }
-
-  shape.parent = newParent;
-
-  return old;
-}
-
-module.exports.eachShape = each;
-module.exports.selfAndDirectChildren = selfAndDirectChildren;
-module.exports.selfAndAllChildren = selfAndAllChildren;
-module.exports.translateShape = translateShape;
-module.exports.setParent = setParent;
-},{}],56:[function(_dereq_,module,exports){
+},{}],66:[function(_dereq_,module,exports){
 
 var isArray = function(obj) {
   return Object.prototype.toString.call(obj) === '[object Array]';
@@ -11187,14 +11167,14 @@ exports.annotate = annotate;
 exports.parse = parse;
 exports.isArray = isArray;
 
-},{}],57:[function(_dereq_,module,exports){
+},{}],67:[function(_dereq_,module,exports){
 module.exports = {
   annotate: _dereq_('./annotation').annotate,
   Module: _dereq_('./module'),
   Injector: _dereq_('./injector')
 };
 
-},{"./annotation":56,"./injector":58,"./module":59}],58:[function(_dereq_,module,exports){
+},{"./annotation":66,"./injector":68,"./module":69}],68:[function(_dereq_,module,exports){
 var Module = _dereq_('./module');
 var autoAnnotate = _dereq_('./annotation').parse;
 var annotate = _dereq_('./annotation').annotate;
@@ -11410,7 +11390,7 @@ var Injector = function(modules, parent) {
 
 module.exports = Injector;
 
-},{"./annotation":56,"./module":59}],59:[function(_dereq_,module,exports){
+},{"./annotation":66,"./module":69}],69:[function(_dereq_,module,exports){
 var Module = function() {
   var providers = [];
 
@@ -11436,6 +11416,280 @@ var Module = function() {
 
 module.exports = Module;
 
-},{}]},{},[2])
+},{}],70:[function(_dereq_,module,exports){
+module.exports = _dereq_('./lib/refs');
+
+module.exports.Collection = _dereq_('./lib/collection');
+},{"./lib/collection":71,"./lib/refs":72}],71:[function(_dereq_,module,exports){
+'use strict';
+
+/**
+ * An empty collection stub. Use {@link RefsCollection.extend} to extend a
+ * collection with ref semantics.
+ *
+ * @classdesc A change and inverse-reference aware collection with set semantics.
+ *
+ * @class RefsCollection
+ */
+function RefsCollection() { }
+
+/**
+ * Extends a collection with {@link Refs} aware methods
+ *
+ * @memberof RefsCollection
+ * @static
+ *
+ * @param  {Array<Object>} collection
+ * @param  {Refs} refs instance
+ * @param  {Object} property represented by the collection
+ * @param  {Object} target object the collection is attached to
+ *
+ * @return {RefsCollection<Object>} the extended array
+ */
+function extend(collection, refs, property, target) {
+
+  var inverseProperty = property.inverse;
+
+  /**
+   * Removes the given element from the array and returns it.
+   *
+   * @method RefsCollection#remove
+   *
+   * @param {Object} element the element to remove
+   */
+  collection.remove = function(element) {
+    var idx = this.indexOf(element);
+    if (idx !== -1) {
+      this.splice(idx, 1);
+
+      // unset inverse
+      refs.unset(element, inverseProperty, target);
+    }
+
+    return element;
+  };
+
+  /**
+   * Returns true if the collection contains the given element
+   *
+   * @method RefsCollection#contains
+   *
+   * @param {Object} element the element to check for
+   */
+  collection.contains = function(element) {
+    return this.indexOf(element) !== -1;
+  };
+
+  /**
+   * Adds an element to the array, unless it exists already (set semantics).
+   *
+   * @method RefsCollection#add
+   *
+   * @param {Object} element the element to add
+   */
+  collection.add = function(element) {
+
+    if (!this.contains(element)) {
+      this.push(element);
+
+      // set inverse
+      refs.set(element, inverseProperty, target);
+    }
+  };
+
+  return collection;
+}
+
+
+module.exports.extend = extend;
+},{}],72:[function(_dereq_,module,exports){
+'use strict';
+
+var Collection = _dereq_('./collection');
+
+function hasOwnProperty(e, property) {
+  return Object.prototype.hasOwnProperty.call(e, property.name || property);
+}
+
+
+function defineCollectionProperty(ref, property, target) {
+  Object.defineProperty(target, property.name, {
+    enumerable: property.enumerable,
+    value: Collection.extend(target[property.name] || [], ref, property, target)
+  });
+}
+
+
+function defineProperty(ref, property, target) {
+
+  var inverseProperty = property.inverse;
+
+  var _value = target[property.name];
+
+  Object.defineProperty(target, property.name, {
+    enumerable: property.enumerable,
+
+    get: function() {
+      return _value;
+    },
+
+    set: function(value) {
+
+      // return if we already performed all changes
+      if (value === _value) {
+        return;
+      }
+
+      var old = _value;
+
+      // temporary set null
+      _value = null;
+
+      if (old) {
+        ref.unset(old, inverseProperty, target);
+      }
+
+      // set new value
+      _value = value;
+
+      // set inverse value
+      ref.set(_value, inverseProperty, target);
+    }
+  });
+
+}
+
+/**
+ * Creates a new references object defining two inversly related
+ * attribute descriptors a and b.
+ *
+ * <p>
+ *   When bound to an object using {@link Refs#bind} the references
+ *   get activated and ensure that add and remove operations are applied
+ *   reversely, too.
+ * </p>
+ *
+ * <p>
+ *   For attributes represented as collections {@link Refs} provides the
+ *   {@link RefsCollection#add}, {@link RefsCollection#remove} and {@link RefsCollection#contains} extensions
+ *   that must be used to properly hook into the inverse change mechanism.
+ * </p>
+ *
+ * @class Refs
+ *
+ * @classdesc A bi-directional reference between two attributes.
+ *
+ * @param {Refs.AttributeDescriptor} a property descriptor
+ * @param {Refs.AttributeDescriptor} b property descriptor
+ *
+ * @example
+ *
+ * var refs = Refs({ name: 'wheels', collection: true, enumerable: true }, { name: 'car' });
+ *
+ * var car = { name: 'toyota' };
+ * var wheels = [{ pos: 'front-left' }, { pos: 'front-right' }];
+ *
+ * refs.bind(car, 'wheels');
+ *
+ * car.wheels // []
+ * car.wheels.add(wheels[0]);
+ * car.wheels.add(wheels[1]);
+ *
+ * car.wheels // [{ pos: 'front-left' }, { pos: 'front-right' }]
+ *
+ * wheels[0].car // { name: 'toyota' };
+ * car.wheels.remove(wheels[0]);
+ *
+ * wheels[0].car // undefined
+ */
+function Refs(a, b) {
+
+  if (!(this instanceof Refs)) {
+    return new Refs(a, b);
+  }
+
+  // link
+  a.inverse = b;
+  b.inverse = a;
+
+  this.props = {};
+  this.props[a.name] = a;
+  this.props[b.name] = b;
+}
+
+/**
+ * Binds one side of a bi-directional reference to a
+ * target object.
+ *
+ * @memberOf Refs
+ *
+ * @param  {Object} target
+ * @param  {String} property
+ */
+Refs.prototype.bind = function(target, property) {
+  if (typeof property === 'string') {
+    if (!this.props[property]) {
+      throw new Error('no property <' + property + '> in ref');
+    }
+    property = this.props[property];
+  }
+
+  if (property.collection) {
+    defineCollectionProperty(this, property, target);
+  } else {
+    defineProperty(this, property, target);
+  }
+};
+
+Refs.prototype.ensureBound = function(target, property) {
+  if (!hasOwnProperty(target, property)) {
+    this.bind(target, property);
+  }
+};
+
+Refs.prototype.unset = function(target, property, value) {
+
+  if (target) {
+    this.ensureBound(target, property);
+
+    if (property.collection) {
+      target[property.name].remove(value);
+    } else {
+      target[property.name] = undefined;
+    }
+  }
+};
+
+Refs.prototype.set = function(target, property, value) {
+
+  if (target) {
+    this.ensureBound(target, property);
+
+    if (property.collection) {
+      target[property.name].add(value);
+    } else {
+      target[property.name] = value;
+    }
+  }
+};
+
+module.exports = Refs;
+
+
+/**
+ * An attribute descriptor to be used specify an attribute in a {@link Refs} instance
+ *
+ * @typedef {Object} Refs.AttributeDescriptor
+ * @property {String} name
+ * @property {boolean} [collection=false]
+ * @property {boolean} [enumerable=false]
+ */
+},{"./collection":71}],73:[function(_dereq_,module,exports){
+module.exports=_dereq_(70)
+},{"./lib/collection":74,"./lib/refs":75}],74:[function(_dereq_,module,exports){
+module.exports=_dereq_(71)
+},{}],75:[function(_dereq_,module,exports){
+module.exports=_dereq_(72)
+},{"./collection":74}]},{},[2])
 (2)
 });
