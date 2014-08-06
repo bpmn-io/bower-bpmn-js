@@ -1,45 +1,19 @@
 !function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.BpmnJS=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
-var _  = (window._);
-
-function failSafeAsync(fn) {
-
-  return function() {
-
-    var args = Array.prototype.slice.call(arguments);
-
-    var done = args[args.length - 1];
-    if (!done || !_.isFunction(done)) {
-      done = function(e) {
-        throw e;
-      };
-    }
-
-    try {
-      fn.apply(this, args);
-    } catch (e) {
-      done(e);
-    }
-  };
-}
-
-module.exports.failSafeAsync = failSafeAsync;
-},{}],2:[function(_dereq_,module,exports){
 'use strict';
 
 var Diagram = _dereq_('diagram-js'),
-    BpmnModel = _dereq_('bpmn-moddle'),
+    BpmnModdle = _dereq_('bpmn-moddle'),
     $ = (window.$),
     _ = (window._);
 
-var Importer = _dereq_('./import/Importer'),
-    util = _dereq_('./Util');
+var Importer = _dereq_('./import/Importer');
 
 
 function getSvgContents(diagram) {
   var outerNode = diagram.get('canvas').getContainer();
 
   var svg = outerNode.innerHTML;
-  return svg.replace(/^<svg[^>]*>|<\/svg>$/g, '')
+  return svg.replace(/^.*<svg[^>]*>|<\/svg>.*$/g, '')
             .replace('<desc>Created with Snap</desc>', '')
             .replace(/<g class="viewport"( transform="[^"]*")?/, '<g');
 }
@@ -70,14 +44,16 @@ function checkValidationError(err) {
 }
 
 /**
- * @class
- *
  * A viewer for BPMN 2.0 diagrams
+ *
+ * @class
  *
  * @param {Object} [options] configuration options to pass to the viewer
  * @param {DOMElement} [options.container] the container to render the viewer in, defaults to body.
  * @param {String|Number} [options.width] the width of the viewer
  * @param {String|Number} [options.height] the height of the viewer
+ * @param {Array<didi.Module>} [options.modules] a list of modules to override the default modules
+ * @param {Array<didi.Module>} [options.additionalModules] a list of modules to use with the default modules
  */
 function Viewer(options) {
   this.options = options = options || {};
@@ -96,6 +72,7 @@ function Viewer(options) {
 
   // unwrap jquery
   this.container = container.get(0);
+
 
   /**
    * The code in the <project-logo></project-logo> area
@@ -129,7 +106,9 @@ Viewer.prototype.importXML = function(xml, done) {
 
   var self = this;
 
-  BpmnModel.fromXML(xml, 'bpmn:Definitions', function(err, definitions) {
+  this.moddle = this.createModdle();
+
+  this.moddle.fromXML(xml, 'bpmn:Definitions', function(err, definitions) {
 
     if (err) {
       err = checkValidationError(err);
@@ -153,11 +132,14 @@ Viewer.prototype.saveXML = function(options, done) {
     return done(new Error('no definitions loaded'));
   }
 
-  BpmnModel.toXML(definitions, options, function(err, xml) {
+  this.moddle.toXML(definitions, options, function(err, xml) {
     done(err, xml);
   });
 };
 
+Viewer.prototype.createModdle = function() {
+  return new BpmnModdle();
+};
 
 var SVG_HEADER =
 '<?xml version="1.0" encoding="utf-8"?>\n' +
@@ -202,39 +184,48 @@ Viewer.prototype.invoke = function(fn) {
   return this.diagram.invoke(fn);
 };
 
-Viewer.prototype.importDefinitions = util.failSafeAsync(function(definitions, done) {
+Viewer.prototype.importDefinitions = function(definitions, done) {
 
-  var diagram = this.diagram;
+  // use try/catch to not swallow synchronous exceptions
+  // that may be raised during model parsing
+  try {
+    if (this.diagram) {
+      this.clear();
+    }
 
-  if (diagram) {
-    this.clear();
+    this.definitions = definitions;
+    this.diagram = this._createDiagram(this.options);
+
+    this._init(this.diagram);
+
+    Importer.importBpmnDiagram(this.diagram, definitions, done);
+  } catch (e) {
+    done(e);
   }
-
-  this.diagram = diagram = this._createDiagram(this.options.modules);
-  this.definitions = definitions;
-
-  this._init(diagram);
-
-  Importer.importBpmnDiagram(diagram, definitions, done);
-});
+};
 
 Viewer.prototype._init = function(diagram) {
   initListeners(diagram, this.__listeners || []);
 };
 
-Viewer.prototype._createDiagram = function(modules) {
+Viewer.prototype._createDiagram = function(options) {
 
-  modules = [].concat(modules || this.getModules());
+  var modules = [].concat(options.modules || this.getModules(), options.additionalModules || []);
 
   // add self as an available service
   modules.unshift({
-    bpmnjs: [ 'value', this ]
+    bpmnjs: [ 'value', this ],
+    moddle: [ 'value', this.moddle ]
   });
 
-  return new Diagram({
+  options = _.omit(options, 'additionalModules');
+
+  options = _.extend(options, {
     canvas: { container: this.container },
     modules: modules
   });
+
+  return new Diagram(options);
 };
 
 
@@ -275,421 +266,58 @@ Viewer.prototype.on = function(event, handler) {
 Viewer.prototype._modules = [
   _dereq_('./core'),
   _dereq_('./draw'),
-  _dereq_('diagram-js/lib/features/selection')
+  _dereq_('diagram-js/lib/features/selection'),
+  _dereq_('diagram-js/lib/features/overlays')
 ];
 
 module.exports = Viewer;
 
-},{"./Util":1,"./core":7,"./draw":10,"./import/Importer":4,"bpmn-moddle":13,"diagram-js":43,"diagram-js/lib/features/selection":61}],3:[function(_dereq_,module,exports){
+},{"./core":3,"./draw":6,"./import/Importer":8,"bpmn-moddle":11,"diagram-js":41,"diagram-js/lib/features/overlays":59,"diagram-js/lib/features/selection":62}],2:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
 
-var Refs = _dereq_('object-refs');
+var LabelUtil = _dereq_('../util/Label');
 
-var diRefs = new Refs({ name: 'bpmnElement', enumerable: true }, { name: 'di' });
-
-
-function BpmnTreeWalker(handler) {
-
-  // list of containers already walked
-  var handledProcesses = [];
-
-  ///// Helpers /////////////////////////////////
-
-  function contextual(fn, ctx) {
-    return function(e) {
-      fn(e, ctx);
-    };
-  }
-
-  function is(element, type) {
-    return element.$instanceOf(type);
-  }
-
-  function visit(element, ctx) {
-
-    var gfx = element.gfx;
-
-    // avoid multiple rendering of elements
-    if (gfx) {
-      throw new Error('already rendered <' + element.id + '>');
-    }
-
-    // call handler
-    return handler.element(element, ctx);
-  }
-
-  function visitRoot(element, diagram) {
-    return handler.root(element, diagram);
-  }
-
-  function visitIfDi(element, ctx) {
-    if (element.di) {
-      return visit(element, ctx);
-    }
-  }
-
-  function logError(message, context) {
-    handler.error(message, context);
-  }
-
-  ////// DI handling ////////////////////////////
-
-  function registerDi(di) {
-    var bpmnElement = di.bpmnElement;
-
-    if (bpmnElement) {
-      diRefs.bind(bpmnElement, 'di');
-      bpmnElement.di = di;
-    } else {
-      logError('no bpmnElement for <' + di.$type + '#' + di.id + '>', { element: di });
-    }
-  }
-
-  function handleDiagram(diagram) {
-    handlePlane(diagram.plane);
-  }
-
-  function handlePlane(plane) {
-    registerDi(plane);
-
-    _.forEach(plane.planeElement, handlePlaneElement);
-  }
-
-  function handlePlaneElement(planeElement) {
-    registerDi(planeElement);
-  }
-
-
-  ////// Semantic handling //////////////////////
-
-  function handleDefinitions(definitions, diagram) {
-    // make sure we walk the correct bpmnElement
-
-    var diagrams = definitions.diagrams;
-
-    if (diagram && diagrams.indexOf(diagram) === -1) {
-      throw new Error('diagram not part of bpmn:Definitions');
-    }
-
-    if (!diagram && diagrams && diagrams.length) {
-      diagram = diagrams[0];
-    }
-
-    // no diagram -> nothing to import
-    if (!diagram) {
-      return;
-    }
-
-    // load DI from selected diagram only
-    handleDiagram(diagram);
-
-    var plane = diagram.plane,
-        rootElement = plane.bpmnElement;
-
-    if (!rootElement) {
-      throw new Error('no rootElement referenced in BPMNPlane <' + diagram.plane.id + '>');
-    }
-
-
-    var ctx = visitRoot(rootElement, plane);
-
-    if (is(rootElement, 'bpmn:Process')) {
-      handleProcess(rootElement, ctx);
-    } else if (is(rootElement, 'bpmn:Collaboration')) {
-      handleCollaboration(rootElement, ctx);
-
-      // force drawing of everything not yet drawn that is part of the target DI
-      handleUnhandledProcesses(definitions.rootElements, ctx);
-    } else {
-      throw new Error('unsupported root element for bpmndi:Diagram <' + rootElement.$type + '>');
-    }
-  }
-
-  function handleProcess(process, context) {
-    handleFlowElementsContainer(process, context);
-    handleIoSpecification(process.ioSpecification, context);
-
-    handleArtifacts(process.artifacts, context);
-
-    // log process handled
-    handledProcesses.push(process);
-  }
-
-  function handleUnhandledProcesses(rootElements) {
-
-    // walk through all processes that have not yet been drawn and draw them
-    // if they contain lanes with DI information.
-    // we do this to pass the free-floating lane test cases in the MIWG test suite
-    var processes = _.filter(rootElements, function(e) {
-      return is(e, 'bpmn:Process') && e.laneSets && handledProcesses.indexOf(e) === -1;
-    });
-
-    processes.forEach(contextual(handleProcess));
-  }
-
-  function handleMessageFlow(messageFlow, context) {
-    visitIfDi(messageFlow, context);
-  }
-
-  function handleMessageFlows(messageFlows, context) {
-    if (messageFlows) {
-      _.forEach(messageFlows, contextual(handleMessageFlow, context));
-    }
-  }
-
-  function handleDataAssociation(association, context) {
-    visitIfDi(association, context);
-  }
-
-  function handleDataInput(dataInput, context) {
-    visitIfDi(dataInput, context);
-  }
-
-  function handleDataOutput(dataOutput, context) {
-    visitIfDi(dataOutput, context);
-  }
-
-  function handleArtifact(artifact, context) {
-
-    // bpmn:TextAnnotation
-    // bpmn:Group
-    // bpmn:Association
-
-    visitIfDi(artifact, context);
-  }
-
-  function handleArtifacts(artifacts, context) {
-    _.forEach(artifacts, contextual(handleArtifact, context));
-  }
-
-  function handleIoSpecification(ioSpecification, context) {
-
-    if (!ioSpecification) {
-      return;
-    }
-
-    _.forEach(ioSpecification.dataInputs, contextual(handleDataInput, context));
-    _.forEach(ioSpecification.dataOutputs, contextual(handleDataOutput, context));
-  }
-
-  function handleSubProcess(subProcess, context) {
-    handleFlowElementsContainer(subProcess, context);
-    handleArtifacts(subProcess.artifacts, context);
-  }
-
-  function handleFlowNode(flowNode, context) {
-    var childCtx = visitIfDi(flowNode, context);
-
-    if (is(flowNode, 'bpmn:SubProcess')) {
-      handleSubProcess(flowNode, childCtx || context);
-    }
-
-    if (is(flowNode, 'bpmn:Activity')) {
-      _.forEach(flowNode.dataInputAssociations, contextual(handleDataAssociation, null));
-      _.forEach(flowNode.dataOutputAssociations, contextual(handleDataAssociation, null));
-
-      handleIoSpecification(flowNode.ioSpecification, context);
-    }
-  }
-
-  function handleSequenceFlow(sequenceFlow, context) {
-    visitIfDi(sequenceFlow, context);
-  }
-
-  function handleDataElement(dataObject, context) {
-    visitIfDi(dataObject, context);
-  }
-
-  function handleBoundaryElement(dataObject, context) {
-    visitIfDi(dataObject, context);
-  }
-
-  function handleLane(lane, context) {
-    var newContext = visitIfDi(lane, context);
-
-    if (lane.childLaneSet) {
-      handleLaneSet(lane.childLaneSet, newContext || context);
-    } else {
-      var filterList = _.filter(lane.flowNodeRef, function(e) {
-        return e.$type !== 'bpmn:BoundaryEvent';
-      });
-      handleFlowElements(filterList, newContext || context);
-    }
-  }
-
-  function handleLaneSet(laneSet, context) {
-    _.forEach(laneSet.lanes, contextual(handleLane, context));
-  }
-
-  function handleLaneSets(laneSets, context) {
-    _.forEach(laneSets, contextual(handleLaneSet, context));
-  }
-
-  function handleFlowElementsContainer(container, context) {
-
-    if (container.laneSets) {
-      handleLaneSets(container.laneSets, context);
-      handleNonFlowNodes(container.flowElements);
-    } else {
-      handleFlowElements(container.flowElements, context);
-    }
-  }
-
-  function handleNonFlowNodes(flowElements, context) {
-    var sequenceFlows = [];
-    var boundaryEvents = [];
-
-    _.forEach(flowElements, function(e) {
-      if (is(e, 'bpmn:SequenceFlow')) {
-        sequenceFlows.push(e);
-      } else if (is(e, 'bpmn:DataObject')) {
-        // SKIP (assume correct referencing via DataObjectReference)
-      } else if (is(e, 'bpmn:DataStoreReference')) {
-        handleDataElement(e, context);
-      } else if (is(e, 'bpmn:DataObjectReference')) {
-        handleDataElement(e, context);
-      } else if (is(e, 'bpmn:BoundaryEvent')) {
-        boundaryEvents.push(e);
-      }
-    });
-
-    // handle boundary events
-    _.forEach(boundaryEvents, contextual(handleBoundaryElement, context));
-
-    // handle SequenceFlows
-    _.forEach(sequenceFlows, contextual(handleSequenceFlow, context));
-  }
-
-  function handleFlowElements(flowElements, context) {
-    var sequenceFlows = [];
-    var boundaryEvents = [];
-
-    _.forEach(flowElements, function(e) {
-      if (is(e, 'bpmn:SequenceFlow')) {
-        sequenceFlows.push(e);
-      } else if (is(e, 'bpmn:BoundaryEvent')) {
-        boundaryEvents.push(e);
-      } else if (is(e, 'bpmn:FlowNode')) {
-        handleFlowNode(e, context);
-      } else if (is(e, 'bpmn:DataObject')) {
-        // SKIP (assume correct referencing via DataObjectReference)
-      } else if (is(e, 'bpmn:DataStoreReference')) {
-        handleDataElement(e, context);
-      } else if (is(e, 'bpmn:DataObjectReference')) {
-        handleDataElement(e, context);
-      } else {
-        logError(
-          'unrecognized flowElement <' + e.$type + '> in context ' + (context ? context.id : null),
-          { element: e, context: context });
-      }
-    });
-
-    // handle boundary events
-    _.forEach(boundaryEvents, contextual(handleBoundaryElement, context));
-
-    // handle SequenceFlows
-    _.forEach(sequenceFlows, contextual(handleSequenceFlow, context));
-  }
-
-  function handleParticipant(participant, context) {
-    var newCtx = visitIfDi(participant, context);
-
-    var process = participant.processRef;
-    if (process) {
-      handleProcess(process, newCtx || context);
-    }
-  }
-
-  function handleCollaboration(collaboration) {
-
-    _.forEach(collaboration.participants, contextual(handleParticipant));
-
-    handleArtifacts(collaboration.artifacts);
-
-    handleMessageFlows(collaboration.messageFlows);
-  }
-
-
-  ///// API ////////////////////////////////
-
-  return {
-    handleDefinitions: handleDefinitions
-  };
-}
-
-module.exports = BpmnTreeWalker;
-},{"object-refs":73}],4:[function(_dereq_,module,exports){
-'use strict';
-
-var BpmnTreeWalker = _dereq_('./BpmnTreeWalker');
-
-
-/**
- * Import the definitions into the given diagram, reporting errors and warnings
- * via the specified callback.
- *
- * @param  {Diagram} diagram
- * @param  {ModdleElement} definitions
- * @param  {Function} done the callback, invoked with (err, [ warning ]) once the import is done
- */
-function importBpmnDiagram(diagram, definitions, done) {
-
-  var importer = diagram.get('bpmnImporter');
-
-  var warnings = [];
-
-  var visitor = {
-
-    root: function(element) {
-      return importer.add(element);
-    },
-
-    element: function(element, parentShape) {
-      return importer.add(element, parentShape);
-    },
-
-    error: function(message, context) {
-      warnings.push({ message: message, context: context });
-    }
-  };
-
-  var walker = new BpmnTreeWalker(visitor);
-
-  try {
-    // import
-    walker.handleDefinitions(definitions);
-
-    done(null, warnings);
-  } catch (e) {
-    done(e);
-  }
-}
-
-module.exports.importBpmnDiagram = importBpmnDiagram;
-},{"./BpmnTreeWalker":3}],5:[function(_dereq_,module,exports){
-'use strict';
-
-var _ = (window._);
-
-var hasExternalLabel = _dereq_('../util/Label').hasExternalLabel,
+var hasExternalLabel = LabelUtil.hasExternalLabel,
+    getExternalLabelBounds = LabelUtil.getExternalLabelBounds,
     isExpanded = _dereq_('../util/Di').isExpanded;
+
+
+function elementData(semantic, attrs) {
+  return _.extend({
+    id: semantic.id,
+    type: semantic.$type,
+    businessObject: semantic
+  }, attrs);
+}
+
+function collectWaypoints(waypoints) {
+  return _.collect(waypoints, function(p) {
+    return { x: p.x, y: p.y };
+  });
+}
+
 
 /**
  * An importer that adds bpmn elements to the canvas
  *
  * @param {EventBus} eventBus
  * @param {Canvas} canvas
+ * @param {ElementFactory} elementFactory
+ * @param {ElementRegistry} elementRegistry
  */
-function BpmnImporter(eventBus, canvas, elementFactory) {
+function BpmnImporter(eventBus, canvas, elementFactory, elementRegistry) {
   this._eventBus = eventBus;
   this._canvas = canvas;
 
   this._elementFactory = elementFactory;
+  this._elementRegistry = elementRegistry;
 }
 
-BpmnImporter.$inject = [ 'eventBus', 'canvas', 'elementFactory' ];
+BpmnImporter.$inject = [ 'eventBus', 'canvas', 'elementFactory', 'elementRegistry' ];
+
+module.exports = BpmnImporter;
 
 
 /**
@@ -701,12 +329,13 @@ BpmnImporter.prototype.add = function(semantic, parentElement) {
   var di = semantic.di,
       element;
 
+  // ROOT ELEMENT
   // handle the special case that we deal with a
   // invisible root element (process or collaboration)
   if (di.$instanceOf('bpmndi:BPMNPlane')) {
 
     // add a virtual element (not being drawn)
-    element = this._elementFactory.createRoot(semantic);
+    element = this._elementFactory.createRoot(elementData(semantic));
   }
 
   // SHAPE
@@ -715,18 +344,39 @@ BpmnImporter.prototype.add = function(semantic, parentElement) {
     var collapsed = !isExpanded(semantic);
     var hidden = parentElement && (parentElement.hidden || parentElement.collapsed);
 
-    element = this._elementFactory.createShape(semantic, {
+    var bounds = semantic.di.bounds;
+
+    element = this._elementFactory.createShape(elementData(semantic, {
       collapsed: collapsed,
-      hidden: hidden
-    });
+      hidden: hidden,
+      x: bounds.x,
+      y: bounds.y,
+      width: bounds.width,
+      height: bounds.height
+    }));
 
     this._canvas.addShape(element, parentElement);
   }
 
   // CONNECTION
-  else {
-    element = this._elementFactory.createConnection(semantic, parentElement);
+  else if (di.$instanceOf('bpmndi:BPMNEdge')) {
+
+    var source = this._getSource(semantic),
+        target = this._getTarget(semantic);
+
+    if (!source || !target) {
+      throw new Error('source or target not rendered for element <' + semantic.id + '>');
+    }
+
+    element = this._elementFactory.createConnection(elementData(semantic, {
+      source: source,
+      target: target,
+      waypoints: collectWaypoints(semantic.di.waypoint)
+    }));
+
     this._canvas.addConnection(element, parentElement);
+  } else {
+    throw new Error('unknown di <' + di.$type + '> for element <' + semantic.id + '>');
   }
 
   // (optional) LABEL
@@ -744,97 +394,74 @@ BpmnImporter.prototype.add = function(semantic, parentElement) {
  * add label for an element
  */
 BpmnImporter.prototype.addLabel = function (semantic, element) {
-  var label = this._elementFactory.createLabel(semantic, element);
-  return this._canvas.addShape(label, element.parent);
-};
+  var bounds = getExternalLabelBounds(semantic, element);
 
-
-module.exports = BpmnImporter;
-},{"../util/Di":11,"../util/Label":12}],6:[function(_dereq_,module,exports){
-'use strict';
-
-var _ = (window._);
-
-
-var LabelUtil = _dereq_('../util/Label');
-
-var getExternalLabelBounds = LabelUtil.getExternalLabelBounds;
-
-
-/**
- * A factory for diagram-js shapes
- *
- * @param {ElementFactory} canvas
- */
-function ElementFactory(canvas) {
-  this._canvas = canvas;
-}
-
-ElementFactory.$inject = [ 'canvas' ];
-
-module.exports = ElementFactory;
-
-
-ElementFactory.prototype.createRoot = function(semantic) {
-
-  return this._canvas.create('root', _.extend({
-    id: semantic.id,
-    type: semantic.$type,
-    businessObject: semantic
-  }));
-};
-
-
-ElementFactory.prototype.createLabel = function(semantic, element) {
-  var labelBounds = getExternalLabelBounds(semantic, element);
-
-  var labelData = _.extend({
+  var label = this._elementFactory.createLabel(elementData(semantic, {
     id: semantic.id + '_label',
     labelTarget: element,
     type: 'label',
     hidden: element.hidden,
-    businessObject: semantic
-  }, labelBounds);
-
-  return this._canvas.create('label', labelData);
-};
-
-
-ElementFactory.prototype.createShape = function(semantic, attrs) {
-  var bounds = semantic.di.bounds;
-
-  var shapeData = _.extend({
-    id: semantic.id,
-    type: semantic.$type,
     x: bounds.x,
     y: bounds.y,
     width: bounds.width,
-    height: bounds.height,
-    businessObject: semantic
-  }, attrs);
+    height: bounds.height
+  }));
 
-  return this._canvas.create('shape', shapeData);
+  return this._canvas.addShape(label, element.parent);
 };
 
 
-ElementFactory.prototype.createConnection = function(semantic) {
-  var waypoints = _.collect(semantic.di.waypoint, function(p) {
-    return { x: p.x, y: p.y };
-  });
+BpmnImporter.prototype._getSource = function(semantic) {
 
-  return this._canvas.create('connection', {
-    id: semantic.id,
-    type: semantic.$type,
-    waypoints: waypoints,
-    businessObject: semantic
-  });
+  var element,
+      elementSemantic = semantic.sourceRef;
+
+  // handle mysterious isMany DataAssociation#sourceRef
+  if (_.isArray(elementSemantic)) {
+    elementSemantic = elementSemantic[0];
+  }
+
+  if (elementSemantic && elementSemantic.$instanceOf('bpmn:DataOutput')) {
+    elementSemantic = elementSemantic.$parent.$parent;
+  }
+
+  element = elementSemantic && this._getElement(elementSemantic);
+
+  if (element) {
+    return element;
+  }
+
+  throw new Error('element <' + elementSemantic.id + '> referenced by <' + semantic.id + '> not yet drawn');
 };
-},{"../util/Label":12}],7:[function(_dereq_,module,exports){
+
+
+BpmnImporter.prototype._getTarget = function(semantic) {
+
+  var element,
+      elementSemantic = semantic.targetRef;
+
+  if (elementSemantic && elementSemantic.$instanceOf('bpmn:DataInput')) {
+    elementSemantic = elementSemantic.$parent.$parent;
+  }
+
+  element = elementSemantic && this._getElement(elementSemantic);
+
+  if (element) {
+    return element;
+  }
+
+  throw new Error('element <' + elementSemantic.id + '> referenced by <' + semantic.id + '> not yet drawn');
+};
+
+
+BpmnImporter.prototype._getElement = function(semantic) {
+  return this._elementRegistry.getById(semantic.id);
+};
+},{"../util/Di":9,"../util/Label":10}],3:[function(_dereq_,module,exports){
 module.exports = {
-  bpmnImporter: [ 'type', _dereq_('./BpmnImporter') ],
-  elementFactory: [ 'type', _dereq_('./ElementFactory') ]
+  bpmnImporter: [ 'type', _dereq_('./BpmnImporter') ]
 };
-},{"./BpmnImporter":5,"./ElementFactory":6}],8:[function(_dereq_,module,exports){
+},{"./BpmnImporter":2}],4:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -1141,7 +768,9 @@ function BpmnRenderer(events, styles, pathMap) {
     );
   }
 
-  function createPathFromWaypoints(waypoints) {
+  function createPathFromConnection(connection) {
+    var waypoints = connection.waypoints;
+
     var pathData = 'm  ' + waypoints[0].x + ',' + waypoints[0].y;
     for (var i = 1; i < waypoints.length; i++) {
       pathData += 'L' + waypoints[i].x + ',' + waypoints[i].y + ' ';
@@ -1851,13 +1480,13 @@ function BpmnRenderer(events, styles, pathMap) {
       return drawDiamond(p, element.width, element.height);
     },
     'bpmn:SequenceFlow': function(p, element) {
-      var pathData = createPathFromWaypoints(element.waypoints);
+      var pathData = createPathFromConnection(element);
       var path = drawPath(p, pathData, {
         markerEnd: marker('sequenceflow-end')
       });
 
       var sequenceFlow = getSemantic(element);
-      var source = sequenceFlow.sourceRef;
+      var source = element.source.businessObject;
 
       // conditional flow marker
       if (sequenceFlow.conditionExpression && source.$instanceOf('bpmn:Task')) {
@@ -1887,19 +1516,19 @@ function BpmnRenderer(events, styles, pathMap) {
     },
     'bpmn:DataInputAssociation': function(p, element) {
       return renderer('bpmn:Association')(p, element, {
-        markerEnd: marker('element-association-end')
+        markerEnd: marker('data-association-end')
       });
     },
     'bpmn:DataOutputAssociation': function(p, element) {
       return renderer('bpmn:Association')(p, element, {
-        markerEnd: marker('element-association-end')
+        markerEnd: marker('data-association-end')
       });
     },
     'bpmn:MessageFlow': function(p, element) {
 
       var di = getDi(element);
 
-      var pathData = createPathFromWaypoints(element.waypoints);
+      var pathData = createPathFromConnection(element);
       var path = drawPath(p, pathData, {
         markerEnd: marker('messageflow-end'),
         markerStart: marker('messageflow-start'),
@@ -2034,6 +1663,11 @@ function BpmnRenderer(events, styles, pathMap) {
       return renderExternalLabel(p, element, '');
     },
     'bpmn:TextAnnotation': function(p, element) {
+      var style = {
+        'fill': 'none',
+        'stroke': 'none'
+      };
+      var textElement = drawRect(p, element.width, element.width, 0, 0, style);
       var textPathData = pathMap.getScaledPath('TEXT_ANNOTATION', {
         xScaleFactor: 1,
         yScaleFactor: 1,
@@ -2047,9 +1681,9 @@ function BpmnRenderer(events, styles, pathMap) {
       drawPath(p, textPathData);
 
       var text = getSemantic(element).text || '';
-      var label = renderLabel(p, text, { box: element, align: 'left-middle' });
+      renderLabel(p, text, { box: element, align: 'left-middle' });
 
-      return label;
+      return textElement;
     },
     'ParticipantMultiplicityMarker': function(p, element) {
       var subProcessPath = pathMap.getScaledPath('MARKER_PARALLEL', {
@@ -2313,7 +1947,7 @@ BpmnRenderer.prototype = Object.create(DefaultRenderer.prototype);
 BpmnRenderer.$inject = [ 'eventBus', 'styles', 'pathMap' ];
 
 module.exports = BpmnRenderer;
-},{"../util/Di":11,"diagram-js/lib/draw/Renderer":50,"diagram-js/lib/util/LabelUtil":65}],9:[function(_dereq_,module,exports){
+},{"../util/Di":9,"diagram-js/lib/draw/Renderer":49,"diagram-js/lib/util/LabelUtil":67}],5:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -2760,13 +2394,417 @@ function PathMap(Snap) {
 PathMap.$inject = [ 'snap' ];
 
 module.exports = PathMap;
-},{}],10:[function(_dereq_,module,exports){
+},{}],6:[function(_dereq_,module,exports){
 module.exports = {
   __depends__: [ _dereq_('../core') ],
   renderer: [ 'type', _dereq_('./BpmnRenderer') ],
   pathMap: [ 'type', _dereq_('./PathMap') ]
 };
-},{"../core":7,"./BpmnRenderer":8,"./PathMap":9}],11:[function(_dereq_,module,exports){
+},{"../core":3,"./BpmnRenderer":4,"./PathMap":5}],7:[function(_dereq_,module,exports){
+'use strict';
+
+var _ = (window._);
+
+var Refs = _dereq_('object-refs');
+
+var diRefs = new Refs({ name: 'bpmnElement', enumerable: true }, { name: 'di' });
+
+
+function BpmnTreeWalker(handler) {
+
+  // list of containers already walked
+  var handledProcesses = [];
+
+  // list of elements to handle deferred to ensure
+  // prerequisites are drawn
+  var deferred = [];
+
+  ///// Helpers /////////////////////////////////
+
+  function contextual(fn, ctx) {
+    return function(e) {
+      fn(e, ctx);
+    };
+  }
+
+  function is(element, type) {
+    return element.$instanceOf(type);
+  }
+
+  function visit(element, ctx) {
+
+    var gfx = element.gfx;
+
+    // avoid multiple rendering of elements
+    if (gfx) {
+      throw new Error('already rendered <' + element.id + '>');
+    }
+
+    // call handler
+    return handler.element(element, ctx);
+  }
+
+  function visitRoot(element, diagram) {
+    return handler.root(element, diagram);
+  }
+
+  function visitIfDi(element, ctx) {
+    try {
+      if (element.di) {
+        return visit(element, ctx);
+      }
+    } catch (e) {
+      logError(e.message, { element: element, error: e });
+    }
+  }
+
+  function logError(message, context) {
+    handler.error(message, context);
+  }
+
+  ////// DI handling ////////////////////////////
+
+  function registerDi(di) {
+    var bpmnElement = di.bpmnElement;
+
+    if (bpmnElement) {
+      diRefs.bind(bpmnElement, 'di');
+      bpmnElement.di = di;
+    } else {
+      logError('no bpmnElement for <' + di.$type + '#' + di.id + '>', { element: di });
+    }
+  }
+
+  function handleDiagram(diagram) {
+    handlePlane(diagram.plane);
+  }
+
+  function handlePlane(plane) {
+    registerDi(plane);
+
+    _.forEach(plane.planeElement, handlePlaneElement);
+  }
+
+  function handlePlaneElement(planeElement) {
+    registerDi(planeElement);
+  }
+
+
+  ////// Semantic handling //////////////////////
+
+  function handleDefinitions(definitions, diagram) {
+    // make sure we walk the correct bpmnElement
+
+    var diagrams = definitions.diagrams;
+
+    if (diagram && diagrams.indexOf(diagram) === -1) {
+      throw new Error('diagram not part of bpmn:Definitions');
+    }
+
+    if (!diagram && diagrams && diagrams.length) {
+      diagram = diagrams[0];
+    }
+
+    // no diagram -> nothing to import
+    if (!diagram) {
+      return;
+    }
+
+    // load DI from selected diagram only
+    handleDiagram(diagram);
+
+    var plane = diagram.plane,
+        rootElement = plane.bpmnElement;
+
+    if (!rootElement) {
+      throw new Error('no rootElement referenced in BPMNPlane <' + diagram.plane.id + '>');
+    }
+
+
+    var ctx = visitRoot(rootElement, plane);
+
+    if (is(rootElement, 'bpmn:Process')) {
+      handleProcess(rootElement, ctx);
+    } else if (is(rootElement, 'bpmn:Collaboration')) {
+      handleCollaboration(rootElement, ctx);
+
+      // force drawing of everything not yet drawn that is part of the target DI
+      handleUnhandledProcesses(definitions.rootElements, ctx);
+    } else {
+      throw new Error('unsupported root element for bpmndi:Diagram <' + rootElement.$type + '>');
+    }
+
+    // handle all deferred elements
+    handleDeferred(deferred);
+  }
+
+  function handleDeferred(deferred) {
+    _.forEach(deferred, function(d) { d(); });
+  }
+
+  function handleProcess(process, context) {
+    handleFlowElementsContainer(process, context);
+    handleIoSpecification(process.ioSpecification, context);
+
+    handleArtifacts(process.artifacts, context);
+
+    // log process handled
+    handledProcesses.push(process);
+  }
+
+  function handleUnhandledProcesses(rootElements) {
+
+    // walk through all processes that have not yet been drawn and draw them
+    // if they contain lanes with DI information.
+    // we do this to pass the free-floating lane test cases in the MIWG test suite
+    var processes = _.filter(rootElements, function(e) {
+      return is(e, 'bpmn:Process') && e.laneSets && handledProcesses.indexOf(e) === -1;
+    });
+
+    processes.forEach(contextual(handleProcess));
+  }
+
+  function handleMessageFlow(messageFlow, context) {
+    visitIfDi(messageFlow, context);
+  }
+
+  function handleMessageFlows(messageFlows, context) {
+    if (messageFlows) {
+      _.forEach(messageFlows, contextual(handleMessageFlow, context));
+    }
+  }
+
+  function handleDataAssociation(association, context) {
+    visitIfDi(association, context);
+  }
+
+  function handleDataInput(dataInput, context) {
+    visitIfDi(dataInput, context);
+  }
+
+  function handleDataOutput(dataOutput, context) {
+    visitIfDi(dataOutput, context);
+  }
+
+  function handleArtifact(artifact, context) {
+
+    // bpmn:TextAnnotation
+    // bpmn:Group
+    // bpmn:Association
+
+    visitIfDi(artifact, context);
+  }
+
+  function handleArtifacts(artifacts, context) {
+    _.forEach(artifacts, contextual(handleArtifact, context));
+  }
+
+  function handleIoSpecification(ioSpecification, context) {
+
+    if (!ioSpecification) {
+      return;
+    }
+
+    _.forEach(ioSpecification.dataInputs, contextual(handleDataInput, context));
+    _.forEach(ioSpecification.dataOutputs, contextual(handleDataOutput, context));
+  }
+
+  function handleSubProcess(subProcess, context) {
+    handleFlowElementsContainer(subProcess, context);
+    handleArtifacts(subProcess.artifacts, context);
+  }
+
+  function handleFlowNode(flowNode, context) {
+    var childCtx = visitIfDi(flowNode, context);
+
+    if (is(flowNode, 'bpmn:SubProcess')) {
+      handleSubProcess(flowNode, childCtx || context);
+    }
+  }
+
+  function handleSequenceFlow(sequenceFlow, context) {
+    visitIfDi(sequenceFlow, context);
+  }
+
+  function handleDataElement(dataObject, context) {
+    visitIfDi(dataObject, context);
+  }
+
+  function handleBoundaryEvent(dataObject, context) {
+    visitIfDi(dataObject, context);
+  }
+
+  function handleLane(lane, context) {
+    var newContext = visitIfDi(lane, context);
+
+    if (lane.childLaneSet) {
+      handleLaneSet(lane.childLaneSet, newContext || context);
+    } else {
+      var filterList = _.filter(lane.flowNodeRef, function(e) {
+        return e.$type !== 'bpmn:BoundaryEvent';
+      });
+      handleFlowElements(filterList, newContext || context);
+    }
+  }
+
+  function handleLaneSet(laneSet, context) {
+    _.forEach(laneSet.lanes, contextual(handleLane, context));
+  }
+
+  function handleLaneSets(laneSets, context) {
+    _.forEach(laneSets, contextual(handleLaneSet, context));
+  }
+
+  function handleFlowElementsContainer(container, context) {
+
+    if (container.laneSets) {
+      handleLaneSets(container.laneSets, context);
+      handleNonFlowNodes(container.flowElements);
+    } else {
+      handleFlowElements(container.flowElements, context);
+    }
+  }
+
+  function handleNonFlowNodes(flowElements, context) {
+    _.forEach(flowElements, function(e) {
+      if (is(e, 'bpmn:SequenceFlow')) {
+        deferred.push(function() {
+          handleSequenceFlow(e, context);
+        });
+      } else if (is(e, 'bpmn:BoundaryEvent')) {
+        deferred.unshift(function() {
+          handleBoundaryEvent(e, context);
+        });
+      } else if (is(e, 'bpmn:DataObject')) {
+        // SKIP (assume correct referencing via DataObjectReference)
+      } else if (is(e, 'bpmn:DataStoreReference')) {
+        handleDataElement(e, context);
+      } else if (is(e, 'bpmn:DataObjectReference')) {
+        handleDataElement(e, context);
+      }
+    });
+  }
+
+  function handleFlowElements(flowElements, context) {
+    _.forEach(flowElements, function(e) {
+      if (is(e, 'bpmn:SequenceFlow')) {
+        deferred.push(function() {
+          handleSequenceFlow(e, context);
+        });
+      } else if (is(e, 'bpmn:BoundaryEvent')) {
+        deferred.unshift(function() {
+          handleBoundaryEvent(e, context);
+        });
+      } else if (is(e, 'bpmn:FlowNode')) {
+        handleFlowNode(e, context);
+
+        if (is(e, 'bpmn:Activity')) {
+
+          handleIoSpecification(e.ioSpecification, context);
+
+          // defer handling of associations
+          deferred.push(function() {
+            _.forEach(e.dataInputAssociations, contextual(handleDataAssociation, context));
+            _.forEach(e.dataOutputAssociations, contextual(handleDataAssociation, context));
+          });
+        }
+      } else if (is(e, 'bpmn:DataObject')) {
+        // SKIP (assume correct referencing via DataObjectReference)
+      } else if (is(e, 'bpmn:DataStoreReference')) {
+        handleDataElement(e, context);
+      } else if (is(e, 'bpmn:DataObjectReference')) {
+        handleDataElement(e, context);
+      } else {
+        logError(
+          'unrecognized flowElement <' + e.$type + '> in context ' + (context ? context.id : null),
+          { element: e, context: context });
+      }
+    });
+  }
+
+  function handleParticipant(participant, context) {
+    var newCtx = visitIfDi(participant, context);
+
+    var process = participant.processRef;
+    if (process) {
+      handleProcess(process, newCtx || context);
+    }
+  }
+
+  function handleCollaboration(collaboration) {
+
+    _.forEach(collaboration.participants, contextual(handleParticipant));
+
+    handleArtifacts(collaboration.artifacts);
+
+    handleMessageFlows(collaboration.messageFlows);
+  }
+
+
+  ///// API ////////////////////////////////
+
+  return {
+    handleDefinitions: handleDefinitions
+  };
+}
+
+module.exports = BpmnTreeWalker;
+},{"object-refs":75}],8:[function(_dereq_,module,exports){
+'use strict';
+
+var BpmnTreeWalker = _dereq_('./BpmnTreeWalker');
+
+
+/**
+ * Import the definitions into a diagram.
+ *
+ * Errors and warnings are reported through the specified callback.
+ *
+ * @param  {Diagram} diagram
+ * @param  {ModdleElement} definitions
+ * @param  {Function} done the callback, invoked with (err, [ warning ]) once the import is done
+ */
+function importBpmnDiagram(diagram, definitions, done) {
+
+  var importer = diagram.get('bpmnImporter'),
+      eventBus = diagram.get('eventBus');
+
+  var warnings = [];
+
+  var visitor = {
+
+    root: function(element) {
+      return importer.add(element);
+    },
+
+    element: function(element, parentShape) {
+      return importer.add(element, parentShape);
+    },
+
+    error: function(message, context) {
+      warnings.push({ message: message, context: context });
+    }
+  };
+
+  var walker = new BpmnTreeWalker(visitor);
+
+  try {
+    eventBus.fire('import.start');
+
+    // import
+    walker.handleDefinitions(definitions);
+
+    eventBus.fire('import.success', warnings);
+
+    done(null, warnings);
+  } catch (e) {
+    eventBus.fire('import.error', e);
+    done(e);
+  }
+}
+
+module.exports.importBpmnDiagram = importBpmnDiagram;
+},{"./BpmnTreeWalker":7}],9:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports.isExpandedPool = function(semantic) {
@@ -2776,10 +2814,16 @@ module.exports.isExpandedPool = function(semantic) {
 module.exports.isExpanded = function(semantic) {
   return !semantic.$instanceOf('bpmn:SubProcess') || semantic.di.isExpanded;
 };
-},{}],12:[function(_dereq_,module,exports){
+},{}],10:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
+
+
+var DEFAULT_LABEL_SIZE = module.exports.DEFAULT_LABEL_SIZE = {
+  width: 90,
+  height: 50
+};
 
 
 /**
@@ -2805,7 +2849,7 @@ module.exports.hasExternalLabel = function(semantic) {
  * @param  {Array<Point>} waypoints
  * @return {Point} the mid point
  */
-module.exports.getWaypointsMid = function(waypoints) {
+var getWaypointsMid = module.exports.getWaypointsMid = function(waypoints) {
 
   var mid = waypoints.length / 2 - 1;
 
@@ -2818,6 +2862,18 @@ module.exports.getWaypointsMid = function(waypoints) {
   };
 };
 
+
+var getExternalLabelMid = module.exports.getExternalLabelMid = function(element) {
+
+  if (element.waypoints) {
+    return getWaypointsMid(element.waypoints);
+  } else {
+    return {
+      x: element.x + element.width / 2,
+      y: element.y + element.height + DEFAULT_LABEL_SIZE.height / 2 - 5
+    };
+  }
+};
 
 /**
  * Returns the bounds of an elements label, parsed from the elements DI or
@@ -2848,19 +2904,9 @@ module.exports.getExternalLabelBounds = function(semantic, element) {
     };
   } else {
 
-    if (element.waypoints) {
-      mid = module.exports.getWaypointsMid(element.waypoints);
-    } else {
-      mid = {
-        x: element.x + element.width / 2,
-        y: element.y + element.height - 5
-      };
-    }
+    mid = getExternalLabelMid(element);
 
-    size = {
-      width: 90,
-      height: 50
-    };
+    size = DEFAULT_LABEL_SIZE;
   }
 
   return _.extend({
@@ -2868,13 +2914,15 @@ module.exports.getExternalLabelBounds = function(semantic, element) {
     y: mid.y
   }, size);
 };
-},{}],13:[function(_dereq_,module,exports){
-module.exports = _dereq_('./lib/model/Simple');
-},{"./lib/model/Simple":15}],14:[function(_dereq_,module,exports){
+},{}],11:[function(_dereq_,module,exports){
+module.exports = _dereq_('./lib/simple');
+},{"./lib/simple":13}],12:[function(_dereq_,module,exports){
+'use strict';
+
 var _ = (window._);
 
 var Moddle = _dereq_('moddle'),
-    xml = _dereq_('moddle-xml');
+    ModdleXml = _dereq_('moddle-xml');
 
 
 function createModel(packages) {
@@ -2882,110 +2930,95 @@ function createModel(packages) {
 }
 
 /**
- * @class Bpmn
+ * A sub class of {@link Moddle} with support for import and export of BPMN 2.0 xml files.
  *
- * A wrapper around {@link Moddle} with support for import and export of BPMN 2.0 xml files.
+ * @class BpmnModdle
+ * @extends Moddle
  *
  * @param {Object|Array} packages to use for instantiating the model
+ * @param {Object} [options] additional options to pass over
  */
-function Bpmn(packages) {
-
-  var model = createModel(packages);
-
-  /**
-   * Instantiates a BPMN model tree from a given xml string.
-   *
-   * @method Bpmn#fromXML
-   *
-   * @param  {String}   xmlStr
-   * @param  {String}   [typeName] name of the root element, defaults to 'bpmn:Definitions'
-   * @param  {Object}   [options] options to pass to the underlying reader
-   * @param  {Function} callback callback that is invoked with (err, result, parseContext) once the import completes
-   */
-  function fromXML(xmlStr, typeName, options, callback) {
-
-    if (!_.isString(typeName)) {
-      callback = options;
-      options = typeName;
-      typeName = 'bpmn:Definitions';
-    }
-
-    if (_.isFunction(options)) {
-      callback = options;
-      options = {};
-    }
-
-    var reader = new xml.Reader(model, options);
-    var rootHandler = reader.handler(typeName);
-
-    reader.fromXML(xmlStr, rootHandler, function(err, result) {
-      callback(err, result, rootHandler.context);
-    });
-  }
-
-  /**
-   * Serializes a BPMN 2.0 object tree to XML.
-   *
-   * @method Bpmn#toXML
-   *
-   * @param  {String}   element the root element, typically an instance of `bpmn:Definitions`
-   * @param  {Object}   [options] to pass to the underlying writer
-   * @param  {Function} callback invoked with (err, xmlStr) once the import completes
-   */
-  function toXML(element, options, callback) {
-
-    if (_.isFunction(options)) {
-      callback = options;
-      options = {};
-    }
-
-    var writer = new xml.Writer(options);
-    try {
-      var result = writer.toXML(element);
-      callback(null, result);
-    } catch (e) {
-      callback(e);
-    }
-  }
-
-  /**
-   * Returns the underlying moddle instance.
-   *
-   * @method  Bpmn#instance
-   *
-   * @return {Moddle}
-   */
-  function instance() {
-    return model;
-  }
-
-
-  // API
-  this.instance = instance;
-
-  this.fromXML = fromXML;
-  this.toXML = toXML;
+function BpmnModdle(packages, options) {
+  Moddle.call(this, packages, options);
 }
 
+BpmnModdle.prototype = Object.create(Moddle.prototype);
 
-module.exports = Bpmn;
-},{"moddle":30,"moddle-xml":16}],15:[function(_dereq_,module,exports){
-var BpmnModdle = _dereq_('../Bpmn');
+module.exports = BpmnModdle;
 
-var packages = {
-  bpmn: _dereq_('../../resources/bpmn/json/bpmn.json'),
-  bpmndi: _dereq_('../../resources/bpmn/json/bpmndi.json'),
-  dc: _dereq_('../../resources/bpmn/json/dc.json'),
-  di: _dereq_('../../resources/bpmn/json/di.json')
+
+/**
+ * Instantiates a BPMN model tree from a given xml string.
+ *
+ * @param {String}   xmlStr
+ * @param {String}   [typeName]   name of the root element, defaults to 'bpmn:Definitions'
+ * @param {Object}   [options]    options to pass to the underlying reader
+ * @param {Function} done         callback that is invoked with (err, result, parseContext) once the import completes
+ */
+BpmnModdle.prototype.fromXML = function(xmlStr, typeName, options, done) {
+
+  if (!_.isString(typeName)) {
+    done = options;
+    options = typeName;
+    typeName = 'bpmn:Definitions';
+  }
+
+  if (_.isFunction(options)) {
+    done = options;
+    options = {};
+  }
+
+  var reader = new ModdleXml.Reader(this, options);
+  var rootHandler = reader.handler(typeName);
+
+  reader.fromXML(xmlStr, rootHandler, function(err, result) {
+    done(err, result, rootHandler.context);
+  });
 };
 
-module.exports = new BpmnModdle(packages);
-},{"../../resources/bpmn/json/bpmn.json":39,"../../resources/bpmn/json/bpmndi.json":40,"../../resources/bpmn/json/dc.json":41,"../../resources/bpmn/json/di.json":42,"../Bpmn":14}],16:[function(_dereq_,module,exports){
+
+/**
+ * Serializes a BPMN 2.0 object tree to XML.
+ *
+ * @param {String}   element    the root element, typically an instance of `bpmn:Definitions`
+ * @param {Object}   [options]  to pass to the underlying writer
+ * @param {Function} done       callback invoked with (err, xmlStr) once the import completes
+ */
+BpmnModdle.prototype.toXML = function(element, options, done) {
+
+  if (_.isFunction(options)) {
+    done = options;
+    options = {};
+  }
+
+  var writer = new ModdleXml.Writer(options);
+  try {
+    var result = writer.toXML(element);
+    done(null, result);
+  } catch (e) {
+    done(e);
+  }
+};
+
+},{"moddle":28,"moddle-xml":14}],13:[function(_dereq_,module,exports){
+var BpmnModdle = _dereq_('./bpmn-moddle');
+
+var packages = {
+  bpmn: _dereq_('../resources/bpmn/json/bpmn.json'),
+  bpmndi: _dereq_('../resources/bpmn/json/bpmndi.json'),
+  dc: _dereq_('../resources/bpmn/json/dc.json'),
+  di: _dereq_('../resources/bpmn/json/di.json')
+};
+
+module.exports = function() {
+  return new BpmnModdle(packages);
+};
+},{"../resources/bpmn/json/bpmn.json":37,"../resources/bpmn/json/bpmndi.json":38,"../resources/bpmn/json/dc.json":39,"../resources/bpmn/json/di.json":40,"./bpmn-moddle":12}],14:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports.Reader = _dereq_('./lib/Reader');
 module.exports.Writer = _dereq_('./lib/Writer');
-},{"./lib/Reader":17,"./lib/Writer":18}],17:[function(_dereq_,module,exports){
+},{"./lib/Reader":15,"./lib/Writer":16}],15:[function(_dereq_,module,exports){
 'use strict';
 
 var sax = (window.sax),
@@ -3522,7 +3555,7 @@ function XMLReader(model) {
 
 module.exports = XMLReader;
 module.exports.ElementHandler = ElementHandler;
-},{"./common":19,"moddle":20,"tiny-stack":29}],18:[function(_dereq_,module,exports){
+},{"./common":17,"moddle":18,"tiny-stack":27}],16:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -4092,7 +4125,7 @@ function XMLWriter(options) {
 }
 
 module.exports = XMLWriter;
-},{"./common":19,"moddle":20}],19:[function(_dereq_,module,exports){
+},{"./common":17,"moddle":18}],17:[function(_dereq_,module,exports){
 'use strict';
 
 
@@ -4128,7 +4161,7 @@ module.exports.nameToAlias = function(name, pkg) {
 module.exports.DEFAULT_NS_MAP = {
   'xsi': 'http://www.w3.org/2001/XMLSchema-instance'
 };
-},{}],20:[function(_dereq_,module,exports){
+},{}],18:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = _dereq_('./lib/moddle');
@@ -4136,7 +4169,7 @@ module.exports = _dereq_('./lib/moddle');
 module.exports.types = _dereq_('./lib/types');
 
 module.exports.ns = _dereq_('./lib/ns');
-},{"./lib/moddle":24,"./lib/ns":25,"./lib/types":28}],21:[function(_dereq_,module,exports){
+},{"./lib/moddle":22,"./lib/ns":23,"./lib/types":26}],19:[function(_dereq_,module,exports){
 'use strict';
 
 function Base() { }
@@ -4151,7 +4184,7 @@ Base.prototype.set = function(name, value) {
 
 
 module.exports = Base;
-},{}],22:[function(_dereq_,module,exports){
+},{}],20:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -4332,7 +4365,7 @@ DescriptorBuilder.prototype.addTrait = function(t) {
   allTypes.push(t);
 };
 
-},{"./ns":25}],23:[function(_dereq_,module,exports){
+},{"./ns":23}],21:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -4390,7 +4423,7 @@ Factory.prototype.createType = function(descriptor) {
 
   return ModdleElement;
 };
-},{"./base":21}],24:[function(_dereq_,module,exports){
+},{"./base":19}],22:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -4429,12 +4462,12 @@ var parseNameNs = _dereq_('./ns').parseName;
  */
 function Moddle(packages, options) {
 
-  options = options || [];
+  options = options || {};
 
-  this.properties = options.properties || new Properties(this);
+  this.properties = new Properties(this);
 
-  this.factory = options.factory || new Factory(this, this.properties);
-  this.registry = options.registry || new Registry(packages, this.properties, options);
+  this.factory = new Factory(this, this.properties);
+  this.registry = new Registry(packages, this.properties, options);
 
   this.typeCache = {};
 }
@@ -4609,7 +4642,7 @@ Moddle.prototype.getPropertyDescriptor = function(element, property) {
   return this.getElementDescriptor(element).propertiesByName[property];
 };
 
-},{"./factory":23,"./ns":25,"./properties":26,"./registry":27,"./types":28}],25:[function(_dereq_,module,exports){
+},{"./factory":21,"./ns":23,"./properties":24,"./registry":25,"./types":26}],23:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -4646,7 +4679,7 @@ module.exports.parseName = function(name, defaultPrefix) {
     localName: localName
   };
 };
-},{}],26:[function(_dereq_,module,exports){
+},{}],24:[function(_dereq_,module,exports){
 'use strict';
 
 
@@ -4739,7 +4772,7 @@ Properties.prototype.defineDescriptor = function(target, descriptor) {
 Properties.prototype.defineModel = function(target, model) {
   this.define(target, '$model', { value: model });
 };
-},{}],27:[function(_dereq_,module,exports){
+},{}],25:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -4887,7 +4920,7 @@ Registry.prototype.getEffectiveDescriptor = function(name) {
 Registry.prototype.definePackage = function(target, pkg) {
   this.properties.define(target, '$pkg', { value: pkg });
 };
-},{"./descriptor-builder":22,"./ns":25,"./types":28}],28:[function(_dereq_,module,exports){
+},{"./descriptor-builder":20,"./ns":23,"./types":26}],26:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -4938,7 +4971,7 @@ module.exports.isBuiltIn = function(type) {
 module.exports.isSimple = function(type) {
   return !!TYPE_CONVERTERS[type];
 };
-},{}],29:[function(_dereq_,module,exports){
+},{}],27:[function(_dereq_,module,exports){
 /**
  * Tiny stack for browser or server
  *
@@ -5055,25 +5088,25 @@ else {
 }
 } )( this );
 
+},{}],28:[function(_dereq_,module,exports){
+module.exports=_dereq_(18)
+},{"./lib/moddle":32,"./lib/ns":33,"./lib/types":36}],29:[function(_dereq_,module,exports){
+module.exports=_dereq_(19)
 },{}],30:[function(_dereq_,module,exports){
 module.exports=_dereq_(20)
-},{"./lib/moddle":34,"./lib/ns":35,"./lib/types":38}],31:[function(_dereq_,module,exports){
+},{"./ns":33}],31:[function(_dereq_,module,exports){
 module.exports=_dereq_(21)
-},{}],32:[function(_dereq_,module,exports){
+},{"./base":29}],32:[function(_dereq_,module,exports){
 module.exports=_dereq_(22)
-},{"./ns":35}],33:[function(_dereq_,module,exports){
+},{"./factory":31,"./ns":33,"./properties":34,"./registry":35,"./types":36}],33:[function(_dereq_,module,exports){
 module.exports=_dereq_(23)
-},{"./base":31}],34:[function(_dereq_,module,exports){
+},{}],34:[function(_dereq_,module,exports){
 module.exports=_dereq_(24)
-},{"./factory":33,"./ns":35,"./properties":36,"./registry":37,"./types":38}],35:[function(_dereq_,module,exports){
+},{}],35:[function(_dereq_,module,exports){
 module.exports=_dereq_(25)
-},{}],36:[function(_dereq_,module,exports){
+},{"./descriptor-builder":30,"./ns":33,"./types":36}],36:[function(_dereq_,module,exports){
 module.exports=_dereq_(26)
 },{}],37:[function(_dereq_,module,exports){
-module.exports=_dereq_(27)
-},{"./descriptor-builder":32,"./ns":35,"./types":38}],38:[function(_dereq_,module,exports){
-module.exports=_dereq_(28)
-},{}],39:[function(_dereq_,module,exports){
 module.exports={
   "name": "BPMN20",
   "uri": "http://www.omg.org/spec/BPMN/20100524/MODEL",
@@ -8151,7 +8184,7 @@ module.exports={
     "alias": "lowerCase"
   }
 }
-},{}],40:[function(_dereq_,module,exports){
+},{}],38:[function(_dereq_,module,exports){
 module.exports={
   "name": "BPMNDI",
   "uri": "http://www.omg.org/spec/BPMN/20100524/DI",
@@ -8355,7 +8388,7 @@ module.exports={
   "associations": [],
   "prefix": "bpmndi"
 }
-},{}],41:[function(_dereq_,module,exports){
+},{}],39:[function(_dereq_,module,exports){
 module.exports={
   "name": "DC",
   "uri": "http://www.omg.org/spec/DD/20100524/DC",
@@ -8455,7 +8488,7 @@ module.exports={
   "prefix": "dc",
   "associations": []
 }
-},{}],42:[function(_dereq_,module,exports){
+},{}],40:[function(_dereq_,module,exports){
 module.exports={
   "name": "DI",
   "uri": "http://www.omg.org/spec/DD/20100524/DI",
@@ -8667,9 +8700,9 @@ module.exports={
   "associations": [],
   "prefix": "di"
 }
-},{}],43:[function(_dereq_,module,exports){
+},{}],41:[function(_dereq_,module,exports){
 module.exports = _dereq_('./lib/Diagram');
-},{"./lib/Diagram":44}],44:[function(_dereq_,module,exports){
+},{"./lib/Diagram":42}],42:[function(_dereq_,module,exports){
 'use strict';
 
 var di = _dereq_('didi');
@@ -8681,6 +8714,7 @@ var di = _dereq_('didi');
 /**
  * Bootstrap an injector from a list of modules, instantiating a number of default components
  *
+ * @ignore
  * @param {Array<didi.Module>} bootstrapModules
  *
  * @return {didi.Injector} a injector to use to access the components
@@ -8731,6 +8765,7 @@ function bootstrap(bootstrapModules) {
 /**
  * Creates an injector from passed options.
  *
+ * @ignore
  * @param  {Object} options
  * @return {didi.Injector}
  */
@@ -8751,46 +8786,41 @@ function createInjector(options) {
 
 
 /**
- * @class
- *
  * The main diagram-js entry point that bootstraps the diagram with the given
- * configuration.
+ * configuration. To register extensions with the diagram, pass them as Array<didi.Module> to the constructor.
  *
- *
- * To register extensions with the diagram, pass them as Array<didi.Module> to the constructor
+ * @class djs.Diagram
+ * @memberOf djs
+ * @constructor
  *
  * @example
  *
- * Given you would like to create a plug-in that logs whenever a shape
- * or connection was added to the canvas:
+ * <caption>Creating a plug-in that logs whenever a shape is added to the canvas.</caption>
  *
- *   * Create the plug-in file:
+ * // plug-in implemenentation
+ * function MyLoggingPlugin(eventBus) {
+ *   eventBus.on('shape.added', function(event) {
+ *     console.log('shape ', event.shape, ' was added to the diagram');
+ *   });
+ * }
  *
- *     ```javascript
- *     function MyLoggingPlugin(events) {
- *       events.on('shape.added', function(event) {
- *         console.log('shape ', event.shape, ' was added to the diagram');
- *       });
- *     }
+ * // export as module
+ * module.exports = {
+ *   __init__: [ 'myLoggingPlugin' ],
+ *     myLoggingPlugin: [ 'type', MyLoggingPlugin ]
+ * };
  *
- *     module.exports = {
- *       __init__: [ 'myLoggingPlugin'],
- *       myLoggingPlugin: [ 'type', [ 'eventBus', MyLoggingPlugin ]]
- *     };
- *     ```
  *
- *   * Instantiate the diagram with the new plug-in
+ * // instantiate the diagram with the new plug-in
  *
- *     ```javascript
- *     var diagram = new Diagram({ modules: [ require('path-to-plugin-file') ] });
+ * var diagram = new Diagram({ modules: [ require('path-to-my-logging-plugin') ] });
  *
- *     diagram.invoke([ 'canvas', function(canvas) {
- *       // add shape to drawing canvas
- *       canvas.addShape({ x: 10, y: 10 });
- *     });
+ * diagram.invoke([ 'canvas', function(canvas) {
+ *   // add shape to drawing canvas
+ *   canvas.addShape({ x: 10, y: 10 });
+ * });
  *
- *     // 'shape ... was added to the diagram' logged to console
- *     ```
+ * // 'shape ... was added to the diagram' logged to console
  *
  * @param {Object} options
  * @param {Array<didi.Module>} [options.modules] external modules to instantiate with the diagram
@@ -8859,13 +8889,11 @@ module.exports = Diagram;
 Diagram.prototype.destroy = function() {
   this.get('eventBus').fire('diagram.destroy');
 };
-},{"./core":49,"didi":67}],45:[function(_dereq_,module,exports){
+},{"./core":48,"didi":69}],43:[function(_dereq_,module,exports){
 'use strict';
 
 
 var _ = (window._);
-
-var Model = _dereq_('../model');
 
 var remove = _dereq_('../util/Collections').remove;
 
@@ -8910,7 +8938,10 @@ function createContainer(options) {
 
 
 /**
+ * The main drawing canvas.
+ *
  * @class
+ * @constructor
  *
  * @emits Canvas#canvas.init
  *
@@ -8997,18 +9028,6 @@ function Canvas(config, eventBus, graphicsFactory, elementRegistry, snap) {
     return elementRegistry.getGraphicsByElement(element);
   }
 
-  /**
-   * Returns the root rendering context on which
-   * all elements have to be drawn.
-   *
-   * @method Canvas#getRoot
-   *
-   * @returns {snapsvg.Group}
-   */
-  function getRoot() {
-    return root;
-  }
-
   eventBus.on('diagram.init', function(event) {
 
     /**
@@ -9036,54 +9055,10 @@ function Canvas(config, eventBus, graphicsFactory, elementRegistry, snap) {
     root = this._root = null;
   });
 
-
-  // redraw shapes / connections on change
-
-  var self = this;
-
-  eventBus.on('element.changed', function(event) {
-
-    if (event.element.waypoints) {
-      eventBus.fire('connection.changed', event);
-    } else {
-      eventBus.fire('shape.changed', event);
-    }
-  });
-
-  eventBus.on('shape.changed', function(event) {
-    var element = event.element;
-    graphicsFactory.updateShape(element, event.gfx || self.getGraphics(element));
-  });
-
-  eventBus.on('connection.changed', function(event) {
-    var element = event.element;
-    graphicsFactory.updateConnection(element, event.gfx || self.getGraphics(element));
-  });
-
-  this.getRoot  = getRoot;
-
-  this.getContainer = function() {
-    return this._container;
-  };
-
   this.getGraphics = getGraphics;
 
   this.sendToFront = sendToFront;
 }
-
-
-/**
- * Create a model element with the given type and
- * a number of pre-set attributes.
- *
- * @param  {String} type
- * @param  {Object} attrs
- * @return {djs.model.Base} the newly created model instance
- */
-Canvas.prototype.create = function(type, attrs) {
-  return Model.create(type, attrs);
-};
-
 
 /**
  * Ensure that an element has a valid, unique id
@@ -9100,11 +9075,28 @@ Canvas.prototype._ensureValidId = function(element) {
   }
 };
 
+/**
+ * Returns the root rendering context on which
+ * all elements are drawn.
+ *
+ * @returns {snapsvg.Group}
+ */
+Canvas.prototype.getRoot = function() {
+  return this._root;
+};
+
+/**
+ * Returns the html element that encloses the
+ * drawing canvas.
+ *
+ * @return {DOMNode}
+ */
+Canvas.prototype.getContainer = function() {
+  return this._container;
+};
 
 /**
  * Adds a shape to the canvas
- *
- * @method Canvas#addShape
  *
  * @param {Object|djs.model.Shape} shape to add to the diagram
  *
@@ -9122,6 +9114,18 @@ Canvas.prototype.addShape = function(shape, parent) {
   // create shape gfx
   var gfx = this._graphicsFactory.createShape(this._root, shape);
 
+  /**
+   * An event indicating that a new shape is being added to the canvas.
+   *
+   * @memberOf Canvas
+   *
+   * @event shape.add
+   * @type {Object}
+   * @property {djs.model.Shape} element the shape
+   * @property {Object} gfx the graphical representation of the shape
+   */
+  this._eventBus.fire('shape.add', { element: shape, gfx: gfx });
+
   // update its visual
   this._graphicsFactory.updateShape(shape, gfx);
 
@@ -9132,7 +9136,7 @@ Canvas.prototype.addShape = function(shape, parent) {
    *
    * @event shape.added
    * @type {Object}
-   * @property {djs.Shape} element the shape descriptor
+   * @property {djs.model.Shape} element the shape
    * @property {Object} gfx the graphical representation of the shape
    */
   this._eventBus.fire('shape.added', { element: shape, gfx: gfx });
@@ -9142,8 +9146,6 @@ Canvas.prototype.addShape = function(shape, parent) {
 
 /**
  * Adds a connection to the canvas
- *
- * @method Canvas#addConnection
  *
  * @param {djs.model.Connection} connection to add to the diagram
  *
@@ -9161,6 +9163,18 @@ Canvas.prototype.addConnection = function(connection, parent) {
   // create connection gfx
   var gfx = this._graphicsFactory.createConnection(this._root, connection);
 
+  /**
+   * An event indicating that a new connection is being added to the canvas.
+   *
+   * @memberOf Canvas
+   *
+   * @event connection.add
+   * @type {Object}
+   * @property {djs.model.Connection} element the connection
+   * @property {Object} gfx the graphical representation of the connection
+   */
+  this._eventBus.fire('connection.add', { element: connection, gfx: gfx });
+
   // update its visual
   this._graphicsFactory.updateConnection(connection, gfx);
 
@@ -9171,7 +9185,7 @@ Canvas.prototype.addConnection = function(connection, parent) {
    *
    * @event connection.added
    * @type {Object}
-   * @property {djs.ElementDescriptor} element the connection descriptor
+   * @property {djs.model.Connection} element the connection
    * @property {Object} gfx the graphical representation of the connection
    */
   this._eventBus.fire('connection.added', { element: connection, gfx: gfx });
@@ -9197,6 +9211,7 @@ Canvas.prototype._removeElement = function(element, type) {
     gfx.remove();
   }
 
+  // unset parent <-> child relationship
   remove(element.parent && element.parent.children, element);
   element.parent = null;
 
@@ -9207,8 +9222,6 @@ Canvas.prototype._removeElement = function(element, type) {
 
 /**
  * Removes a shape from the canvas
- *
- * @method Canvas#removeShape
  *
  * @param {String|djs.model.Shape} shape or shape id to be removed
  *
@@ -9242,8 +9255,6 @@ Canvas.prototype.removeShape = function(shape) {
 
 /**
  * Removes a connection from the canvas
- *
- * @method Canvas#removeConnection
  *
  * @param {String|djs.model.Connection} connection or connection id to be removed
  *
@@ -9283,8 +9294,6 @@ Canvas.prototype._fireViewboxChange = function(viewbox) {
 /**
  * Gets or sets the view box of the canvas, i.e. the area that is currently displayed
  *
- * @method Canvas#viewbox
- *
  * @param  {Object} [box] the new view box to set
  * @param  {Number} box.x the top left X coordinate of the canvas visible in view box
  * @param  {Number} box.y the top left Y coordinate of the canvas visible in view box
@@ -9302,15 +9311,13 @@ Canvas.prototype._fireViewboxChange = function(viewbox) {
  */
 Canvas.prototype.viewbox = function(box) {
 
-  var root = this._root,
-      eventBus = this._eventBus;
+  var root = this._root;
 
   var innerBox,
       outerBox = this.getSize(),
       matrix,
       scale,
-      x, y,
-      width, height;
+      x, y;
 
   if (!box) {
     innerBox = root.getBBox(true);
@@ -9376,8 +9383,6 @@ Canvas.prototype.scroll = function(delta) {
 /**
  * Gets or sets the current zoom of the canvas, optionally zooming to the specified position.
  *
- * @method Canvas#zoom
- *
  * @param {String|Number} [newScale] the new zoom level, either a number, i.e. 0.9,
  *                                   or `fit-viewport` to adjust the size to fit the current viewport
  * @param {String|Point} [center] the reference point { x: .., y: ..} to zoom to, 'auto' to zoom into mid or null
@@ -9385,8 +9390,6 @@ Canvas.prototype.scroll = function(delta) {
  * @return {Number} the current scale
  */
 Canvas.prototype.zoom = function(newScale, center) {
-
-  var snap = this._snap;
 
   var vbox = this.viewbox();
 
@@ -9514,7 +9517,60 @@ Canvas.$inject = [
   'snap' ];
 
 module.exports = Canvas;
-},{"../model":62,"../util/Collections":63}],46:[function(_dereq_,module,exports){
+},{"../util/Collections":64}],44:[function(_dereq_,module,exports){
+'use strict';
+
+var _ = (window._);
+
+
+var Model = _dereq_('../model');
+
+
+/**
+ * A factory for diagram-js shapes
+ */
+function ElementFactory() {
+  this._uid = 12;
+}
+
+module.exports = ElementFactory;
+
+
+ElementFactory.prototype.createRoot = function(attrs) {
+  return this.create('root', attrs);
+};
+
+ElementFactory.prototype.createLabel = function(attrs) {
+  return this.create('label', attrs);
+};
+
+ElementFactory.prototype.createShape = function(attrs) {
+  return this.create('shape', attrs);
+};
+
+ElementFactory.prototype.createConnection = function(attrs) {
+  return this.create('connection', attrs);
+};
+
+/**
+ * Create a model element with the given type and
+ * a number of pre-set attributes.
+ *
+ * @param  {String} type
+ * @param  {Object} attrs
+ * @return {djs.model.Base} the newly created model instance
+ */
+ElementFactory.prototype.create = function(type, attrs) {
+
+  attrs = attrs || {};
+
+  if (!attrs.id) {
+    attrs.id = type + '_' + (this._uid++);
+  }
+
+  return Model.create(type, attrs);
+};
+},{"../model":63}],45:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -9530,95 +9586,92 @@ var _ = (window._);
 function ElementRegistry(eventBus) {
 
   // mapping element.id -> container
-  var elementMap = {};
+  this._elementMap = {};
 
   // mapping gfx.id -> container
-  var graphicsMap = {};
+  this._graphicsMap = {};
 
 
-  function add(element, gfx) {
-    if (!element.id) {
-      throw new Error('element has no id');
-    }
-
-    if (!gfx.id) {
-      throw new Error('graphics has no id');
-    }
-
-    if (graphicsMap[gfx.id]) {
-      throw new Error('graphics with id ' + gfx.id + ' already registered');
-    }
-
-    if (elementMap[element.id]) {
-      throw new Error('element with id ' + element.id + ' already added');
-    }
-
-    elementMap[element.id] = graphicsMap[gfx.id] = { element: element, gfx: gfx };
-  }
-
-  function remove(element) {
-    var gfx = getGraphicsByElement(element);
-
-    delete elementMap[element.id];
-    delete graphicsMap[gfx.id];
-  }
-
-  /**
-   * @method ElementRegistry#getByGraphics
-   */
-  function getByGraphics(gfx) {
-    var id = _.isString(gfx) ? gfx : gfx.id;
-
-    var container = graphicsMap[id];
-    return container && container.element;
-  }
-
-  /**
-   * @method ElementRegistry#getById
-   */
-  function getById(id) {
-    var container = elementMap[id];
-    return container && container.element;
-  }
-
-  /**
-   * @method ElementRegistry#getGraphicsByElement
-   */
-  function getGraphicsByElement(element) {
-    var id = _.isString(element) ? element : element.id;
-
-    var container = elementMap[id];
-    return container && container.gfx;
-  }
-
+  var self = this;
 
   _.forEach([ 'shape', 'connection' ], function(type) {
-    eventBus.on(type + '.added', function(event) {
-      add(event.element, event.gfx);
+    eventBus.on(type + '.add', function(event) {
+      self.add(event.element, event.gfx);
     });
 
     eventBus.on(type + '.removed', function(event) {
-      remove(event.element, event.gfx);
+      self.remove(event.element, event.gfx);
     });
   });
 
-
   eventBus.on('diagram.destroy', function(event) {
-    elementMap = null;
-    graphicsMap = null;
+    self._elementMap = null;
+    self.graphicsMap = null;
   });
-
-  return {
-    getGraphicsByElement: getGraphicsByElement,
-    getById: getById,
-    getByGraphics: getByGraphics
-  };
 }
 
 ElementRegistry.$inject = [ 'eventBus' ];
 
 module.exports = ElementRegistry;
-},{}],47:[function(_dereq_,module,exports){
+
+
+ElementRegistry.prototype.add = function(element, gfx) {
+  if (!element.id) {
+    throw new Error('element has no id');
+  }
+
+  if (!gfx.id) {
+    throw new Error('graphics has no id');
+  }
+
+  if (this._graphicsMap[gfx.id]) {
+    throw new Error('graphics with id ' + gfx.id + ' already registered');
+  }
+
+  if (this._elementMap[element.id]) {
+    throw new Error('element with id ' + element.id + ' already added');
+  }
+
+  this._elementMap[element.id] = this._graphicsMap[gfx.id] = { element: element, gfx: gfx };
+};
+
+ElementRegistry.prototype.remove = function(element) {
+  var gfx = this.getGraphicsByElement(element);
+
+  delete this._elementMap[element.id];
+  delete this._graphicsMap[gfx.id];
+};
+
+
+/**
+ * @method ElementRegistry#getByGraphics
+ */
+ElementRegistry.prototype.getByGraphics = function(gfx) {
+  var id = _.isString(gfx) ? gfx : gfx.id;
+
+  var container = this._graphicsMap[id];
+  return container && container.element;
+};
+
+
+/**
+ * @method ElementRegistry#getById
+ */
+ElementRegistry.prototype.getById = function(id) {
+  var container = this._elementMap[id];
+  return container && container.element;
+};
+
+/**
+ * @method ElementRegistry#getGraphicsByElement
+ */
+ElementRegistry.prototype.getGraphicsByElement = function(element) {
+  var id = _.isString(element) ? element : element.id;
+
+  var container = this._elementMap[id];
+  return container && container.gfx;
+};
+},{}],46:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -9686,14 +9739,16 @@ function EventBus() {
    *
    * @method EventBus#on
    *
-   * @param {String} event
+   * @param {String|Array<String>} events
    * @param {Number} [priority] the priority in which this listener is called,
    *                            defaults to 1000 but may be changed to override execution order of callbacks
    *                            (> {@link EventPriority#overwrite})
    *
    * @param {Function} callback
    */
-  function on(event, priority, callback) {
+  function on(events, priority, callback) {
+
+    events = _.isArray(events) ? events : [ events ];
 
     if (_.isFunction(priority)) {
       callback = priority;
@@ -9704,8 +9759,10 @@ function EventBus() {
       throw new Error('priority needs to be a number');
     }
 
-    var listeners = getListeners(event);
-    addEventToArray(listeners, callback, priority);
+    _.forEach(events, function(e) {
+      var listeners = getListeners(e);
+      addEventToArray(listeners, callback, priority);
+    });
   }
 
   /**
@@ -9761,6 +9818,10 @@ function EventBus() {
     }
   }
 
+  function handleError(error) {
+    return !fire('error', { error: error });
+  }
+
   /**
    * Fires a named event.
    *
@@ -9789,6 +9850,8 @@ function EventBus() {
    * @param {String} [name] the optional event name
    * @param {Object} [event] the event object
    * @param {...Object} additional arguments to be passed to the callback functions
+   *
+   * @return {Boolean} false if default was prevented
    */
   function fire() {
 
@@ -9825,8 +9888,18 @@ function EventBus() {
       if (event.isPropagationStopped()) {
         break;
       }
-      l.callback.apply(this, args);
+
+      try {
+        l.callback.apply(this, args);
+      } catch (e) {
+        if (!handleError(e)) {
+          console.error('unhandled error in event listener', e);
+          throw e;
+        }
+      }
     }
+
+    return !event.isDefaultPrevented();
   }
 
   function addEventToArray(array, callback, priority) {
@@ -9855,7 +9928,7 @@ function EventBus() {
 
 
 module.exports = EventBus;
-},{}],48:[function(_dereq_,module,exports){
+},{}],47:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -9961,16 +10034,17 @@ GraphicsFactory.prototype.updateConnection = function(element, gfx) {
 GraphicsFactory.$inject = [ 'renderer', 'snap' ];
 
 module.exports = GraphicsFactory;
-},{}],49:[function(_dereq_,module,exports){
+},{}],48:[function(_dereq_,module,exports){
 module.exports = {
   __depends__: [ _dereq_('../draw') ],
   __init__: [ 'canvas' ],
   canvas: [ 'type', _dereq_('./Canvas') ],
   elementRegistry: [ 'type', _dereq_('./ElementRegistry') ],
+  elementFactory: [ 'type', _dereq_('./ElementFactory') ],
   eventBus: [ 'type', _dereq_('./EventBus') ],
   graphicsFactory: [ 'type', _dereq_('./GraphicsFactory') ]
 };
-},{"../draw":53,"./Canvas":45,"./ElementRegistry":46,"./EventBus":47,"./GraphicsFactory":48}],50:[function(_dereq_,module,exports){
+},{"../draw":52,"./Canvas":43,"./ElementFactory":44,"./ElementRegistry":45,"./EventBus":46,"./GraphicsFactory":47}],49:[function(_dereq_,module,exports){
 'use strict';
 
 // required components
@@ -9995,7 +10069,7 @@ function flattenPoints(points) {
  * @param {Styles} styles
  */
 function Renderer(styles) {
-  this.CONNECTION_STYLE = styles.style([ 'no-fill' ], { strokeWidth: 5 });
+  this.CONNECTION_STYLE = styles.style([ 'no-fill' ], { strokeWidth: 5, stroke: 'fuchsia' });
   this.SHAPE_STYLE = styles.style({ fill: 'white', stroke: 'fuchsia', strokeWidth: 2 });
 }
 
@@ -10020,14 +10094,14 @@ Renderer.$inject = ['styles'];
 
 module.exports = Renderer;
 module.exports.flattenPoints = flattenPoints;
-},{}],51:[function(_dereq_,module,exports){
+},{}],50:[function(_dereq_,module,exports){
 var snapsvg = (window.Snap);
 
 // require snapsvg extensions
 _dereq_('./snapsvg-extensions');
 
 module.exports = snapsvg;
-},{"./snapsvg-extensions":54}],52:[function(_dereq_,module,exports){
+},{"./snapsvg-extensions":53}],51:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -10090,7 +10164,7 @@ function Styles() {
 }
 
 module.exports = Styles;
-},{}],53:[function(_dereq_,module,exports){
+},{}],52:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = {
@@ -10098,7 +10172,7 @@ module.exports = {
   snap: [ 'value', _dereq_('./Snap') ],
   styles: [ 'type', _dereq_('./Styles') ]
 };
-},{"./Renderer":50,"./Snap":51,"./Styles":52}],54:[function(_dereq_,module,exports){
+},{"./Renderer":49,"./Snap":50,"./Styles":51}],53:[function(_dereq_,module,exports){
 'use strict';
 
 var Snap = (window.Snap);
@@ -10285,7 +10359,7 @@ Snap.plugin(function (Snap, Element, Paper, global) {
     return new Snap(svg);
   };
 });
-},{}],55:[function(_dereq_,module,exports){
+},{}],54:[function(_dereq_,module,exports){
 'use strict';
 
 
@@ -10395,12 +10469,12 @@ function InteractionEvents(eventBus, styles) {
 InteractionEvents.$inject = [ 'eventBus', 'styles' ];
 
 module.exports = InteractionEvents;
-},{"../../util/GraphicsUtil":64}],56:[function(_dereq_,module,exports){
+},{"../../util/GraphicsUtil":65}],55:[function(_dereq_,module,exports){
 module.exports = {
   __init__: [ 'interactionEvents' ],
   interactionEvents: [ 'type', _dereq_('./InteractionEvents') ]
 };
-},{"./InteractionEvents":55}],57:[function(_dereq_,module,exports){
+},{"./InteractionEvents":54}],56:[function(_dereq_,module,exports){
 'use strict';
 
 
@@ -10459,94 +10533,538 @@ function Outline(events, styles) {
 Outline.$inject = ['eventBus', 'styles'];
 
 module.exports = Outline;
-},{"../../util/GraphicsUtil":64}],58:[function(_dereq_,module,exports){
+},{"../../util/GraphicsUtil":65}],57:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = {
   __init__: [ 'outline' ],
   outline: [ 'type', _dereq_('./Outline') ]
 };
-},{"./Outline":57}],59:[function(_dereq_,module,exports){
+},{"./Outline":56}],58:[function(_dereq_,module,exports){
+'use strict';
+
+var _ = (window._),
+    $ = (window.$);
+
+// document wide unique overlay ids
+var ids = new (_dereq_('../../util/IdGenerator'))('ov');
+
+
+/**
+ * A plugin that allows users to attach overlays to diagram elements.
+ *
+ * The overlay service will take care of overlay positioning during updates.
+ *
+ * @class
+ *
+ * @example
+ *
+ * // add a pink badge on the top left of the shape
+ * overlays.add(someShape, {
+ *   position: {
+ *     top: -5,
+ *     left: -5
+ *   }
+ *   html: '<div style="width: 10px; background: fuchsia; color: white;">0</div>'
+ * });
+ *
+ * // or add via shape id
+ *
+ * overlays.add('some-element-id', {
+ *   position: {
+ *     top: -5,
+ *     left: -5
+ *   }
+ *   html: '<div style="width: 10px; background: fuchsia; color: white;">0</div>'
+ * });
+ *
+ * // or add with optional type
+ *
+ * overlays.add(someShape, 'badge', {
+ *   position: {
+ *     top: -5,
+ *     left: -5
+ *   }
+ *   html: '<div style="width: 10px; background: fuchsia; color: white;">0</div>'
+ * });
+ *
+ *
+ * // remove an overlay
+ *
+ * var id = overlays.add(...);
+ * overlays.remove(id);
+ *
+ * @param {EventBus} eventBus
+ * @param {Canvas} canvas
+ * @param {ElementRegistry} elementRegistry
+ */
+function Overlays(config, eventBus, canvas, elementRegistry) {
+
+  this._eventBus = eventBus;
+  this._canvas = canvas;
+  this._elementRegistry = elementRegistry;
+
+  this._ids = ids;
+
+  this._overlayDefaults = {
+    show: {
+      trigger: 'automatic',
+      minZoom: 0.7,
+      maxZoom: 5.0
+    }
+  };
+
+  /**
+   * Mapping overlay-id > overlay
+   */
+  this._overlays = {};
+
+  /**
+   * Mapping element-id > overlay container
+   */
+  this._overlayContainers = {};
+
+  // root html element for all overlays
+  this._overlayRoot = $('<div class="djs-overlay-container" />')
+                        .css({ position: 'absolute', width: 0, height: 0 })
+                        .prependTo(canvas.getContainer());
+
+  this._init(config);
+}
+
+
+Overlays.$inject = [ 'config.overlays', 'eventBus', 'canvas', 'elementRegistry' ];
+
+module.exports = Overlays;
+
+
+/**
+ * Returns the overlay with the specified id or a list of overlays
+ * for an element with a given type.
+ *
+ * @example
+ *
+ * // return the single overlay with the given id
+ * overlays.get('some-id');
+ *
+ * // return all overlays for the shape
+ * overlays.get({ element: someShape });
+ *
+ * // return all overlays on shape with type 'badge'
+ * overlays.get({ element: someShape, type: 'badge' });
+ *
+ * // shape can also be specified as id
+ * overlays.get({ element: 'element-id', type: 'badge' });
+ *
+ *
+ * @param {Object} filter
+ * @param {String} [filter.id]
+ * @param {String|djs.model.Base} [filter.element]
+ * @param {String} [filter.type]
+ *
+ * @return {Object|Array<Object>} the overlay(s)
+ */
+Overlays.prototype.get = function(filter) {
+
+  if (_.isString(filter)) {
+    filter = { id: filter };
+  }
+
+  if (filter.element) {
+    var container = this._getOverlayContainer(filter.element, true);
+
+    // return a list of overlays when filtering by element (+type)
+    if (container) {
+      return filter.type ? _.filter(container.overlays, { type: filter.type }) : _.clone(container.overlays);
+    } else {
+      return [];
+    }
+  } else {
+    // return single element when filtering by id
+    return filter.id ? this._overlays[filter.id] : null;
+  }
+};
+
+/**
+ * Adds a HTML overlay to an element.
+ *
+ * @param {String|djs.model.Base}   element   attach overlay to this shape
+ * @param {String}                  [type]    optional type to assign to the overlay
+ * @param {Object}                  overlay   the overlay configuration
+ *
+ * @param {String|DOMElement}       overlay.html                      html element to use as an overlay
+ * @param {Object}                  [overlay.show]                    show configuration
+ * @param {Number}                  overlay.show.minZoom              minimal zoom level to show the overlay
+ * @param {Number}                  overlay.show.maxZoom              maximum zoom level to show the overlay
+ * @param {String}                  [overlay.show.trigger=automatic]  automatic or manual (user triggers show)
+ * @param {Object}                  overlay.show.position             where to attach the overlay
+ * @param {Number}                  [overlay.show.position.left]      relative to element bbox left attachment
+ * @param {Number}                  [overlay.show.position.top]       relative to element bbox top attachment
+ * @param {Number}                  [overlay.show.position.bottom]    relative to element bbox bottom attachment
+ * @param {Number}                  [overlay.show.position.right]     relative to element bbox right attachment
+ *
+ * @return {String}                 id that may be used to reference the overlay for update or removal
+ */
+Overlays.prototype.add = function(element, type, overlay) {
+
+  if (_.isObject(type)) {
+    overlay = type;
+    type = null;
+  }
+
+  if (_.isString(element)) {
+    element = this._elementRegistry.getById(element);
+  }
+
+  if (!overlay.position) {
+    throw new Error('must specifiy overlay position');
+  }
+
+  if (!overlay.html) {
+    throw new Error('must specifiy overlay html');
+  }
+
+  if (!element) {
+    throw new Error('invalid element specified');
+  }
+
+  var id = this._ids.next();
+
+  overlay = _.extend({}, this._overlayDefaults, overlay, {
+    id: id,
+    type: type,
+    element: element,
+    html: $(overlay.html)
+  });
+
+  this._addOverlay(overlay);
+
+  return id;
+};
+
+
+/**
+ * Remove an overlay with the given id
+ *
+ * @param  {String} id
+ */
+Overlays.prototype.remove = function(id) {
+
+  var overlay = this.get(id),
+      container = overlay && this._getOverlayContainer(overlay.element, true);
+
+  if (overlay) {
+    overlay.html.remove();
+    overlay.htmlContainer.remove();
+
+    delete overlay.htmlContainer;
+    delete overlay.element;
+
+    delete this._overlays[id];
+  }
+
+  if (container) {
+    var idx = container.overlays.indexOf(overlay);
+    if (idx !== -1) {
+      container.overlays.splice(idx, 1);
+    }
+  }
+};
+
+
+Overlays.prototype.show = function() {
+  this._overlayRoot.show();
+};
+
+
+Overlays.prototype.hide = function() {
+  this._overlayRoot.hide();
+};
+
+
+Overlays.prototype._updateOverlayContainer = function(container) {
+  var element = container.element,
+      html = container.html;
+
+  // update container left,top according to the elements x,y coordinates
+  // this ensures we can attach child elements relative to this container
+
+  // TODO(nre): update according to element bbox (for connections)
+  html.css({ left: element.x, top: element.y });
+};
+
+
+Overlays.prototype._updateOverlay = function(overlay) {
+
+  var position = overlay.position,
+      htmlContainer = overlay.htmlContainer,
+      element = overlay.element;
+
+  // update overlay html relative to shape because
+  // it is already positioned on the element
+
+  // update relative
+  var left = position.left,
+      top = position.top;
+
+  if (position.right !== undefined) {
+    left = position.right * -1 + element.width;
+  }
+
+  if (position.bottom !== undefined) {
+    top = position.bottom * -1 + element.height;
+  }
+
+  htmlContainer.css({ left: left || 0, top: top || 0 });
+};
+
+
+Overlays.prototype._createOverlayContainer = function(element) {
+  var html = $('<div />')
+                .addClass('djs-overlays')
+                .addClass('djs-overlays-' + element.id)
+                .css({ position: 'absolute' });
+
+  html.appendTo(this._overlayRoot);
+
+  var container = {
+    html: html,
+    element: element,
+    overlays: []
+  };
+
+  this._updateOverlayContainer(container);
+
+  return container;
+};
+
+
+Overlays.prototype._updateRoot = function(viewbox) {
+  var a = viewbox.scale || 1;
+  var d = viewbox.scale || 1;
+  var e = viewbox.x || 0;
+  var f = viewbox.y || 0;
+
+  var matrix = 'matrix(' + a + ',0,0,' + d + ',' + (-1 * viewbox.x * a) + ',' + (-1 * viewbox.y * d) + ')';
+
+  this._overlayRoot.css('transform', matrix);
+};
+
+
+Overlays.prototype._getOverlayContainer = function(element, raw) {
+  var id = (element && element.id) || element;
+
+  var container = this._overlayContainers[id];
+  if (!container && !raw) {
+    container = this._overlayContainers[id] = this._createOverlayContainer(element);
+  }
+
+  return container;
+};
+
+
+Overlays.prototype._addOverlay = function(overlay) {
+
+  var id = overlay.id,
+      element = overlay.element;
+
+  var container = this._getOverlayContainer(element);
+
+  var htmlContainer = $('<div>', {
+    id: id,
+    className: 'djs-overlay'
+  }).css({ position: 'absolute' }).append(overlay.html);
+
+  if (overlay.type) {
+    htmlContainer.addClass('djs-overlay-' + overlay.type);
+  }
+
+  overlay.htmlContainer = htmlContainer;
+
+  container.overlays.push(overlay);
+  container.html.append(htmlContainer);
+
+  this._overlays[id] = overlay;
+
+  this._updateOverlay(overlay);
+};
+
+Overlays.prototype._updateOverlayVisibilty = function(viewbox) {
+
+  _.forEach(this._overlays, function(overlay) {
+    if (overlay.show) {
+      if (overlay.show.minZoom > viewbox.scale ||
+          overlay.show.maxZoom < viewbox.scale) {
+        overlay.htmlContainer.hide();
+      } else {
+        overlay.htmlContainer.show();
+      }
+    }
+  });
+};
+
+Overlays.prototype._init = function(config) {
+
+  var eventBus = this._eventBus;
+
+  var self = this;
+
+
+  // scroll/zoom integration
+
+  var updateViewbox = function(viewbox) {
+    self._updateRoot(viewbox);
+    self._updateOverlayVisibilty(viewbox);
+
+    self.show();
+  };
+
+  if (!config || config.deferUpdate !== false) {
+    updateViewbox = _.debounce(updateViewbox, 300);
+  }
+
+  eventBus.on('canvas.viewbox.changed', function(event) {
+    self.hide();
+    updateViewbox(event.viewbox);
+  });
+
+
+  // remove integration
+
+  eventBus.on([ 'shape.remove', 'connection.remove' ], function(e) {
+    var overlays = self.get({ element: e.element });
+
+    _.forEach(overlays, function(o) {
+      self.remove(o.id);
+    });
+  });
+
+
+  // move integration
+
+  eventBus.on([
+    'commandStack.shape.move.executed',
+    'commandStack.shape.move.reverted'
+  ], function(e) {
+    var element = e.context.shape;
+
+    var container = self._getOverlayContainer(element, true);
+    if (container) {
+      self._updateOverlayContainer(container);
+    }
+  });
+};
+},{"../../util/IdGenerator":66}],59:[function(_dereq_,module,exports){
+'use strict';
+
+module.exports = {
+  __init__: [ 'overlays' ],
+  overlays: [ 'type', _dereq_('./Overlays') ]
+};
+},{"./Overlays":58}],60:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
 
 
 /**
- * @class
- *
  * A service that offers the current selection in a diagram.
  * Offers the api to control the selection, too.
  *
- * @param {EventBus} events the event bus
+ * @class
+ *
+ * @param {EventBus} eventBus the event bus
  */
-function Selection(events) {
+function Selection(eventBus) {
 
-  var selectedElements = [];
+  this._eventBus = eventBus;
 
-  function getSelection() {
-    return selectedElements;
-  }
+  this._selectedElements = [];
 
-  function isSelected(shape) {
-    return selectedElements.indexOf(shape) !== -1;
-  }
+  var self = this;
 
-  /**
-   * This method selects one or more elements on the diagram.
-   *
-   * By passing an additional add parameter you can decide whether or not the element(s)
-   * should be added to the already existing selection or not.
-   *
-   * @method Selection#select
-   *
-   * @param  {Object|Object[]} elements element or array of elements to be selected
-   * @param  {boolean} [add] whether the element(s) should be appended to the current selection, defaults to false
-   */
-  function select(elements, add) {
-    var oldSelection = selectedElements.slice();
-
-    if (!_.isArray(elements)) {
-      elements = elements ? [ elements ] : [];
-    }
-
-    // selection may be cleared by passing an empty array or null
-    // to the method
-    if (elements.length && add) {
-      _.forEach(elements, function(element) {
-        if (selectedElements.indexOf(element) !== -1) {
-          // already selected
-          return;
-        } else {
-          selectedElements.push(element);
-        }
-      });
-    } else {
-      selectedElements = elements.slice();
-    }
-
-    events.fire('selection.changed', { oldSelection: oldSelection, newSelection: selectedElements });
-  }
-
-  function deselect(element) {
-    throw new Error('not implemented');
-  }
-
-  return {
-    getSelection: getSelection,
-    isSelected: isSelected,
-    select: select,
-    deselect: deselect
-  };
+  eventBus.on([ 'shape.remove', 'connection.remove' ], function(e) {
+    var element = e.element;
+    self.deselect(element);
+  });
 }
 
 Selection.$inject = [ 'eventBus' ];
 
 module.exports = Selection;
-},{}],60:[function(_dereq_,module,exports){
+
+
+Selection.prototype.deselect = function(element) {
+  var selectedElements = this._selectedElements;
+
+  var idx = selectedElements.indexOf(element);
+
+  if (idx !== -1) {
+    var oldSelection = selectedElements.slice();
+
+    selectedElements.splice(idx, 1);
+
+    this._eventBus.fire('selection.changed', { oldSelection: oldSelection, newSelection: selectedElements });
+  }
+};
+
+
+Selection.prototype.get = function() {
+  return this._selectedElements;
+};
+
+Selection.prototype.isSelected = function(element) {
+  return this._selectedElements.indexOf(element) !== -1;
+};
+
+
+/**
+ * This method selects one or more elements on the diagram.
+ *
+ * By passing an additional add parameter you can decide whether or not the element(s)
+ * should be added to the already existing selection or not.
+ *
+ * @method Selection#select
+ *
+ * @param  {Object|Object[]} elements element or array of elements to be selected
+ * @param  {boolean} [add] whether the element(s) should be appended to the current selection, defaults to false
+ */
+Selection.prototype.select = function(elements, add) {
+  var selectedElements = this._selectedElements,
+      oldSelection = selectedElements.slice();
+
+  if (!_.isArray(elements)) {
+    elements = elements ? [ elements ] : [];
+  }
+
+  var self = this;
+
+  // selection may be cleared by passing an empty array or null
+  // to the method
+  if (elements.length && add) {
+    _.forEach(elements, function(element) {
+      if (selectedElements.indexOf(element) !== -1) {
+        // already selected
+        return;
+      } else {
+        selectedElements.push(element);
+      }
+    });
+  } else {
+    this._selectedElements = selectedElements = elements.slice();
+  }
+
+  this._eventBus.fire('selection.changed', { oldSelection: oldSelection, newSelection: selectedElements });
+};
+},{}],61:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
+
+
+function originalEvent(e) {
+  return e.srcEvent || e;
+}
 
 
 /**
@@ -10567,11 +11085,15 @@ function SelectionVisuals(events, selection, elementRegistry) {
       SELECTED_CLS = 'selected';
 
   function addMarker(gfx, cls) {
-    gfx.addClass(cls);
+    if (gfx) {
+      gfx.addClass(cls);
+    }
   }
 
   function removeMarker(gfx, cls) {
-    gfx.removeClass(cls);
+    if (gfx) {
+      gfx.removeClass(cls);
+    }
   }
 
   /**
@@ -10580,7 +11102,7 @@ function SelectionVisuals(events, selection, elementRegistry) {
    * @param  {Object} event the fired event
    */
   events.on('shape.click', function(event) {
-    var add = event.shiftKey;
+    var add = originalEvent(event).shiftKey;
     selection.select(event.element, add);
   });
 
@@ -10595,11 +11117,11 @@ function SelectionVisuals(events, selection, elementRegistry) {
   events.on('selection.changed', function(event) {
 
     function deselect(s) {
-      addMarker(elementRegistry.getGraphicsByElement(s), SELECTED_CLS);
+      removeMarker(elementRegistry.getGraphicsByElement(s), SELECTED_CLS);
     }
 
     function select(s) {
-      removeMarker(elementRegistry.getGraphicsByElement(s), SELECTED_CLS);
+      addMarker(elementRegistry.getGraphicsByElement(s), SELECTED_CLS);
     }
 
     var oldSelection = event.oldSelection,
@@ -10607,20 +11129,20 @@ function SelectionVisuals(events, selection, elementRegistry) {
 
     _.forEach(oldSelection, function(e) {
       if (newSelection.indexOf(e) === -1) {
-        select(e);
+        deselect(e);
       }
     });
 
     _.forEach(newSelection, function(e) {
       if (oldSelection.indexOf(e) === -1) {
-        deselect(e);
+        select(e);
       }
     });
   });
 
   // deselect all selected shapes on canvas click
   events.on('canvas.click', function(event) {
-    if (event.srcElement === event.root.node) {
+    if (originalEvent(event).srcElement === event.root.paper.node) {
       selection.select(null);
     }
   });
@@ -10633,7 +11155,7 @@ SelectionVisuals.$inject = [
 ];
 
 module.exports = SelectionVisuals;
-},{}],61:[function(_dereq_,module,exports){
+},{}],62:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = {
@@ -10645,7 +11167,7 @@ module.exports = {
   selection: [ 'type', _dereq_('./Selection') ],
   selectionVisuals: [ 'type', _dereq_('./SelectionVisuals') ]
 };
-},{"../interaction-events":56,"../outline":58,"./Selection":59,"./SelectionVisuals":60}],62:[function(_dereq_,module,exports){
+},{"../interaction-events":55,"../outline":57,"./Selection":60,"./SelectionVisuals":61}],63:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -10658,38 +11180,59 @@ var parentRefs = new Refs({ name: 'children', enumerable: true, collection: true
     incomingRefs = new Refs({ name: 'incoming', collection: true }, { name: 'target' });
 
 /**
+ * @namespace djs.model
+ */
+
+/**
+ * @memberOf djs.model
+ */
+
+/**
  * The basic graphical representation
  *
- * @class djs.model.Base
+ * @class
  *
  * @abstract
  */
 function Base() {
 
   /**
-   * @property {Object} businessObject the object that backs up the shape
+   * The object that backs up the shape
+   *
+   * @name Base#businessObject
+   * @type Object
    */
   Object.defineProperty(this, 'businessObject', {
     writable: true
   });
 
   /**
-   * @property {djs.model.Shape} parent
+   * The parent shape
+   *
+   * @name Base#parent
+   * @type Shape
    */
   parentRefs.bind(this, 'parent');
 
   /**
-   * @property {djs.model.Label} label
+   * @name Base#label
+   * @type Label
    */
   labelRefs.bind(this, 'label');
 
   /**
-   * @property {Array<djs.model.Connection>} outgoing the list of incoming connections
+   * The list of outgoing connections
+   *
+   * @name Base#outgoing
+   * @type Array<Connection>
    */
   outgoingRefs.bind(this, 'outgoing');
 
   /**
-   * @property {Array<djs.model.Connection>} incoming the list of outgoing connections
+   * The list of outgoing connections
+   *
+   * @name Base#incoming
+   * @type Array<Connection>
    */
   incomingRefs.bind(this, 'incoming');
 }
@@ -10698,15 +11241,19 @@ function Base() {
 /**
  * A graphical object
  *
- * @class djs.model.Shape
+ * @class
+ * @constructor
  *
- * @augments {djs.model.Base}
+ * @extends Base
  */
 function Shape() {
   Base.call(this);
 
   /**
-   * @property {Array<djs.model.Base>} children list of children
+   * The list of children
+   *
+   * @name Shape#children
+   * @type Array<Base>
    */
   parentRefs.bind(this, 'children');
 }
@@ -10715,11 +11262,12 @@ Shape.prototype = Object.create(Base.prototype);
 
 
 /**
- * The root graphical object
+ * A root graphical object
  *
- * @class djs.model.Root
+ * @class
+ * @constructor
  *
- * @augments {djs.model.Shape}
+ * @extends Shape
  */
 function Root() {
   Shape.call(this);
@@ -10731,15 +11279,19 @@ Root.prototype = Object.create(Shape.prototype);
 /**
  * A label for an element
  *
- * @class djs.model.Label
+ * @class
+ * @constructor
  *
- * @augments {djs.model.Shape}
+ * @extends Shape
  */
 function Label() {
   Shape.call(this);
 
   /**
-   * @property {djs.model.Base} labelTarget the element labeled
+   * The labeled element
+   *
+   * @name Label#labelTarget
+   * @type Base
    */
   labelRefs.bind(this, 'labelTarget');
 }
@@ -10750,20 +11302,27 @@ Label.prototype = Object.create(Shape.prototype);
 /**
  * A connection between two elements
  *
- * @class djs.model.Connection
+ * @class
+ * @constructor
  *
- * @augments {djs.model.Base}
+ * @extends Base
  */
 function Connection() {
   Base.call(this);
 
   /**
-   * @property {djs.model.Base} source the element this connection originates from
+   * The element this connection originates from
+   *
+   * @name Connection#source
+   * @type Base
    */
   outgoingRefs.bind(this, 'source');
 
   /**
-   * @property {djs.model.Base} target the element this connection points to
+   * The element this connection points to
+   *
+   * @name Connection#target
+   * @type Base
    */
   incomingRefs.bind(this, 'target');
 }
@@ -10781,6 +11340,8 @@ var types = {
 /**
  * Creates a new model element of the specified type
  *
+ * @method create
+ *
  * @example
  *
  * var shape1 = Model.create('shape', { x: 10, y: 10, width: 100, height: 100 });
@@ -10791,7 +11352,7 @@ var types = {
  * @param  {String} type lower-cased model name
  * @param  {Object} attrs attributes to initialize the new model instance with
  *
- * @return {djs.model.Base} the new model instance
+ * @return {Base} the new model instance
  */
 module.exports.create = function(type, attrs) {
   var Type = types[type];
@@ -10806,7 +11367,7 @@ module.exports.Root = Root;
 module.exports.Shape = Shape;
 module.exports.Connection = Connection;
 module.exports.Label = Label;
-},{"object-refs":70}],63:[function(_dereq_,module,exports){
+},{"object-refs":72}],64:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -10832,7 +11393,7 @@ module.exports.remove = function(collection, element) {
 
   return element;
 };
-},{}],64:[function(_dereq_,module,exports){
+},{}],65:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -10875,7 +11436,41 @@ function getVisual(gfx) {
 }
 
 module.exports.getVisual = getVisual;
-},{}],65:[function(_dereq_,module,exports){
+},{}],66:[function(_dereq_,module,exports){
+'use strict';
+
+/**
+ * Util that provides unique IDs.
+ *
+ * @class djs.util.IdGenerator
+ * @memberOf djs.util
+ *
+ * @constructor
+ *
+ * The ids can be customized via a given prefix and contain a random value to avoid collisions.
+ *
+ * @param {String} prefix a prefix to prepend to generated ids (for better readability)
+ */
+function IdGenerator(prefix) {
+
+  this._counter = 0;
+  this._prefix = (prefix ? prefix + '-' : '') + Math.floor(Math.random() * 1000000000) + '-';
+}
+
+module.exports = IdGenerator;
+
+/**
+ * Returns a next unique ID.
+ *
+ * @method djs.util.IdGenerator#next
+ *
+ * @returns {String} the id
+ */
+IdGenerator.prototype.next = function() {
+  return this._prefix + (++this._counter);
+};
+
+},{}],67:[function(_dereq_,module,exports){
 var _ = (window._);
 
 var DEFAULT_BOX_PADDING = 5;
@@ -11117,7 +11712,7 @@ function LabelUtil(config) {
 
 
 module.exports = LabelUtil;
-},{}],66:[function(_dereq_,module,exports){
+},{}],68:[function(_dereq_,module,exports){
 
 var isArray = function(obj) {
   return Object.prototype.toString.call(obj) === '[object Array]';
@@ -11167,14 +11762,14 @@ exports.annotate = annotate;
 exports.parse = parse;
 exports.isArray = isArray;
 
-},{}],67:[function(_dereq_,module,exports){
+},{}],69:[function(_dereq_,module,exports){
 module.exports = {
   annotate: _dereq_('./annotation').annotate,
   Module: _dereq_('./module'),
   Injector: _dereq_('./injector')
 };
 
-},{"./annotation":66,"./injector":68,"./module":69}],68:[function(_dereq_,module,exports){
+},{"./annotation":68,"./injector":70,"./module":71}],70:[function(_dereq_,module,exports){
 var Module = _dereq_('./module');
 var autoAnnotate = _dereq_('./annotation').parse;
 var annotate = _dereq_('./annotation').annotate;
@@ -11390,7 +11985,7 @@ var Injector = function(modules, parent) {
 
 module.exports = Injector;
 
-},{"./annotation":66,"./module":69}],69:[function(_dereq_,module,exports){
+},{"./annotation":68,"./module":71}],71:[function(_dereq_,module,exports){
 var Module = function() {
   var providers = [];
 
@@ -11416,11 +12011,11 @@ var Module = function() {
 
 module.exports = Module;
 
-},{}],70:[function(_dereq_,module,exports){
+},{}],72:[function(_dereq_,module,exports){
 module.exports = _dereq_('./lib/refs');
 
 module.exports.Collection = _dereq_('./lib/collection');
-},{"./lib/collection":71,"./lib/refs":72}],71:[function(_dereq_,module,exports){
+},{"./lib/collection":73,"./lib/refs":74}],73:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -11502,7 +12097,7 @@ function extend(collection, refs, property, target) {
 
 
 module.exports.extend = extend;
-},{}],72:[function(_dereq_,module,exports){
+},{}],74:[function(_dereq_,module,exports){
 'use strict';
 
 var Collection = _dereq_('./collection');
@@ -11684,12 +12279,12 @@ module.exports = Refs;
  * @property {boolean} [collection=false]
  * @property {boolean} [enumerable=false]
  */
-},{"./collection":71}],73:[function(_dereq_,module,exports){
-module.exports=_dereq_(70)
-},{"./lib/collection":74,"./lib/refs":75}],74:[function(_dereq_,module,exports){
-module.exports=_dereq_(71)
-},{}],75:[function(_dereq_,module,exports){
+},{"./collection":73}],75:[function(_dereq_,module,exports){
 module.exports=_dereq_(72)
-},{"./collection":74}]},{},[2])
-(2)
+},{"./lib/collection":76,"./lib/refs":77}],76:[function(_dereq_,module,exports){
+module.exports=_dereq_(73)
+},{}],77:[function(_dereq_,module,exports){
+module.exports=_dereq_(74)
+},{"./collection":76}]},{},[1])
+(1)
 });
