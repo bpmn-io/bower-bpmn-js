@@ -266,7 +266,7 @@ Viewer.prototype._modules = [
 
 module.exports = Viewer;
 
-},{"./core":3,"./draw":6,"./import/Importer":8,"bpmn-moddle":11,"diagram-js":41,"diagram-js/lib/features/overlays":59,"diagram-js/lib/features/selection":62}],2:[function(_dereq_,module,exports){
+},{"./core":3,"./draw":6,"./import/Importer":8,"bpmn-moddle":11,"diagram-js":32,"diagram-js/lib/features/overlays":50,"diagram-js/lib/features/selection":53}],2:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -1944,7 +1944,7 @@ BpmnRenderer.prototype = Object.create(DefaultRenderer.prototype);
 BpmnRenderer.$inject = [ 'eventBus', 'styles', 'pathMap' ];
 
 module.exports = BpmnRenderer;
-},{"../util/Di":9,"diagram-js/lib/draw/Renderer":49,"diagram-js/lib/util/Text":67}],5:[function(_dereq_,module,exports){
+},{"../util/Di":9,"diagram-js/lib/draw/Renderer":40,"diagram-js/lib/util/Text":58}],5:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -2746,7 +2746,7 @@ function BpmnTreeWalker(handler) {
 }
 
 module.exports = BpmnTreeWalker;
-},{"object-refs":75}],8:[function(_dereq_,module,exports){
+},{"object-refs":63}],8:[function(_dereq_,module,exports){
 'use strict';
 
 var BpmnTreeWalker = _dereq_('./BpmnTreeWalker');
@@ -2999,7 +2999,7 @@ BpmnModdle.prototype.toXML = function(element, options, done) {
   }
 };
 
-},{"moddle":28,"moddle-xml":14}],13:[function(_dereq_,module,exports){
+},{"moddle":19,"moddle-xml":14}],13:[function(_dereq_,module,exports){
 var BpmnModdle = _dereq_('./bpmn-moddle');
 
 var packages = {
@@ -3012,7 +3012,7 @@ var packages = {
 module.exports = function() {
   return new BpmnModdle(packages);
 };
-},{"../resources/bpmn/json/bpmn.json":37,"../resources/bpmn/json/bpmndi.json":38,"../resources/bpmn/json/dc.json":39,"../resources/bpmn/json/di.json":40,"./bpmn-moddle":12}],14:[function(_dereq_,module,exports){
+},{"../resources/bpmn/json/bpmn.json":28,"../resources/bpmn/json/bpmndi.json":29,"../resources/bpmn/json/dc.json":30,"../resources/bpmn/json/di.json":31,"./bpmn-moddle":12}],14:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports.Reader = _dereq_('./lib/Reader');
@@ -3556,7 +3556,7 @@ XMLReader.prototype.handler = function(name) {
 
 module.exports = XMLReader;
 module.exports.ElementHandler = ElementHandler;
-},{"./common":17,"moddle":18,"tiny-stack":27}],16:[function(_dereq_,module,exports){
+},{"./common":17,"moddle":19,"tiny-stack":18}],16:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -4126,7 +4126,7 @@ function XMLWriter(options) {
 }
 
 module.exports = XMLWriter;
-},{"./common":17,"moddle":18}],17:[function(_dereq_,module,exports){
+},{"./common":17,"moddle":19}],17:[function(_dereq_,module,exports){
 'use strict';
 
 
@@ -4163,6 +4163,123 @@ module.exports.DEFAULT_NS_MAP = {
   'xsi': 'http://www.w3.org/2001/XMLSchema-instance'
 };
 },{}],18:[function(_dereq_,module,exports){
+/**
+ * Tiny stack for browser or server
+ *
+ * @author Jason Mulligan <jason.mulligan@avoidwork.com>
+ * @copyright 2014 Jason Mulligan
+ * @license BSD-3 <https://raw.github.com/avoidwork/tiny-stack/master/LICENSE>
+ * @link http://avoidwork.github.io/tiny-stack
+ * @module tiny-stack
+ * @version 0.1.0
+ */
+
+( function ( global ) {
+
+"use strict";
+
+/**
+ * TinyStack
+ *
+ * @constructor
+ */
+function TinyStack () {
+	this.data = [null];
+	this.top  = 0;
+}
+
+/**
+ * Clears the stack
+ *
+ * @method clear
+ * @memberOf TinyStack
+ * @return {Object} {@link TinyStack}
+ */
+TinyStack.prototype.clear = function clear () {
+	this.data = [null];
+	this.top  = 0;
+
+	return this;
+};
+
+/**
+ * Gets the size of the stack
+ *
+ * @method length
+ * @memberOf TinyStack
+ * @return {Number} Size of stack
+ */
+TinyStack.prototype.length = function length () {
+	return this.top;
+};
+
+/**
+ * Gets the item at the top of the stack
+ *
+ * @method peek
+ * @memberOf TinyStack
+ * @return {Mixed} Item at the top of the stack
+ */
+TinyStack.prototype.peek = function peek () {
+	return this.data[this.top];
+};
+
+/**
+ * Gets & removes the item at the top of the stack
+ *
+ * @method pop
+ * @memberOf TinyStack
+ * @return {Mixed} Item at the top of the stack
+ */
+TinyStack.prototype.pop = function pop () {
+	if ( this.top > 0 ) {
+		this.top--;
+
+		return this.data.pop();
+	}
+	else {
+		return undefined;
+	}
+};
+
+/**
+ * Pushes an item onto the stack
+ *
+ * @method push
+ * @memberOf TinyStack
+ * @return {Object} {@link TinyStack}
+ */
+TinyStack.prototype.push = function push ( arg ) {
+	this.data[++this.top] = arg;
+
+	return this;
+};
+
+/**
+ * TinyStack factory
+ *
+ * @method factory
+ * @return {Object} {@link TinyStack}
+ */
+function factory () {
+	return new TinyStack();
+}
+
+// Node, AMD & window supported
+if ( typeof exports != "undefined" ) {
+	module.exports = factory;
+}
+else if ( typeof define == "function" ) {
+	define( function () {
+		return factory;
+	} );
+}
+else {
+	global.stack = factory;
+}
+} )( this );
+
+},{}],19:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = _dereq_('./lib/moddle');
@@ -4170,7 +4287,7 @@ module.exports = _dereq_('./lib/moddle');
 module.exports.types = _dereq_('./lib/types');
 
 module.exports.ns = _dereq_('./lib/ns');
-},{"./lib/moddle":22,"./lib/ns":23,"./lib/types":26}],19:[function(_dereq_,module,exports){
+},{"./lib/moddle":23,"./lib/ns":24,"./lib/types":27}],20:[function(_dereq_,module,exports){
 'use strict';
 
 function Base() { }
@@ -4185,7 +4302,7 @@ Base.prototype.set = function(name, value) {
 
 
 module.exports = Base;
-},{}],20:[function(_dereq_,module,exports){
+},{}],21:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -4366,7 +4483,7 @@ DescriptorBuilder.prototype.addTrait = function(t) {
   allTypes.push(t);
 };
 
-},{"./ns":23}],21:[function(_dereq_,module,exports){
+},{"./ns":24}],22:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -4424,7 +4541,7 @@ Factory.prototype.createType = function(descriptor) {
 
   return ModdleElement;
 };
-},{"./base":19}],22:[function(_dereq_,module,exports){
+},{"./base":20}],23:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -4643,7 +4760,7 @@ Moddle.prototype.getPropertyDescriptor = function(element, property) {
   return this.getElementDescriptor(element).propertiesByName[property];
 };
 
-},{"./factory":21,"./ns":23,"./properties":24,"./registry":25,"./types":26}],23:[function(_dereq_,module,exports){
+},{"./factory":22,"./ns":24,"./properties":25,"./registry":26,"./types":27}],24:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -4680,7 +4797,7 @@ module.exports.parseName = function(name, defaultPrefix) {
     localName: localName
   };
 };
-},{}],24:[function(_dereq_,module,exports){
+},{}],25:[function(_dereq_,module,exports){
 'use strict';
 
 
@@ -4774,7 +4891,7 @@ Properties.prototype.defineDescriptor = function(target, descriptor) {
 Properties.prototype.defineModel = function(target, model) {
   this.define(target, '$model', { value: model });
 };
-},{}],25:[function(_dereq_,module,exports){
+},{}],26:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -4922,7 +5039,7 @@ Registry.prototype.getEffectiveDescriptor = function(name) {
 Registry.prototype.definePackage = function(target, pkg) {
   this.properties.define(target, '$pkg', { value: pkg });
 };
-},{"./descriptor-builder":20,"./ns":23,"./types":26}],26:[function(_dereq_,module,exports){
+},{"./descriptor-builder":21,"./ns":24,"./types":27}],27:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -4973,142 +5090,7 @@ module.exports.isBuiltIn = function(type) {
 module.exports.isSimple = function(type) {
   return !!TYPE_CONVERTERS[type];
 };
-},{}],27:[function(_dereq_,module,exports){
-/**
- * Tiny stack for browser or server
- *
- * @author Jason Mulligan <jason.mulligan@avoidwork.com>
- * @copyright 2014 Jason Mulligan
- * @license BSD-3 <https://raw.github.com/avoidwork/tiny-stack/master/LICENSE>
- * @link http://avoidwork.github.io/tiny-stack
- * @module tiny-stack
- * @version 0.1.0
- */
-
-( function ( global ) {
-
-"use strict";
-
-/**
- * TinyStack
- *
- * @constructor
- */
-function TinyStack () {
-	this.data = [null];
-	this.top  = 0;
-}
-
-/**
- * Clears the stack
- *
- * @method clear
- * @memberOf TinyStack
- * @return {Object} {@link TinyStack}
- */
-TinyStack.prototype.clear = function clear () {
-	this.data = [null];
-	this.top  = 0;
-
-	return this;
-};
-
-/**
- * Gets the size of the stack
- *
- * @method length
- * @memberOf TinyStack
- * @return {Number} Size of stack
- */
-TinyStack.prototype.length = function length () {
-	return this.top;
-};
-
-/**
- * Gets the item at the top of the stack
- *
- * @method peek
- * @memberOf TinyStack
- * @return {Mixed} Item at the top of the stack
- */
-TinyStack.prototype.peek = function peek () {
-	return this.data[this.top];
-};
-
-/**
- * Gets & removes the item at the top of the stack
- *
- * @method pop
- * @memberOf TinyStack
- * @return {Mixed} Item at the top of the stack
- */
-TinyStack.prototype.pop = function pop () {
-	if ( this.top > 0 ) {
-		this.top--;
-
-		return this.data.pop();
-	}
-	else {
-		return undefined;
-	}
-};
-
-/**
- * Pushes an item onto the stack
- *
- * @method push
- * @memberOf TinyStack
- * @return {Object} {@link TinyStack}
- */
-TinyStack.prototype.push = function push ( arg ) {
-	this.data[++this.top] = arg;
-
-	return this;
-};
-
-/**
- * TinyStack factory
- *
- * @method factory
- * @return {Object} {@link TinyStack}
- */
-function factory () {
-	return new TinyStack();
-}
-
-// Node, AMD & window supported
-if ( typeof exports != "undefined" ) {
-	module.exports = factory;
-}
-else if ( typeof define == "function" ) {
-	define( function () {
-		return factory;
-	} );
-}
-else {
-	global.stack = factory;
-}
-} )( this );
-
 },{}],28:[function(_dereq_,module,exports){
-module.exports=_dereq_(18)
-},{"./lib/moddle":32,"./lib/ns":33,"./lib/types":36}],29:[function(_dereq_,module,exports){
-module.exports=_dereq_(19)
-},{}],30:[function(_dereq_,module,exports){
-module.exports=_dereq_(20)
-},{"./ns":33}],31:[function(_dereq_,module,exports){
-module.exports=_dereq_(21)
-},{"./base":29}],32:[function(_dereq_,module,exports){
-module.exports=_dereq_(22)
-},{"./factory":31,"./ns":33,"./properties":34,"./registry":35,"./types":36}],33:[function(_dereq_,module,exports){
-module.exports=_dereq_(23)
-},{}],34:[function(_dereq_,module,exports){
-module.exports=_dereq_(24)
-},{}],35:[function(_dereq_,module,exports){
-module.exports=_dereq_(25)
-},{"./descriptor-builder":30,"./ns":33,"./types":36}],36:[function(_dereq_,module,exports){
-module.exports=_dereq_(26)
-},{}],37:[function(_dereq_,module,exports){
 module.exports={
   "name": "BPMN20",
   "uri": "http://www.omg.org/spec/BPMN/20100524/MODEL",
@@ -8188,7 +8170,7 @@ module.exports={
     "alias": "lowerCase"
   }
 }
-},{}],38:[function(_dereq_,module,exports){
+},{}],29:[function(_dereq_,module,exports){
 module.exports={
   "name": "BPMNDI",
   "uri": "http://www.omg.org/spec/BPMN/20100524/DI",
@@ -8393,7 +8375,7 @@ module.exports={
   "associations": [],
   "prefix": "bpmndi"
 }
-},{}],39:[function(_dereq_,module,exports){
+},{}],30:[function(_dereq_,module,exports){
 module.exports={
   "name": "DC",
   "uri": "http://www.omg.org/spec/DD/20100524/DC",
@@ -8493,7 +8475,7 @@ module.exports={
   "prefix": "dc",
   "associations": []
 }
-},{}],40:[function(_dereq_,module,exports){
+},{}],31:[function(_dereq_,module,exports){
 module.exports={
   "name": "DI",
   "uri": "http://www.omg.org/spec/DD/20100524/DI",
@@ -8705,9 +8687,9 @@ module.exports={
   "associations": [],
   "prefix": "di"
 }
-},{}],41:[function(_dereq_,module,exports){
+},{}],32:[function(_dereq_,module,exports){
 module.exports = _dereq_('./lib/Diagram');
-},{"./lib/Diagram":42}],42:[function(_dereq_,module,exports){
+},{"./lib/Diagram":33}],33:[function(_dereq_,module,exports){
 'use strict';
 
 var di = _dereq_('didi');
@@ -8894,7 +8876,7 @@ module.exports = Diagram;
 Diagram.prototype.destroy = function() {
   this.get('eventBus').fire('diagram.destroy');
 };
-},{"./core":48,"didi":69}],43:[function(_dereq_,module,exports){
+},{"./core":39,"didi":60}],34:[function(_dereq_,module,exports){
 'use strict';
 
 
@@ -9633,7 +9615,7 @@ Canvas.prototype.getAbsoluteBBox = function(element) {
     height: height
   };
 };
-},{"../util/Collections":64}],44:[function(_dereq_,module,exports){
+},{"../util/Collections":55}],35:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -9686,7 +9668,7 @@ ElementFactory.prototype.create = function(type, attrs) {
 
   return Model.create(type, attrs);
 };
-},{"../model":63}],45:[function(_dereq_,module,exports){
+},{"../model":54}],36:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -9778,7 +9760,7 @@ ElementRegistry.prototype.getGraphicsByElement = function(element) {
   return container && container.gfx;
 };
 
-},{}],46:[function(_dereq_,module,exports){
+},{}],37:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -10023,7 +10005,7 @@ EventBus.prototype._getListeners = function(name) {
 
   return listeners;
 };
-},{}],47:[function(_dereq_,module,exports){
+},{}],38:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -10125,7 +10107,7 @@ GraphicsFactory.prototype.updateConnection = function(element, gfx) {
 GraphicsFactory.$inject = [ 'renderer', 'snap' ];
 
 module.exports = GraphicsFactory;
-},{}],48:[function(_dereq_,module,exports){
+},{}],39:[function(_dereq_,module,exports){
 module.exports = {
   __depends__: [ _dereq_('../draw') ],
   __init__: [ 'canvas' ],
@@ -10135,7 +10117,7 @@ module.exports = {
   eventBus: [ 'type', _dereq_('./EventBus') ],
   graphicsFactory: [ 'type', _dereq_('./GraphicsFactory') ]
 };
-},{"../draw":52,"./Canvas":43,"./ElementFactory":44,"./ElementRegistry":45,"./EventBus":46,"./GraphicsFactory":47}],49:[function(_dereq_,module,exports){
+},{"../draw":43,"./Canvas":34,"./ElementFactory":35,"./ElementRegistry":36,"./EventBus":37,"./GraphicsFactory":38}],40:[function(_dereq_,module,exports){
 'use strict';
 
 var Snap = _dereq_('./Snap');
@@ -10193,14 +10175,14 @@ function updateLine(gfx, points) {
 
 module.exports.createLine = createLine;
 module.exports.updateLine = updateLine;
-},{"./Snap":50}],50:[function(_dereq_,module,exports){
+},{"./Snap":41}],41:[function(_dereq_,module,exports){
 var snapsvg = (window.Snap);
 
 // require snapsvg extensions
 _dereq_('./snapsvg-extensions');
 
 module.exports = snapsvg;
-},{"./snapsvg-extensions":53}],51:[function(_dereq_,module,exports){
+},{"./snapsvg-extensions":44}],42:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -10263,7 +10245,7 @@ function Styles() {
 }
 
 module.exports = Styles;
-},{}],52:[function(_dereq_,module,exports){
+},{}],43:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = {
@@ -10271,7 +10253,7 @@ module.exports = {
   snap: [ 'value', _dereq_('./Snap') ],
   styles: [ 'type', _dereq_('./Styles') ]
 };
-},{"./Renderer":49,"./Snap":50,"./Styles":51}],53:[function(_dereq_,module,exports){
+},{"./Renderer":40,"./Snap":41,"./Styles":42}],44:[function(_dereq_,module,exports){
 'use strict';
 
 var Snap = (window.Snap);
@@ -10472,7 +10454,7 @@ Snap.plugin(function(Snap, Element, Paper, global) {
     return new Snap(svg);
   };
 });
-},{}],54:[function(_dereq_,module,exports){
+},{}],45:[function(_dereq_,module,exports){
 'use strict';
 
 
@@ -10573,12 +10555,12 @@ function InteractionEvents(eventBus, styles) {
 InteractionEvents.$inject = [ 'eventBus', 'styles' ];
 
 module.exports = InteractionEvents;
-},{"../../draw/Renderer":49,"../../util/GraphicsUtil":65}],55:[function(_dereq_,module,exports){
+},{"../../draw/Renderer":40,"../../util/GraphicsUtil":56}],46:[function(_dereq_,module,exports){
 module.exports = {
   __init__: [ 'interactionEvents' ],
   interactionEvents: [ 'type', _dereq_('./InteractionEvents') ]
 };
-},{"./InteractionEvents":54}],56:[function(_dereq_,module,exports){
+},{"./InteractionEvents":45}],47:[function(_dereq_,module,exports){
 'use strict';
 
 var Snap = (window.Snap);
@@ -10636,14 +10618,14 @@ function Outline(events, styles) {
 Outline.$inject = ['eventBus', 'styles'];
 
 module.exports = Outline;
-},{"../../util/GraphicsUtil":65}],57:[function(_dereq_,module,exports){
+},{"../../util/GraphicsUtil":56}],48:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = {
   __init__: [ 'outline' ],
   outline: [ 'type', _dereq_('./Outline') ]
 };
-},{"./Outline":56}],58:[function(_dereq_,module,exports){
+},{"./Outline":47}],49:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._),
@@ -11088,14 +11070,14 @@ Overlays.prototype._init = function(config) {
     }
   });
 };
-},{"../../util/IdGenerator":66}],59:[function(_dereq_,module,exports){
+},{"../../util/IdGenerator":57}],50:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = {
   __init__: [ 'overlays' ],
   overlays: [ 'type', _dereq_('./Overlays') ]
 };
-},{"./Overlays":58}],60:[function(_dereq_,module,exports){
+},{"./Overlays":49}],51:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -11190,7 +11172,7 @@ Selection.prototype.select = function(elements, add) {
 
   this._eventBus.fire('selection.changed', { oldSelection: oldSelection, newSelection: selectedElements });
 };
-},{}],61:[function(_dereq_,module,exports){
+},{}],52:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -11286,7 +11268,7 @@ SelectionVisuals.$inject = [
 ];
 
 module.exports = SelectionVisuals;
-},{}],62:[function(_dereq_,module,exports){
+},{}],53:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = {
@@ -11298,7 +11280,7 @@ module.exports = {
   selection: [ 'type', _dereq_('./Selection') ],
   selectionVisuals: [ 'type', _dereq_('./SelectionVisuals') ]
 };
-},{"../interaction-events":55,"../outline":57,"./Selection":60,"./SelectionVisuals":61}],63:[function(_dereq_,module,exports){
+},{"../interaction-events":46,"../outline":48,"./Selection":51,"./SelectionVisuals":52}],54:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -11498,7 +11480,7 @@ module.exports.Root = Root;
 module.exports.Shape = Shape;
 module.exports.Connection = Connection;
 module.exports.Label = Label;
-},{"object-refs":72}],64:[function(_dereq_,module,exports){
+},{"object-refs":63}],55:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -11524,7 +11506,7 @@ module.exports.remove = function(collection, element) {
 
   return element;
 };
-},{}],65:[function(_dereq_,module,exports){
+},{}],56:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -11579,7 +11561,7 @@ function getBBox(gfx) {
 
 module.exports.getBBox = getBBox;
 module.exports.getVisual = getVisual;
-},{}],66:[function(_dereq_,module,exports){
+},{}],57:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -11613,7 +11595,7 @@ IdGenerator.prototype.next = function() {
   return this._prefix + (++this._counter);
 };
 
-},{}],67:[function(_dereq_,module,exports){
+},{}],58:[function(_dereq_,module,exports){
 'use strict';
 
 var Snap = (window.Snap);
@@ -11698,6 +11680,9 @@ Text.prototype.createText = function(parent, text, options) {
   var maxWidth = box.width - padding.left - padding.right;
 
   var fakeText = parent.text(0, 0, '').attr(style).node;
+  // FF regression: ensure text is shown during rendering
+  // by attaching it directly to the body
+  fakeText.ownerSVGElement.appendChild(fakeText);
 
   /**
    * Layout the next line and return the layouted element.
@@ -11857,7 +11842,7 @@ Text.prototype.createText = function(parent, text, options) {
 
 
 module.exports = Text;
-},{}],68:[function(_dereq_,module,exports){
+},{}],59:[function(_dereq_,module,exports){
 
 var isArray = function(obj) {
   return Object.prototype.toString.call(obj) === '[object Array]';
@@ -11907,14 +11892,14 @@ exports.annotate = annotate;
 exports.parse = parse;
 exports.isArray = isArray;
 
-},{}],69:[function(_dereq_,module,exports){
+},{}],60:[function(_dereq_,module,exports){
 module.exports = {
   annotate: _dereq_('./annotation').annotate,
   Module: _dereq_('./module'),
   Injector: _dereq_('./injector')
 };
 
-},{"./annotation":68,"./injector":70,"./module":71}],70:[function(_dereq_,module,exports){
+},{"./annotation":59,"./injector":61,"./module":62}],61:[function(_dereq_,module,exports){
 var Module = _dereq_('./module');
 var autoAnnotate = _dereq_('./annotation').parse;
 var annotate = _dereq_('./annotation').annotate;
@@ -12130,7 +12115,7 @@ var Injector = function(modules, parent) {
 
 module.exports = Injector;
 
-},{"./annotation":68,"./module":71}],71:[function(_dereq_,module,exports){
+},{"./annotation":59,"./module":62}],62:[function(_dereq_,module,exports){
 var Module = function() {
   var providers = [];
 
@@ -12156,11 +12141,11 @@ var Module = function() {
 
 module.exports = Module;
 
-},{}],72:[function(_dereq_,module,exports){
+},{}],63:[function(_dereq_,module,exports){
 module.exports = _dereq_('./lib/refs');
 
 module.exports.Collection = _dereq_('./lib/collection');
-},{"./lib/collection":73,"./lib/refs":74}],73:[function(_dereq_,module,exports){
+},{"./lib/collection":64,"./lib/refs":65}],64:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -12242,7 +12227,7 @@ function extend(collection, refs, property, target) {
 
 
 module.exports.extend = extend;
-},{}],74:[function(_dereq_,module,exports){
+},{}],65:[function(_dereq_,module,exports){
 'use strict';
 
 var Collection = _dereq_('./collection');
@@ -12424,12 +12409,6 @@ module.exports = Refs;
  * @property {boolean} [collection=false]
  * @property {boolean} [enumerable=false]
  */
-},{"./collection":73}],75:[function(_dereq_,module,exports){
-module.exports=_dereq_(72)
-},{"./lib/collection":76,"./lib/refs":77}],76:[function(_dereq_,module,exports){
-module.exports=_dereq_(73)
-},{}],77:[function(_dereq_,module,exports){
-module.exports=_dereq_(74)
-},{"./collection":76}]},{},[1])
+},{"./collection":64}]},{},[1])
 (1)
 });
