@@ -259,203 +259,20 @@ Viewer.prototype.on = function(event, handler) {
 // modules the viewer is composed of
 Viewer.prototype._modules = [
   _dereq_('./core'),
-  _dereq_('./draw'),
   _dereq_('diagram-js/lib/features/selection'),
   _dereq_('diagram-js/lib/features/overlays')
 ];
 
 module.exports = Viewer;
 
-},{"./core":3,"./draw":6,"./import/Importer":8,"bpmn-moddle":11,"diagram-js":32,"diagram-js/lib/features/overlays":50,"diagram-js/lib/features/selection":53}],2:[function(_dereq_,module,exports){
-'use strict';
-
-var _ = (window._);
-
-var LabelUtil = _dereq_('../util/Label');
-
-var hasExternalLabel = LabelUtil.hasExternalLabel,
-    getExternalLabelBounds = LabelUtil.getExternalLabelBounds,
-    isExpanded = _dereq_('../util/Di').isExpanded;
-
-
-function elementData(semantic, attrs) {
-  return _.extend({
-    id: semantic.id,
-    type: semantic.$type,
-    businessObject: semantic
-  }, attrs);
-}
-
-function collectWaypoints(waypoints) {
-  return _.collect(waypoints, function(p) {
-    return { x: p.x, y: p.y };
-  });
-}
-
-
-/**
- * An importer that adds bpmn elements to the canvas
- *
- * @param {EventBus} eventBus
- * @param {Canvas} canvas
- * @param {ElementFactory} elementFactory
- * @param {ElementRegistry} elementRegistry
- */
-function BpmnImporter(eventBus, canvas, elementFactory, elementRegistry) {
-  this._eventBus = eventBus;
-  this._canvas = canvas;
-
-  this._elementFactory = elementFactory;
-  this._elementRegistry = elementRegistry;
-}
-
-BpmnImporter.$inject = [ 'eventBus', 'canvas', 'elementFactory', 'elementRegistry' ];
-
-module.exports = BpmnImporter;
-
-
-/**
- * Add bpmn element (semantic) to the canvas onto the
- * specified parent shape.
- */
-BpmnImporter.prototype.add = function(semantic, parentElement) {
-
-  var di = semantic.di,
-      element;
-
-  // ROOT ELEMENT
-  // handle the special case that we deal with a
-  // invisible root element (process or collaboration)
-  if (di.$instanceOf('bpmndi:BPMNPlane')) {
-
-    // add a virtual element (not being drawn)
-    element = this._elementFactory.createRoot(elementData(semantic));
-  }
-
-  // SHAPE
-  else if (di.$instanceOf('bpmndi:BPMNShape')) {
-
-    var collapsed = !isExpanded(semantic);
-    var hidden = parentElement && (parentElement.hidden || parentElement.collapsed);
-
-    var bounds = semantic.di.bounds;
-
-    element = this._elementFactory.createShape(elementData(semantic, {
-      collapsed: collapsed,
-      hidden: hidden,
-      x: bounds.x,
-      y: bounds.y,
-      width: bounds.width,
-      height: bounds.height
-    }));
-
-    this._canvas.addShape(element, parentElement);
-  }
-
-  // CONNECTION
-  else if (di.$instanceOf('bpmndi:BPMNEdge')) {
-
-    var source = this._getSource(semantic),
-        target = this._getTarget(semantic);
-
-    if (!source || !target) {
-      throw new Error('source or target not rendered for element <' + semantic.id + '>');
-    }
-
-    element = this._elementFactory.createConnection(elementData(semantic, {
-      source: source,
-      target: target,
-      waypoints: collectWaypoints(semantic.di.waypoint)
-    }));
-
-    this._canvas.addConnection(element, parentElement);
-  } else {
-    throw new Error('unknown di <' + di.$type + '> for element <' + semantic.id + '>');
-  }
-
-  // (optional) LABEL
-  if (hasExternalLabel(semantic)) {
-    this.addLabel(semantic, element);
-  }
-
-  this._eventBus.fire('bpmnElement.added', { element: element });
-
-  return element;
-};
-
-
-/**
- * add label for an element
- */
-BpmnImporter.prototype.addLabel = function (semantic, element) {
-  var bounds = getExternalLabelBounds(semantic, element);
-
-  var label = this._elementFactory.createLabel(elementData(semantic, {
-    id: semantic.id + '_label',
-    labelTarget: element,
-    type: 'label',
-    hidden: element.hidden,
-    x: bounds.x,
-    y: bounds.y,
-    width: bounds.width,
-    height: bounds.height
-  }));
-
-  return this._canvas.addShape(label, element.parent);
-};
-
-
-BpmnImporter.prototype._getSource = function(semantic) {
-
-  var element,
-      elementSemantic = semantic.sourceRef;
-
-  // handle mysterious isMany DataAssociation#sourceRef
-  if (_.isArray(elementSemantic)) {
-    elementSemantic = elementSemantic[0];
-  }
-
-  if (elementSemantic && elementSemantic.$instanceOf('bpmn:DataOutput')) {
-    elementSemantic = elementSemantic.$parent.$parent;
-  }
-
-  element = elementSemantic && this._getElement(elementSemantic);
-
-  if (element) {
-    return element;
-  }
-
-  throw new Error('element <' + elementSemantic.id + '> referenced by <' + semantic.id + '> not yet drawn');
-};
-
-
-BpmnImporter.prototype._getTarget = function(semantic) {
-
-  var element,
-      elementSemantic = semantic.targetRef;
-
-  if (elementSemantic && elementSemantic.$instanceOf('bpmn:DataInput')) {
-    elementSemantic = elementSemantic.$parent.$parent;
-  }
-
-  element = elementSemantic && this._getElement(elementSemantic);
-
-  if (element) {
-    return element;
-  }
-
-  throw new Error('element <' + elementSemantic.id + '> referenced by <' + semantic.id + '> not yet drawn');
-};
-
-
-BpmnImporter.prototype._getElement = function(semantic) {
-  return this._elementRegistry.getById(semantic.id);
-};
-},{"../util/Di":9,"../util/Label":10}],3:[function(_dereq_,module,exports){
+},{"./core":2,"./import/Importer":8,"bpmn-moddle":13,"diagram-js":43,"diagram-js/lib/features/overlays":61,"diagram-js/lib/features/selection":64}],2:[function(_dereq_,module,exports){
 module.exports = {
-  bpmnImporter: [ 'type', _dereq_('./BpmnImporter') ]
+  __depends__: [
+    _dereq_('../draw'),
+    _dereq_('../import')
+  ]
 };
-},{"./BpmnImporter":2}],4:[function(_dereq_,module,exports){
+},{"../draw":5,"../import":10}],3:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -837,8 +654,32 @@ function BpmnRenderer(events, styles, pathMap) {
       });
 
       var path = drawPath(p, pathData, {
-        strokeWidth: 2
+        strokeWidth: 2,
+        strokeLinecap: 'square'
       });
+
+      for(var i = 0;i < 12;i++) {
+
+        var linePathData = pathMap.getScaledPath('EVENT_TIMER_LINE', {
+          xScaleFactor: 0.75,
+          yScaleFactor: 0.75,
+          containerWidth: element.width,
+          containerHeight: element.height,
+          position: {
+            mx: 0.5,
+            my: 0.5
+          }
+        });
+
+        var width = element.width / 2;
+        var height = element.height / 2;
+
+        var linePath = drawPath(p, linePathData, {
+          strokeWidth: 1,
+          strokeLinecap: 'square',
+          transform: 'rotate(' + (i * 30) + ',' + height + ',' + width + ')'
+        });
+      }
 
       return circle;
     },
@@ -1944,7 +1785,8 @@ BpmnRenderer.prototype = Object.create(DefaultRenderer.prototype);
 BpmnRenderer.$inject = [ 'eventBus', 'styles', 'pathMap' ];
 
 module.exports = BpmnRenderer;
-},{"../util/Di":9,"diagram-js/lib/draw/Renderer":40,"diagram-js/lib/util/Text":58}],5:[function(_dereq_,module,exports){
+
+},{"../util/Di":11,"diagram-js/lib/draw/Renderer":51,"diagram-js/lib/util/Text":69}],4:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -2050,11 +1892,19 @@ function PathMap(Snap) {
       widthElements: [10]
     },
     'EVENT_TIMER_WH': {
-      d: 'M {mx},{my} m -{e.x1},-{e.y1} l {e.x1},{e.y1} l {e.x0},-{e.y0}',
+      d: 'M {mx},{my} l {e.x0},-{e.y0} m -{e.x0},{e.y0} l {e.x1},{e.y1} ',
       height: 36,
       width:  36,
-      heightElements: [3.5,4],
-      widthElements: [8.75,10.5]
+      heightElements: [10, 2],
+      widthElements: [3, 7]
+    },
+    'EVENT_TIMER_LINE': {
+      d:  'M {mx},{my} ' +
+          'm {e.x0},{e.y0} l -{e.x1},{e.y1} ',
+      height: 36,
+      width:  36,
+      heightElements: [10, 3],
+      widthElements: [0, 0]
     },
     'EVENT_MULTIPLE': {
       d:'m {mx},{my} {e.x1},-{e.y0} {e.x1},{e.y0} -{e.x0},{e.y1} -{e.x2},0 z',
@@ -2391,20 +2241,221 @@ function PathMap(Snap) {
 PathMap.$inject = [ 'snap' ];
 
 module.exports = PathMap;
-},{}],6:[function(_dereq_,module,exports){
+
+},{}],5:[function(_dereq_,module,exports){
 module.exports = {
-  __depends__: [ _dereq_('../core') ],
   renderer: [ 'type', _dereq_('./BpmnRenderer') ],
   pathMap: [ 'type', _dereq_('./PathMap') ]
 };
-},{"../core":3,"./BpmnRenderer":4,"./PathMap":5}],7:[function(_dereq_,module,exports){
+},{"./BpmnRenderer":3,"./PathMap":4}],6:[function(_dereq_,module,exports){
+'use strict';
+
+var _ = (window._);
+
+var LabelUtil = _dereq_('../util/Label');
+
+var hasExternalLabel = LabelUtil.hasExternalLabel,
+    getExternalLabelBounds = LabelUtil.getExternalLabelBounds,
+    isExpanded = _dereq_('../util/Di').isExpanded,
+    elementToString = _dereq_('./Util').elementToString;
+
+
+function elementData(semantic, attrs) {
+  return _.extend({
+    id: semantic.id,
+    type: semantic.$type,
+    businessObject: semantic
+  }, attrs);
+}
+
+function collectWaypoints(waypoints) {
+  return _.collect(waypoints, function(p) {
+    return { x: p.x, y: p.y };
+  });
+}
+
+
+/**
+ * An importer that adds bpmn elements to the canvas
+ *
+ * @param {EventBus} eventBus
+ * @param {Canvas} canvas
+ * @param {ElementFactory} elementFactory
+ * @param {ElementRegistry} elementRegistry
+ */
+function BpmnImporter(eventBus, canvas, elementFactory, elementRegistry) {
+  this._eventBus = eventBus;
+  this._canvas = canvas;
+
+  this._elementFactory = elementFactory;
+  this._elementRegistry = elementRegistry;
+}
+
+BpmnImporter.$inject = [ 'eventBus', 'canvas', 'elementFactory', 'elementRegistry' ];
+
+module.exports = BpmnImporter;
+
+
+/**
+ * Add bpmn element (semantic) to the canvas onto the
+ * specified parent shape.
+ */
+BpmnImporter.prototype.add = function(semantic, parentElement) {
+
+  var di = semantic.di,
+      element;
+
+  // ROOT ELEMENT
+  // handle the special case that we deal with a
+  // invisible root element (process or collaboration)
+  if (di.$instanceOf('bpmndi:BPMNPlane')) {
+
+    // add a virtual element (not being drawn)
+    element = this._elementFactory.createRoot(elementData(semantic));
+  }
+
+  // SHAPE
+  else if (di.$instanceOf('bpmndi:BPMNShape')) {
+
+    var collapsed = !isExpanded(semantic);
+    var hidden = parentElement && (parentElement.hidden || parentElement.collapsed);
+
+    var bounds = semantic.di.bounds;
+
+    element = this._elementFactory.createShape(elementData(semantic, {
+      collapsed: collapsed,
+      hidden: hidden,
+      x: bounds.x,
+      y: bounds.y,
+      width: bounds.width,
+      height: bounds.height
+    }));
+
+    this._canvas.addShape(element, parentElement);
+  }
+
+  // CONNECTION
+  else if (di.$instanceOf('bpmndi:BPMNEdge')) {
+
+    var source = this._getSource(semantic),
+        target = this._getTarget(semantic);
+
+    element = this._elementFactory.createConnection(elementData(semantic, {
+      source: source,
+      target: target,
+      waypoints: collectWaypoints(semantic.di.waypoint)
+    }));
+
+    this._canvas.addConnection(element, parentElement);
+  } else {
+    throw new Error('unknown di ' + elementToString(di) + ' for element ' + elementToString(semantic));
+  }
+
+  // (optional) LABEL
+  if (hasExternalLabel(semantic)) {
+    this.addLabel(semantic, element);
+  }
+
+  this._eventBus.fire('bpmnElement.added', { element: element });
+
+  return element;
+};
+
+
+/**
+ * add label for an element
+ */
+BpmnImporter.prototype.addLabel = function(semantic, element) {
+  var bounds = getExternalLabelBounds(semantic, element);
+
+  var label = this._elementFactory.createLabel(elementData(semantic, {
+    id: semantic.id + '_label',
+    labelTarget: element,
+    type: 'label',
+    hidden: element.hidden,
+    x: bounds.x,
+    y: bounds.y,
+    width: bounds.width,
+    height: bounds.height
+  }));
+
+  return this._canvas.addShape(label, element.parent);
+};
+
+/**
+ * Return the drawn connection end based on the given side.
+ *
+ * @throws {Error} if the end is not yet drawn
+ */
+BpmnImporter.prototype._getEnd = function(semantic, side) {
+
+  var element,
+      refSemantic,
+      refIsParent,
+      type = semantic.$type;
+
+  refSemantic = semantic[side + 'Ref'];
+
+  // handle mysterious isMany DataAssociation#sourceRef
+  if (side === 'source' && type === 'bpmn:DataInputAssociation') {
+    refSemantic = refSemantic && refSemantic[0];
+  }
+
+  // fix source / target for DataInputAssociation / DataOutputAssociation
+  if (side === 'source' && type === 'bpmn:DataOutputAssociation' ||
+      side === 'target' && type === 'bpmn:DataInputAssociation') {
+
+    refSemantic = semantic.$parent;
+  }
+
+  element = refSemantic && this._getElement(refSemantic);
+
+  if (element) {
+    return element;
+  }
+
+  if (refSemantic) {
+    throw new Error(
+      'element ' + elementToString(refSemantic) + ' referenced by ' +
+      elementToString(semantic) + '#' + side + 'Ref not yet drawn');
+  } else {
+    throw new Error(elementToString(semantic) + '#' + side + 'Ref not specified');
+  }
+};
+
+BpmnImporter.prototype._getSource = function(semantic) {
+  return this._getEnd(semantic, 'source');
+};
+
+BpmnImporter.prototype._getTarget = function(semantic) {
+  return this._getEnd(semantic, 'target');
+};
+
+
+BpmnImporter.prototype._getElement = function(semantic) {
+  return this._elementRegistry.getById(semantic.id);
+};
+},{"../util/Di":11,"../util/Label":12,"./Util":9}],7:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
 
 var Refs = _dereq_('object-refs');
 
+var elementToString = _dereq_('./Util').elementToString;
+
 var diRefs = new Refs({ name: 'bpmnElement', enumerable: true }, { name: 'di' });
+
+
+/**
+ * Find a suitable display candidate for definitions where the DI does not
+ * correctly specify one.
+ */
+function findDisplayCandidate(definitions) {
+  return _.find(definitions.rootElements, function(e) {
+    return e.$instanceOf('bpmn:Process') || e.$instanceOf('bpmn:Collaboration');
+  });
+}
 
 
 function BpmnTreeWalker(handler) {
@@ -2434,7 +2485,7 @@ function BpmnTreeWalker(handler) {
 
     // avoid multiple rendering of elements
     if (gfx) {
-      throw new Error('already rendered <' + element.id + '>');
+      throw new Error('already rendered ' + elementToString(element));
     }
 
     // call handler
@@ -2447,9 +2498,7 @@ function BpmnTreeWalker(handler) {
 
   function visitIfDi(element, ctx) {
     try {
-      if (element.di) {
-        return visit(element, ctx);
-      }
+      return element.di && visit(element, ctx);
     } catch (e) {
       logError(e.message, { element: element, error: e });
     }
@@ -2468,7 +2517,7 @@ function BpmnTreeWalker(handler) {
       diRefs.bind(bpmnElement, 'di');
       bpmnElement.di = di;
     } else {
-      logError('no bpmnElement for <' + di.$type + '#' + di.id + '>', { element: di });
+      logError('no bpmnElement referenced in ' + elementToString(di), { element: di });
     }
   }
 
@@ -2510,11 +2559,31 @@ function BpmnTreeWalker(handler) {
     // load DI from selected diagram only
     handleDiagram(diagram);
 
-    var plane = diagram.plane,
-        rootElement = plane.bpmnElement;
 
+    var plane = diagram.plane;
+
+    if (!plane) {
+      throw new Error('no plane for ' + elementToString(diagram));
+    }
+
+
+    var rootElement = plane.bpmnElement;
+
+    // ensure we default to a suitable display candidate (process or collaboration),
+    // even if non is specified in DI
     if (!rootElement) {
-      throw new Error('no rootElement referenced in BPMNPlane <' + diagram.plane.id + '>');
+      rootElement = findDisplayCandidate(definitions);
+
+      if (!rootElement) {
+        throw new Error('do not know what to display');
+      } else {
+
+        logError('correcting missing bpmnElement on ' + elementToString(plane) + ' to ' + elementToString(rootElement));
+
+        // correct DI on the fly
+        plane.bpmnElement = rootElement;
+        registerDi(plane);
+      }
     }
 
 
@@ -2528,7 +2597,7 @@ function BpmnTreeWalker(handler) {
       // force drawing of everything not yet drawn that is part of the target DI
       handleUnhandledProcesses(definitions.rootElements, ctx);
     } else {
-      throw new Error('unsupported root element for bpmndi:Diagram <' + rootElement.$type + '>');
+      throw new Error('unsupported bpmnElement for ' + elementToString(plane) + ' : ' + elementToString(rootElement));
     }
 
     // handle all deferred elements
@@ -2566,9 +2635,7 @@ function BpmnTreeWalker(handler) {
   }
 
   function handleMessageFlows(messageFlows, context) {
-    if (messageFlows) {
-      _.forEach(messageFlows, contextual(handleMessageFlow, context));
-    }
+    _.forEach(messageFlows, contextual(handleMessageFlow, context));
   }
 
   function handleDataAssociation(association, context) {
@@ -2593,7 +2660,16 @@ function BpmnTreeWalker(handler) {
   }
 
   function handleArtifacts(artifacts, context) {
-    _.forEach(artifacts, contextual(handleArtifact, context));
+
+    _.forEach(artifacts, function(e) {
+      if (is(e, 'bpmn:Association')) {
+        deferred.push(function() {
+          handleArtifact(e, context);
+        });
+      } else {
+        handleArtifact(e, context);
+      }
+    });
   }
 
   function handleIoSpecification(ioSpecification, context) {
@@ -2713,7 +2789,8 @@ function BpmnTreeWalker(handler) {
         handleDataElement(e, context);
       } else {
         logError(
-          'unrecognized flowElement <' + e.$type + '> in context ' + (context ? context.id : null),
+          'unrecognized flowElement ' + elementToString(e) + ' in context ' +
+          (context ? elementToString(context.businessObject) : null),
           { element: e, context: context });
       }
     });
@@ -2746,7 +2823,7 @@ function BpmnTreeWalker(handler) {
 }
 
 module.exports = BpmnTreeWalker;
-},{"object-refs":63}],8:[function(_dereq_,module,exports){
+},{"./Util":9,"object-refs":77}],8:[function(_dereq_,module,exports){
 'use strict';
 
 var BpmnTreeWalker = _dereq_('./BpmnTreeWalker');
@@ -2806,6 +2883,18 @@ function importBpmnDiagram(diagram, definitions, done) {
 
 module.exports.importBpmnDiagram = importBpmnDiagram;
 },{"./BpmnTreeWalker":7}],9:[function(_dereq_,module,exports){
+module.exports.elementToString = function(e) {
+  if (!e) {
+    return '<null>';
+  }
+
+  return '<' + e.$type + (e.id ? ' id="' + e.id : '') + '" />';
+};
+},{}],10:[function(_dereq_,module,exports){
+module.exports = {
+  bpmnImporter: [ 'type', _dereq_('./BpmnImporter') ]
+};
+},{"./BpmnImporter":6}],11:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports.isExpandedPool = function(semantic) {
@@ -2813,9 +2902,17 @@ module.exports.isExpandedPool = function(semantic) {
 };
 
 module.exports.isExpanded = function(semantic) {
-  return !semantic.$instanceOf('bpmn:SubProcess') || semantic.di.isExpanded;
+
+  // Is type expanded by default?
+  var isDefaultExpanded = !(semantic.$instanceOf('bpmn:SubProcess') || semantic.$instanceOf('bpmn:CallActivity'));
+
+  // For non default expanded types -> evaluate the expanded flag
+  var isExpanded = isDefaultExpanded || semantic.di.isExpanded;
+
+  return isExpanded;
 };
-},{}],10:[function(_dereq_,module,exports){
+
+},{}],12:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -2901,7 +2998,7 @@ module.exports.getExternalLabelBounds = function(semantic, element) {
 
     mid = {
       x: bounds.x + bounds.width / 2,
-      y: bounds.y
+      y: bounds.y + bounds.height / 2
     };
   } else {
 
@@ -2915,9 +3012,9 @@ module.exports.getExternalLabelBounds = function(semantic, element) {
     y: mid.y - size.height / 2
   }, size);
 };
-},{}],11:[function(_dereq_,module,exports){
+},{}],13:[function(_dereq_,module,exports){
 module.exports = _dereq_('./lib/simple');
-},{"./lib/simple":13}],12:[function(_dereq_,module,exports){
+},{"./lib/simple":15}],14:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -2999,7 +3096,7 @@ BpmnModdle.prototype.toXML = function(element, options, done) {
   }
 };
 
-},{"moddle":19,"moddle-xml":14}],13:[function(_dereq_,module,exports){
+},{"moddle":30,"moddle-xml":16}],15:[function(_dereq_,module,exports){
 var BpmnModdle = _dereq_('./bpmn-moddle');
 
 var packages = {
@@ -3012,12 +3109,12 @@ var packages = {
 module.exports = function() {
   return new BpmnModdle(packages);
 };
-},{"../resources/bpmn/json/bpmn.json":28,"../resources/bpmn/json/bpmndi.json":29,"../resources/bpmn/json/dc.json":30,"../resources/bpmn/json/di.json":31,"./bpmn-moddle":12}],14:[function(_dereq_,module,exports){
+},{"../resources/bpmn/json/bpmn.json":39,"../resources/bpmn/json/bpmndi.json":40,"../resources/bpmn/json/dc.json":41,"../resources/bpmn/json/di.json":42,"./bpmn-moddle":14}],16:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports.Reader = _dereq_('./lib/Reader');
 module.exports.Writer = _dereq_('./lib/Writer');
-},{"./lib/Reader":15,"./lib/Writer":16}],15:[function(_dereq_,module,exports){
+},{"./lib/Reader":17,"./lib/Writer":18}],17:[function(_dereq_,module,exports){
 'use strict';
 
 var sax = (window.sax),
@@ -3556,7 +3653,7 @@ XMLReader.prototype.handler = function(name) {
 
 module.exports = XMLReader;
 module.exports.ElementHandler = ElementHandler;
-},{"./common":17,"moddle":19,"tiny-stack":18}],16:[function(_dereq_,module,exports){
+},{"./common":19,"moddle":20,"tiny-stack":29}],18:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -4126,7 +4223,7 @@ function XMLWriter(options) {
 }
 
 module.exports = XMLWriter;
-},{"./common":17,"moddle":19}],17:[function(_dereq_,module,exports){
+},{"./common":19,"moddle":20}],19:[function(_dereq_,module,exports){
 'use strict';
 
 
@@ -4162,124 +4259,7 @@ module.exports.nameToAlias = function(name, pkg) {
 module.exports.DEFAULT_NS_MAP = {
   'xsi': 'http://www.w3.org/2001/XMLSchema-instance'
 };
-},{}],18:[function(_dereq_,module,exports){
-/**
- * Tiny stack for browser or server
- *
- * @author Jason Mulligan <jason.mulligan@avoidwork.com>
- * @copyright 2014 Jason Mulligan
- * @license BSD-3 <https://raw.github.com/avoidwork/tiny-stack/master/LICENSE>
- * @link http://avoidwork.github.io/tiny-stack
- * @module tiny-stack
- * @version 0.1.0
- */
-
-( function ( global ) {
-
-"use strict";
-
-/**
- * TinyStack
- *
- * @constructor
- */
-function TinyStack () {
-	this.data = [null];
-	this.top  = 0;
-}
-
-/**
- * Clears the stack
- *
- * @method clear
- * @memberOf TinyStack
- * @return {Object} {@link TinyStack}
- */
-TinyStack.prototype.clear = function clear () {
-	this.data = [null];
-	this.top  = 0;
-
-	return this;
-};
-
-/**
- * Gets the size of the stack
- *
- * @method length
- * @memberOf TinyStack
- * @return {Number} Size of stack
- */
-TinyStack.prototype.length = function length () {
-	return this.top;
-};
-
-/**
- * Gets the item at the top of the stack
- *
- * @method peek
- * @memberOf TinyStack
- * @return {Mixed} Item at the top of the stack
- */
-TinyStack.prototype.peek = function peek () {
-	return this.data[this.top];
-};
-
-/**
- * Gets & removes the item at the top of the stack
- *
- * @method pop
- * @memberOf TinyStack
- * @return {Mixed} Item at the top of the stack
- */
-TinyStack.prototype.pop = function pop () {
-	if ( this.top > 0 ) {
-		this.top--;
-
-		return this.data.pop();
-	}
-	else {
-		return undefined;
-	}
-};
-
-/**
- * Pushes an item onto the stack
- *
- * @method push
- * @memberOf TinyStack
- * @return {Object} {@link TinyStack}
- */
-TinyStack.prototype.push = function push ( arg ) {
-	this.data[++this.top] = arg;
-
-	return this;
-};
-
-/**
- * TinyStack factory
- *
- * @method factory
- * @return {Object} {@link TinyStack}
- */
-function factory () {
-	return new TinyStack();
-}
-
-// Node, AMD & window supported
-if ( typeof exports != "undefined" ) {
-	module.exports = factory;
-}
-else if ( typeof define == "function" ) {
-	define( function () {
-		return factory;
-	} );
-}
-else {
-	global.stack = factory;
-}
-} )( this );
-
-},{}],19:[function(_dereq_,module,exports){
+},{}],20:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = _dereq_('./lib/moddle');
@@ -4287,7 +4267,7 @@ module.exports = _dereq_('./lib/moddle');
 module.exports.types = _dereq_('./lib/types');
 
 module.exports.ns = _dereq_('./lib/ns');
-},{"./lib/moddle":23,"./lib/ns":24,"./lib/types":27}],20:[function(_dereq_,module,exports){
+},{"./lib/moddle":24,"./lib/ns":25,"./lib/types":28}],21:[function(_dereq_,module,exports){
 'use strict';
 
 function Base() { }
@@ -4302,7 +4282,7 @@ Base.prototype.set = function(name, value) {
 
 
 module.exports = Base;
-},{}],21:[function(_dereq_,module,exports){
+},{}],22:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -4483,7 +4463,7 @@ DescriptorBuilder.prototype.addTrait = function(t) {
   allTypes.push(t);
 };
 
-},{"./ns":24}],22:[function(_dereq_,module,exports){
+},{"./ns":25}],23:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -4541,7 +4521,7 @@ Factory.prototype.createType = function(descriptor) {
 
   return ModdleElement;
 };
-},{"./base":20}],23:[function(_dereq_,module,exports){
+},{"./base":21}],24:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -4760,7 +4740,7 @@ Moddle.prototype.getPropertyDescriptor = function(element, property) {
   return this.getElementDescriptor(element).propertiesByName[property];
 };
 
-},{"./factory":22,"./ns":24,"./properties":25,"./registry":26,"./types":27}],24:[function(_dereq_,module,exports){
+},{"./factory":23,"./ns":25,"./properties":26,"./registry":27,"./types":28}],25:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -4797,7 +4777,7 @@ module.exports.parseName = function(name, defaultPrefix) {
     localName: localName
   };
 };
-},{}],25:[function(_dereq_,module,exports){
+},{}],26:[function(_dereq_,module,exports){
 'use strict';
 
 
@@ -4891,7 +4871,7 @@ Properties.prototype.defineDescriptor = function(target, descriptor) {
 Properties.prototype.defineModel = function(target, model) {
   this.define(target, '$model', { value: model });
 };
-},{}],26:[function(_dereq_,module,exports){
+},{}],27:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -5039,7 +5019,7 @@ Registry.prototype.getEffectiveDescriptor = function(name) {
 Registry.prototype.definePackage = function(target, pkg) {
   this.properties.define(target, '$pkg', { value: pkg });
 };
-},{"./descriptor-builder":21,"./ns":24,"./types":27}],27:[function(_dereq_,module,exports){
+},{"./descriptor-builder":22,"./ns":25,"./types":28}],28:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -5090,7 +5070,142 @@ module.exports.isBuiltIn = function(type) {
 module.exports.isSimple = function(type) {
   return !!TYPE_CONVERTERS[type];
 };
-},{}],28:[function(_dereq_,module,exports){
+},{}],29:[function(_dereq_,module,exports){
+/**
+ * Tiny stack for browser or server
+ *
+ * @author Jason Mulligan <jason.mulligan@avoidwork.com>
+ * @copyright 2014 Jason Mulligan
+ * @license BSD-3 <https://raw.github.com/avoidwork/tiny-stack/master/LICENSE>
+ * @link http://avoidwork.github.io/tiny-stack
+ * @module tiny-stack
+ * @version 0.1.0
+ */
+
+( function ( global ) {
+
+"use strict";
+
+/**
+ * TinyStack
+ *
+ * @constructor
+ */
+function TinyStack () {
+	this.data = [null];
+	this.top  = 0;
+}
+
+/**
+ * Clears the stack
+ *
+ * @method clear
+ * @memberOf TinyStack
+ * @return {Object} {@link TinyStack}
+ */
+TinyStack.prototype.clear = function clear () {
+	this.data = [null];
+	this.top  = 0;
+
+	return this;
+};
+
+/**
+ * Gets the size of the stack
+ *
+ * @method length
+ * @memberOf TinyStack
+ * @return {Number} Size of stack
+ */
+TinyStack.prototype.length = function length () {
+	return this.top;
+};
+
+/**
+ * Gets the item at the top of the stack
+ *
+ * @method peek
+ * @memberOf TinyStack
+ * @return {Mixed} Item at the top of the stack
+ */
+TinyStack.prototype.peek = function peek () {
+	return this.data[this.top];
+};
+
+/**
+ * Gets & removes the item at the top of the stack
+ *
+ * @method pop
+ * @memberOf TinyStack
+ * @return {Mixed} Item at the top of the stack
+ */
+TinyStack.prototype.pop = function pop () {
+	if ( this.top > 0 ) {
+		this.top--;
+
+		return this.data.pop();
+	}
+	else {
+		return undefined;
+	}
+};
+
+/**
+ * Pushes an item onto the stack
+ *
+ * @method push
+ * @memberOf TinyStack
+ * @return {Object} {@link TinyStack}
+ */
+TinyStack.prototype.push = function push ( arg ) {
+	this.data[++this.top] = arg;
+
+	return this;
+};
+
+/**
+ * TinyStack factory
+ *
+ * @method factory
+ * @return {Object} {@link TinyStack}
+ */
+function factory () {
+	return new TinyStack();
+}
+
+// Node, AMD & window supported
+if ( typeof exports != "undefined" ) {
+	module.exports = factory;
+}
+else if ( typeof define == "function" ) {
+	define( function () {
+		return factory;
+	} );
+}
+else {
+	global.stack = factory;
+}
+} )( this );
+
+},{}],30:[function(_dereq_,module,exports){
+module.exports=_dereq_(20)
+},{"./lib/moddle":34,"./lib/ns":35,"./lib/types":38}],31:[function(_dereq_,module,exports){
+module.exports=_dereq_(21)
+},{}],32:[function(_dereq_,module,exports){
+module.exports=_dereq_(22)
+},{"./ns":35}],33:[function(_dereq_,module,exports){
+module.exports=_dereq_(23)
+},{"./base":31}],34:[function(_dereq_,module,exports){
+module.exports=_dereq_(24)
+},{"./factory":33,"./ns":35,"./properties":36,"./registry":37,"./types":38}],35:[function(_dereq_,module,exports){
+module.exports=_dereq_(25)
+},{}],36:[function(_dereq_,module,exports){
+module.exports=_dereq_(26)
+},{}],37:[function(_dereq_,module,exports){
+module.exports=_dereq_(27)
+},{"./descriptor-builder":32,"./ns":35,"./types":38}],38:[function(_dereq_,module,exports){
+module.exports=_dereq_(28)
+},{}],39:[function(_dereq_,module,exports){
 module.exports={
   "name": "BPMN20",
   "uri": "http://www.omg.org/spec/BPMN/20100524/MODEL",
@@ -5645,7 +5760,6 @@ module.exports={
       "properties": [
         {
           "name": "text",
-          "isAttr": true,
           "type": "String",
           "isBody": true
         },
@@ -8170,7 +8284,7 @@ module.exports={
     "alias": "lowerCase"
   }
 }
-},{}],29:[function(_dereq_,module,exports){
+},{}],40:[function(_dereq_,module,exports){
 module.exports={
   "name": "BPMNDI",
   "uri": "http://www.omg.org/spec/BPMN/20100524/DI",
@@ -8375,7 +8489,7 @@ module.exports={
   "associations": [],
   "prefix": "bpmndi"
 }
-},{}],30:[function(_dereq_,module,exports){
+},{}],41:[function(_dereq_,module,exports){
 module.exports={
   "name": "DC",
   "uri": "http://www.omg.org/spec/DD/20100524/DC",
@@ -8475,7 +8589,7 @@ module.exports={
   "prefix": "dc",
   "associations": []
 }
-},{}],31:[function(_dereq_,module,exports){
+},{}],42:[function(_dereq_,module,exports){
 module.exports={
   "name": "DI",
   "uri": "http://www.omg.org/spec/DD/20100524/DI",
@@ -8687,9 +8801,9 @@ module.exports={
   "associations": [],
   "prefix": "di"
 }
-},{}],32:[function(_dereq_,module,exports){
+},{}],43:[function(_dereq_,module,exports){
 module.exports = _dereq_('./lib/Diagram');
-},{"./lib/Diagram":33}],33:[function(_dereq_,module,exports){
+},{"./lib/Diagram":44}],44:[function(_dereq_,module,exports){
 'use strict';
 
 var di = _dereq_('didi');
@@ -8708,8 +8822,8 @@ var di = _dereq_('didi');
  */
 function bootstrap(bootstrapModules) {
 
-  var modules = [];
-  var components = [];
+  var modules = [],
+      components = [];
 
   function hasModule(m) {
     return modules.indexOf(m) >= 0;
@@ -8742,8 +8856,9 @@ function bootstrap(bootstrapModules) {
   var injector = new di.Injector(modules);
 
   components.forEach(function(c) {
-    // eagerly resolve main components
-    injector.get(c);
+
+    // eagerly resolve component (fn or string)
+    injector[typeof c === 'string' ? 'get' : 'invoke'](c);
   });
 
   return injector;
@@ -8876,7 +8991,7 @@ module.exports = Diagram;
 Diagram.prototype.destroy = function() {
   this.get('eventBus').fire('diagram.destroy');
 };
-},{"./core":39,"didi":60}],34:[function(_dereq_,module,exports){
+},{"./core":50,"didi":71}],45:[function(_dereq_,module,exports){
 'use strict';
 
 
@@ -8987,9 +9102,6 @@ Canvas.prototype._init = function(config) {
 
   // layers
   this._layers = {};
-
-  // init base layer
-  this.getLayer(BASE_LAYER);
 
   var eventBus = this._eventBus;
 
@@ -9427,7 +9539,9 @@ Canvas.prototype.viewbox = function(box) {
       scale: scale,
       inner: {
         width: innerBox.width,
-        height: innerBox.height
+        height: innerBox.height,
+        x: innerBox.x,
+        y: innerBox.y
       },
       outer: outerBox
     };
@@ -9491,7 +9605,9 @@ Canvas.prototype.zoom = function(newScale, center) {
   var outer = vbox.outer;
 
   if (newScale === 'fit-viewport') {
-    newScale = Math.min(1, outer.width / vbox.inner.width);
+    newScale = Math.min(1,
+      outer.width / (vbox.inner.width + vbox.inner.x),
+      outer.height / (vbox.inner.height + vbox.inner.y));
   }
 
   if (center === 'auto') {
@@ -9615,7 +9731,7 @@ Canvas.prototype.getAbsoluteBBox = function(element) {
     height: height
   };
 };
-},{"../util/Collections":55}],35:[function(_dereq_,module,exports){
+},{"../util/Collections":66}],46:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -9668,7 +9784,7 @@ ElementFactory.prototype.create = function(type, attrs) {
 
   return Model.create(type, attrs);
 };
-},{"../model":54}],36:[function(_dereq_,module,exports){
+},{"../model":65}],47:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -9760,7 +9876,23 @@ ElementRegistry.prototype.getGraphicsByElement = function(element) {
   return container && container.gfx;
 };
 
-},{}],37:[function(_dereq_,module,exports){
+/**
+ * @method ElementRegistry#getRoot
+ *
+ */
+ElementRegistry.prototype.getRoot = function() {
+
+  var root;
+  _.forEach(this._elementMap, function(e) {
+
+      if (e.element.parent && !e.element.parent.parent) {
+        root = e.element.parent;
+      }
+  });
+  return root;
+};
+
+},{}],48:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -9816,7 +9948,11 @@ module.exports.Event = Event;
  * Register an event listener for events with the given name.
  *
  * The callback will be invoked with `event, ...additionalArguments`
- * that have been passed to the evented elements
+ * that have been passed to {@link EventBus#fire}.
+ *
+ * Returning false from a listener will prevent the events default action
+ * (if any is specified). To stop an event from being processed further in
+ * other listeners execute `event.stopPropagation();`.
  *
  * @param {String|Array<String>} events
  * @param {Number} [priority=1000] the priority in which this listener is called, larger is higher
@@ -9955,12 +10091,17 @@ EventBus.prototype.fire = function() {
   event = extendEvent(event, eventType);
 
   for (i = 0, l; i < listeners.length; i++) {
+
+    // handle stopped propagation
     if (event.isPropagationStopped()) {
       break;
     }
 
     try {
-      listeners[i].callback.apply(null, args);
+      // handle listeher returning false
+      if (listeners[i].callback.apply(null, args) === false) {
+        event.preventDefault();
+      }
     } catch (e) {
       if (!this.handleError(e)) {
         console.error('unhandled error in event listener', e);
@@ -10005,7 +10146,7 @@ EventBus.prototype._getListeners = function(name) {
 
   return listeners;
 };
-},{}],38:[function(_dereq_,module,exports){
+},{}],49:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -10107,7 +10248,7 @@ GraphicsFactory.prototype.updateConnection = function(element, gfx) {
 GraphicsFactory.$inject = [ 'renderer', 'snap' ];
 
 module.exports = GraphicsFactory;
-},{}],39:[function(_dereq_,module,exports){
+},{}],50:[function(_dereq_,module,exports){
 module.exports = {
   __depends__: [ _dereq_('../draw') ],
   __init__: [ 'canvas' ],
@@ -10117,7 +10258,7 @@ module.exports = {
   eventBus: [ 'type', _dereq_('./EventBus') ],
   graphicsFactory: [ 'type', _dereq_('./GraphicsFactory') ]
 };
-},{"../draw":43,"./Canvas":34,"./ElementFactory":35,"./ElementRegistry":36,"./EventBus":37,"./GraphicsFactory":38}],40:[function(_dereq_,module,exports){
+},{"../draw":54,"./Canvas":45,"./ElementFactory":46,"./ElementRegistry":47,"./EventBus":48,"./GraphicsFactory":49}],51:[function(_dereq_,module,exports){
 'use strict';
 
 var Snap = _dereq_('./Snap');
@@ -10175,14 +10316,14 @@ function updateLine(gfx, points) {
 
 module.exports.createLine = createLine;
 module.exports.updateLine = updateLine;
-},{"./Snap":41}],41:[function(_dereq_,module,exports){
+},{"./Snap":52}],52:[function(_dereq_,module,exports){
 var snapsvg = (window.Snap);
 
 // require snapsvg extensions
 _dereq_('./snapsvg-extensions');
 
 module.exports = snapsvg;
-},{"./snapsvg-extensions":44}],42:[function(_dereq_,module,exports){
+},{"./snapsvg-extensions":55}],53:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -10245,7 +10386,7 @@ function Styles() {
 }
 
 module.exports = Styles;
-},{}],43:[function(_dereq_,module,exports){
+},{}],54:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = {
@@ -10253,7 +10394,7 @@ module.exports = {
   snap: [ 'value', _dereq_('./Snap') ],
   styles: [ 'type', _dereq_('./Styles') ]
 };
-},{"./Renderer":40,"./Snap":41,"./Styles":42}],44:[function(_dereq_,module,exports){
+},{"./Renderer":51,"./Snap":52,"./Styles":53}],55:[function(_dereq_,module,exports){
 'use strict';
 
 var Snap = (window.Snap);
@@ -10454,7 +10595,7 @@ Snap.plugin(function(Snap, Element, Paper, global) {
     return new Snap(svg);
   };
 });
-},{}],45:[function(_dereq_,module,exports){
+},{}],56:[function(_dereq_,module,exports){
 'use strict';
 
 
@@ -10473,7 +10614,7 @@ var GraphicsUtil = _dereq_('../../util/GraphicsUtil'),
  *
  * @param {EventBus} eventBus
  */
-function InteractionEvents(eventBus, styles) {
+function InteractionEvents(eventBus, elementRegistry, styles) {
 
   var HIT_STYLE = styles.cls('djs-hit', [ 'no-fill', 'no-border' ], {
     stroke: 'white',
@@ -10491,7 +10632,7 @@ function InteractionEvents(eventBus, styles) {
       var root = event.root;
 
       // implement direct canvas click
-      root.click(function(event) {
+      event.paper.click(function(event) {
 
         /**
          * An event indicating that the canvas has been directly clicked
@@ -10538,12 +10679,42 @@ function InteractionEvents(eventBus, styles) {
         fire(e, baseEvent, type + '.out');
       });
 
-      visual.click(function(e) {
+      hit.click(function(e) {
         fire(e, baseEvent, type + '.click');
       });
 
-      visual.dblclick(function(e) {
+      hit.dblclick(function(e) {
         fire(e, baseEvent, type + '.dblclick');
+      });
+    });
+
+    // on shape resize apply changes to djs-hit
+    eventBus.on('shape.resized', function(event) {
+      var shape     = event.shape,
+          gfx       = elementRegistry.getGraphicsByElement(shape),
+          newWidth  = event.newBBox.width,
+          newHeight = event.newBBox.height;
+
+      var hit = gfx.select('.djs-hit');
+
+      hit.attr({
+        height: newHeight,
+        width:  newWidth
+      });
+    });
+
+    eventBus.on('commandStack.shape.resize.reverted', function(event) {
+
+      var shape     = event.context.shape,
+          gfx       = elementRegistry.getGraphicsByElement(shape),
+          oldWidth  = event.context.oldBBox.width,
+          oldHeight = event.context.oldBBox.height;
+
+      var hit = gfx.select('.djs-hit');
+
+      hit.attr({
+        height: oldHeight,
+        width:  oldWidth
       });
     });
   }
@@ -10552,15 +10723,16 @@ function InteractionEvents(eventBus, styles) {
 }
 
 
-InteractionEvents.$inject = [ 'eventBus', 'styles' ];
+InteractionEvents.$inject = [ 'eventBus', 'elementRegistry', 'styles' ];
 
 module.exports = InteractionEvents;
-},{"../../draw/Renderer":40,"../../util/GraphicsUtil":56}],46:[function(_dereq_,module,exports){
+
+},{"../../draw/Renderer":51,"../../util/GraphicsUtil":67}],57:[function(_dereq_,module,exports){
 module.exports = {
   __init__: [ 'interactionEvents' ],
   interactionEvents: [ 'type', _dereq_('./InteractionEvents') ]
 };
-},{"./InteractionEvents":45}],47:[function(_dereq_,module,exports){
+},{"./InteractionEvents":56}],58:[function(_dereq_,module,exports){
 'use strict';
 
 var Snap = (window.Snap);
@@ -10576,7 +10748,7 @@ var GraphicsUtil = _dereq_('../../util/GraphicsUtil');
  *
  * @param {EventBus} events the event bus
  */
-function Outline(events, styles) {
+function Outline(eventBus, styles, elementRegistry) {
 
   var OUTLINE_OFFSET = 5;
 
@@ -10596,36 +10768,55 @@ function Outline(events, styles) {
     });
   }
 
-  events.on('shape.added', function(event) {
+  eventBus.on('shape.added', function(event) {
     var element = event.element,
-        gfx = event.gfx;
+        gfx     = event.gfx;
 
     var outline = createOutline(gfx, element);
 
     updateOutline(outline, element);
   });
 
-  events.on('connection.change', function(event) {
+  eventBus.on('shape.resized', function(event) {
+    var shape = event.shape,
+        gfx   = elementRegistry.getGraphicsByElement(shape);
+
+    var outline = gfx.select('.djs-outline');
+
+    updateOutline(outline, shape);
+  });
+
+  eventBus.on('commandStack.shape.resize.reverted', function(event) {
+    var shape = event.context.shape,
+        gfx   = elementRegistry.getGraphicsByElement(shape);
+
+    var outline = gfx.select('.djs-outline');
+
+    updateOutline(outline, shape);
+  });
+
+  eventBus.on('connection.change', function(event) {
     // TODO: update connection outline box
   });
 
-  events.on('shape.change', function(event) {
+  eventBus.on('shape.change', function(event) {
     // TODO: update shape outline box
   });
 }
 
 
-Outline.$inject = ['eventBus', 'styles'];
+Outline.$inject = ['eventBus', 'styles', 'elementRegistry'];
 
 module.exports = Outline;
-},{"../../util/GraphicsUtil":56}],48:[function(_dereq_,module,exports){
+
+},{"../../util/GraphicsUtil":67}],59:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = {
   __init__: [ 'outline' ],
   outline: [ 'type', _dereq_('./Outline') ]
 };
-},{"./Outline":47}],49:[function(_dereq_,module,exports){
+},{"./Outline":58}],60:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._),
@@ -10978,7 +11169,7 @@ Overlays.prototype._addOverlay = function(overlay) {
 
   var htmlContainer = $('<div>', {
     id: id,
-    className: 'djs-overlay'
+    'class': 'djs-overlay'
   }).css({ position: 'absolute' }).append(overlay.html);
 
   if (overlay.type) {
@@ -11060,6 +11251,26 @@ Overlays.prototype._init = function(config) {
     }
   });
 
+  eventBus.on([
+    'commandStack.shape.resize.executed',
+    'commandStack.shape.resize.reverted'
+  ], function(e) {
+
+    var overlays = self._overlays;
+
+    var element = e.context.shape;
+
+    _.forEach(overlays, function(overlay) {
+      if (overlay.element.id === element.id) {
+        self._updateOverlay(overlay);
+      }
+    });
+
+    var container = self._getOverlayContainer(element, true);
+    if (container) {
+      self._updateOverlayContainer(container);
+    }
+  });
 
   // marker integration, simply add them on the overlays as classes, too.
 
@@ -11070,14 +11281,15 @@ Overlays.prototype._init = function(config) {
     }
   });
 };
-},{"../../util/IdGenerator":57}],50:[function(_dereq_,module,exports){
+
+},{"../../util/IdGenerator":68}],61:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = {
   __init__: [ 'overlays' ],
   overlays: [ 'type', _dereq_('./Overlays') ]
 };
-},{"./Overlays":49}],51:[function(_dereq_,module,exports){
+},{"./Overlays":60}],62:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -11172,7 +11384,7 @@ Selection.prototype.select = function(elements, add) {
 
   this._eventBus.fire('selection.changed', { oldSelection: oldSelection, newSelection: selectedElements });
 };
-},{}],52:[function(_dereq_,module,exports){
+},{}],63:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -11268,7 +11480,8 @@ SelectionVisuals.$inject = [
 ];
 
 module.exports = SelectionVisuals;
-},{}],53:[function(_dereq_,module,exports){
+
+},{}],64:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = {
@@ -11280,7 +11493,7 @@ module.exports = {
   selection: [ 'type', _dereq_('./Selection') ],
   selectionVisuals: [ 'type', _dereq_('./SelectionVisuals') ]
 };
-},{"../interaction-events":46,"../outline":48,"./Selection":51,"./SelectionVisuals":52}],54:[function(_dereq_,module,exports){
+},{"../interaction-events":57,"../outline":59,"./Selection":62,"./SelectionVisuals":63}],65:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -11480,7 +11693,7 @@ module.exports.Root = Root;
 module.exports.Shape = Shape;
 module.exports.Connection = Connection;
 module.exports.Label = Label;
-},{"object-refs":63}],55:[function(_dereq_,module,exports){
+},{"object-refs":74}],66:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -11506,7 +11719,7 @@ module.exports.remove = function(collection, element) {
 
   return element;
 };
-},{}],56:[function(_dereq_,module,exports){
+},{}],67:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -11561,7 +11774,7 @@ function getBBox(gfx) {
 
 module.exports.getBBox = getBBox;
 module.exports.getVisual = getVisual;
-},{}],57:[function(_dereq_,module,exports){
+},{}],68:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -11595,7 +11808,7 @@ IdGenerator.prototype.next = function() {
   return this._prefix + (++this._counter);
 };
 
-},{}],58:[function(_dereq_,module,exports){
+},{}],69:[function(_dereq_,module,exports){
 'use strict';
 
 var Snap = (window.Snap);
@@ -11842,7 +12055,7 @@ Text.prototype.createText = function(parent, text, options) {
 
 
 module.exports = Text;
-},{}],59:[function(_dereq_,module,exports){
+},{}],70:[function(_dereq_,module,exports){
 
 var isArray = function(obj) {
   return Object.prototype.toString.call(obj) === '[object Array]';
@@ -11892,14 +12105,14 @@ exports.annotate = annotate;
 exports.parse = parse;
 exports.isArray = isArray;
 
-},{}],60:[function(_dereq_,module,exports){
+},{}],71:[function(_dereq_,module,exports){
 module.exports = {
   annotate: _dereq_('./annotation').annotate,
   Module: _dereq_('./module'),
   Injector: _dereq_('./injector')
 };
 
-},{"./annotation":59,"./injector":61,"./module":62}],61:[function(_dereq_,module,exports){
+},{"./annotation":70,"./injector":72,"./module":73}],72:[function(_dereq_,module,exports){
 var Module = _dereq_('./module');
 var autoAnnotate = _dereq_('./annotation').parse;
 var annotate = _dereq_('./annotation').annotate;
@@ -12115,7 +12328,7 @@ var Injector = function(modules, parent) {
 
 module.exports = Injector;
 
-},{"./annotation":59,"./module":62}],62:[function(_dereq_,module,exports){
+},{"./annotation":70,"./module":73}],73:[function(_dereq_,module,exports){
 var Module = function() {
   var providers = [];
 
@@ -12141,11 +12354,11 @@ var Module = function() {
 
 module.exports = Module;
 
-},{}],63:[function(_dereq_,module,exports){
+},{}],74:[function(_dereq_,module,exports){
 module.exports = _dereq_('./lib/refs');
 
 module.exports.Collection = _dereq_('./lib/collection');
-},{"./lib/collection":64,"./lib/refs":65}],64:[function(_dereq_,module,exports){
+},{"./lib/collection":75,"./lib/refs":76}],75:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -12227,7 +12440,7 @@ function extend(collection, refs, property, target) {
 
 
 module.exports.extend = extend;
-},{}],65:[function(_dereq_,module,exports){
+},{}],76:[function(_dereq_,module,exports){
 'use strict';
 
 var Collection = _dereq_('./collection');
@@ -12409,6 +12622,12 @@ module.exports = Refs;
  * @property {boolean} [collection=false]
  * @property {boolean} [enumerable=false]
  */
-},{"./collection":64}]},{},[1])
+},{"./collection":75}],77:[function(_dereq_,module,exports){
+module.exports=_dereq_(74)
+},{"./lib/collection":78,"./lib/refs":79}],78:[function(_dereq_,module,exports){
+module.exports=_dereq_(75)
+},{}],79:[function(_dereq_,module,exports){
+module.exports=_dereq_(76)
+},{"./collection":78}]},{},[1])
 (1)
 });
