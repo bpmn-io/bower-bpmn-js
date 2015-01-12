@@ -5,7 +5,7 @@
     "bpmn.io"
   ],
   "description": "A BPMN 2.0 renderer and web modeler",
-  "main": "bpmn-viewer.js",
+  "main": "dist/bpmn-viewer.js",
   "keywords": [
     "models",
     "diagram",
