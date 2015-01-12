@@ -1,0 +1,23 @@
+html, body, #canvas {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+h1 {
+  position: fixed;
+  z-index: 100;
+  left: 10px;
+  top: 10px;
+  background: white;
+  padding: 5px 10px;
+  margin: 0;
+}
+
+body.fail {
+  background: red;
+}
+
+body.success {
+  background: lightgreen;
+}

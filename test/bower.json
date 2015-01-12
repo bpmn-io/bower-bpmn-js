@@ -1,0 +1,8 @@
+{
+  "name": "bpmn-js-test",
+  "version": "0.0.0",
+  "private": true,
+  "dependencies": {
+    "bpmn-js": "*"
+  }
+}
