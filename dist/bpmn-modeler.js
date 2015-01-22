@@ -1,5 +1,5 @@
 /*!
- * bpmn-js - bpmn-modeler v0.7.0
+ * bpmn-js - bpmn-modeler v0.8.0
 
  * Copyright 2014, 2015 camunda Services GmbH and other contributors
  *
@@ -8,14 +8,14 @@
  *
  * Source Code: https://github.com/bpmn-io/bpmn-js
  *
- * Date: 2015-01-12
+ * Date: 2015-01-22
  */
 !function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.BpmnJS=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 'use strict';
 
 var BpmnModdle = _dereq_(35),
     IdSupport = _dereq_(37),
-    Ids = _dereq_(155);
+    Ids = _dereq_(161);
 
 var Viewer = _dereq_(2);
 
@@ -68,17 +68,19 @@ Modeler.prototype.createModdle = function() {
 Modeler.prototype._interactionModules = [
   // non-modeling components
   _dereq_(12),
-  _dereq_(139),
-  _dereq_(136),
-  _dereq_(137)
+  _dereq_(147),
+  _dereq_(144),
+  _dereq_(145)
 ];
 
 Modeler.prototype._modelingModules = [
   // modeling components
-  _dereq_(88),
-  _dereq_(127),
-  _dereq_(109),
-  _dereq_(118),
+  _dereq_(93),
+  _dereq_(135),
+  _dereq_(117),
+  _dereq_(79),
+  _dereq_(126),
+  _dereq_(95),
   _dereq_(23),
   _dereq_(8),
   _dereq_(27)
@@ -297,11 +299,12 @@ Viewer.prototype.importDefinitions = function(definitions, done) {
     }
 
     this.definitions = definitions;
-    this.diagram = this._createDiagram(this.options);
 
-    this._init(this.diagram);
+    var diagram = this.diagram = this._createDiagram(this.options);
 
-    Importer.importBpmnDiagram(this.diagram, definitions, done);
+    this._init(diagram);
+
+    Importer.importBpmnDiagram(diagram, definitions, done);
   } catch (e) {
     done(e);
   }
@@ -372,7 +375,6 @@ Viewer.prototype.on = function(event, handler) {
   var diagram = this.diagram,
       listeners = this.__listeners = this.__listeners || [];
 
-  listeners = this.__listeners || [];
   listeners.push({ event: event, handler: handler });
 
   if (diagram) {
@@ -383,8 +385,8 @@ Viewer.prototype.on = function(event, handler) {
 // modules the viewer is composed of
 Viewer.prototype._modules = [
   _dereq_(3),
-  _dereq_(125),
-  _dereq_(113)
+  _dereq_(133),
+  _dereq_(121)
 ];
 
 module.exports = Viewer;
@@ -402,7 +404,7 @@ module.exports = {
 var _ = (window._);
 
 var DefaultRenderer = _dereq_(70);
-var TextUtil = _dereq_(147);
+var TextUtil = _dereq_(156);
 
 var DiUtil = _dereq_(33);
 
@@ -2493,10 +2495,10 @@ module.exports = ContextPadProvider;
 module.exports = {
   __depends__: [
     _dereq_(57),
-    _dereq_(80),
-    _dereq_(125),
-    _dereq_(78),
-    _dereq_(82),
+    _dereq_(85),
+    _dereq_(133),
+    _dereq_(83),
+    _dereq_(87),
     _dereq_(23)
   ],
   __init__: [ 'contextPadProvider' ],
@@ -2733,7 +2735,7 @@ module.exports = UpdateTextHandler;
 module.exports = {
   __depends__: [
     _dereq_(63),
-    _dereq_(76),
+    _dereq_(81),
     _dereq_(57)
   ],
   __init__: [ 'labelEditingProvider' ],
@@ -2829,9 +2831,9 @@ module.exports = BpmnFactory;
 
 var _ = (window._);
 
-var Collections = _dereq_(140);
+var Collections = _dereq_(148);
 
-var Model = _dereq_(134);
+var Model = _dereq_(142);
 
 
 /**
@@ -2861,7 +2863,12 @@ function BpmnUpdater(eventBus, bpmnFactory, connectionDocking) {
     }
   }
 
-  this.executed([ 'connection.layout', 'connection.create' ], cropConnection);
+  this.executed([
+    'connection.layout',
+    'connection.create',
+    'connection.reconnectEnd',
+    'connection.reconnectStart'
+  ], cropConnection);
 
   this.reverted([ 'connection.layout' ], function(e) {
     delete e.context.cropped;
@@ -2905,8 +2912,21 @@ function BpmnUpdater(eventBus, bpmnFactory, connectionDocking) {
     self.updateConnection(e.context.connection);
   }
 
-  this.executed([ 'connection.create', 'connection.move', 'connection.delete' ], updateConnection);
-  this.reverted([ 'connection.create', 'connection.move', 'connection.delete' ], updateConnection);
+  this.executed([
+    'connection.create',
+    'connection.move',
+    'connection.delete',
+    'connection.reconnectEnd',
+    'connection.reconnectStart'
+  ], updateConnection);
+
+  this.reverted([
+    'connection.create',
+    'connection.move',
+    'connection.delete',
+    'connection.reconnectEnd',
+    'connection.reconnectStart'
+  ], updateConnection);
 
 
   // update waypoints
@@ -2914,8 +2934,21 @@ function BpmnUpdater(eventBus, bpmnFactory, connectionDocking) {
     self.updateConnectionWaypoints(e.context.connection);
   }
 
-  this.executed([ 'connection.layout', 'connection.move' ], updateConnectionWaypoints);
-  this.reverted([ 'connection.layout', 'connection.move' ], updateConnectionWaypoints);
+  this.executed([
+    'connection.layout',
+    'connection.move',
+    'connection.updateWaypoints',
+    'connection.reconnectEnd',
+    'connection.reconnectStart'
+  ], updateConnectionWaypoints);
+
+  this.reverted([
+    'connection.layout',
+    'connection.move',
+    'connection.updateWaypoints',
+    'connection.reconnectEnd',
+    'connection.reconnectStart'
+  ], updateConnectionWaypoints);
 }
 
 module.exports = BpmnUpdater;
@@ -3341,9 +3374,9 @@ module.exports = LabelSupport;
 },{}],17:[function(_dereq_,module,exports){
 'use strict';
 
-var BaseLayouter = _dereq_(89),
-    LayoutUtil = _dereq_(133),
-    ManhattanLayout = _dereq_(132);
+var BaseLayouter = _dereq_(96),
+    LayoutUtil = _dereq_(141),
+    ManhattanLayout = _dereq_(140);
 
 
 function Layouter() {}
@@ -3379,7 +3412,7 @@ Layouter.prototype.getConnectionWaypoints = function(connection) {
 
 var _ = (window._);
 
-var BaseModeling = _dereq_(90);
+var BaseModeling = _dereq_(97);
 
 var UpdatePropertiesHandler = _dereq_(22);
 
@@ -3423,7 +3456,11 @@ Modeling.prototype.connect = function(source, target, attrs) {
       targetBo = target.businessObject;
 
   if (!attrs) {
-    if (sourceBo.$instanceOf('bpmn:FlowNode') && targetBo.$instanceOf('bpmn:FlowNode')) {
+    if (sourceBo.$instanceOf('bpmn:FlowNode') &&
+        targetBo.$instanceOf('bpmn:FlowNode') &&
+       !sourceBo.$instanceOf('bpmn:EndEvent') &&
+       !targetBo.$instanceOf('bpmn:StartEvent')) {
+
       attrs = {
         type: 'bpmn:SequenceFlow'
       };
@@ -3636,7 +3673,7 @@ module.exports = {
     _dereq_(25),
     _dereq_(21),
     _dereq_(63),
-    _dereq_(76)
+    _dereq_(81)
   ],
   bpmnFactory: [ 'type', _dereq_(13) ],
   bpmnUpdater: [ 'type', _dereq_(14) ],
@@ -3644,7 +3681,7 @@ module.exports = {
   modeling: [ 'type', _dereq_(18) ],
   labelSupport: [ 'type', _dereq_(16) ],
   layouter: [ 'type', _dereq_(17) ],
-  connectionDocking: [ 'type', _dereq_(131) ]
+  connectionDocking: [ 'type', _dereq_(139) ]
 };
 
 },{}],24:[function(_dereq_,module,exports){
@@ -3652,7 +3689,7 @@ module.exports = {
 
 var _ = (window._);
 
-var RuleProvider = _dereq_(119);
+var RuleProvider = _dereq_(127);
 
 function ModelingRules(eventBus) {
   RuleProvider.call(this, eventBus);
@@ -3669,23 +3706,64 @@ ModelingRules.prototype.init = function() {
 
   // rules
 
-  this.addRule('connection.create', function(context) {
-
-    var source = context.source,
-        target = context.target;
+  function canConnect(source, target, connection) {
 
     if (!source || source.labelTarget || !target || target.labelTarget) {
       return null;
     }
 
-    return source.businessObject.$parent === target.businessObject.$parent &&
-           source.businessObject.$instanceOf('bpmn:FlowNode') &&
-          !source.businessObject.$instanceOf('bpmn:EndEvent') &&
-          !target.businessObject.$instanceOf('bpmn:StartEvent') &&
-          (target.businessObject.$instanceOf('bpmn:FlowNode') ||
-           target.businessObject.$instanceOf('bpmn:TextAnnotation'));
+    var sourceBo = source.businessObject,
+        targetBo = target.businessObject,
+        connectionBo = connection && connection.businessObject;
+
+    if (sourceBo.$parent !== targetBo.$parent) {
+      return false;
+    }
+
+    if (connectionBo && connectionBo.$instanceOf('bpmn:SequenceFlow')) {
+      if (!sourceBo.$instanceOf('bpmn:FlowNode') ||
+          !targetBo.$instanceOf('bpmn:FlowNode') ||
+          sourceBo.$instanceOf('bpmn:EndEvent') ||
+          targetBo.$instanceOf('bpmn:StartEvent')) {
+        return false;
+      }
+    }
+
+    return (sourceBo.$instanceOf('bpmn:FlowNode') ||
+            sourceBo.$instanceOf('bpmn:TextAnnotation')) &&
+           (targetBo.$instanceOf('bpmn:FlowNode') ||
+            targetBo.$instanceOf('bpmn:TextAnnotation'));
+  }
+
+  this.addRule('connection.create', function(context) {
+    var source = context.source,
+        target = context.target;
+
+    return canConnect(source, target);
   });
 
+  this.addRule('connection.reconnectStart', function(context) {
+
+    var connection = context.connection,
+        source = context.hover,
+        target = connection.target;
+
+    return canConnect(source, target, connection);
+  });
+
+  this.addRule('connection.reconnectEnd', function(context) {
+
+    var connection = context.connection,
+        source = connection.source,
+        target = context.hover;
+
+    return canConnect(source, target, connection);
+  });
+
+  this.addRule('connection.updateWaypoints', function(context) {
+    // OK! but visually ignore
+    return null;
+  });
 
   this.addRule('shape.resize', function(context) {
 
@@ -3870,7 +3948,7 @@ PaletteProvider.prototype.getPaletteEntries = function(element) {
 },{}],27:[function(_dereq_,module,exports){
 module.exports = {
   __depends__: [
-    _dereq_(115)
+    _dereq_(123)
   ],
   __init__: [ 'paletteProvider' ],
   paletteProvider: [ 'type', _dereq_(26) ],
@@ -4073,7 +4151,7 @@ BpmnImporter.prototype._getElement = function(semantic) {
 
 var _ = (window._);
 
-var Refs = _dereq_(157);
+var Refs = _dereq_(163);
 
 var elementToString = _dereq_(31).elementToString;
 
@@ -4665,11 +4743,6 @@ var _ = (window._);
 var Moddle = _dereq_(44),
     ModdleXml = _dereq_(39);
 
-
-function createModel(packages) {
-  return new Moddle(packages);
-}
-
 /**
  * A sub class of {@link Moddle} with support for import and export of BPMN 2.0 xml files.
  *
@@ -4907,7 +4980,7 @@ function normalizeType(node, attr, model) {
  * @param  {Uri} defaultNsUri
  */
 function normalizeNamespaces(node, model, defaultNsUri) {
-  var uri, childUri, prefix;
+  var uri, prefix;
 
   uri = node.uri || defaultNsUri;
 
@@ -5331,8 +5404,7 @@ XMLReader.prototype.fromXML = function(xml, rootHandler, done) {
   var parser = sax.parser(true, { xmlns: true, trim: true }),
       stack = new Stack();
 
-  var model = this.model,
-      self = this;
+  var model = this.model;
 
   rootHandler.context = context;
 
@@ -5546,8 +5618,7 @@ ReferenceSerializer.prototype.serializeTo = function(writer) {
 function BodySerializer() {}
 
 BodySerializer.prototype.serializeValue = BodySerializer.prototype.serializeTo = function(writer) {
-  var value = this.value,
-      escape = this.escape;
+  var escape = this.escape;
 
   if (escape) {
     writer.append('<![CDATA[');
@@ -5733,8 +5804,7 @@ ElementSerializer.prototype.parseContainments = function(properties) {
 
   var self = this,
       body = this.body,
-      element = this.element,
-      typeDesc = element.$descriptor;
+      element = this.element;
 
   _.forEach(properties, function(p) {
     var value = element.get(p.name),
@@ -5868,8 +5938,7 @@ ElementSerializer.prototype.addAttribute = function(name, value) {
 };
 
 ElementSerializer.prototype.serializeAttributes = function(writer) {
-  var element = this.element,
-      attrs = this.attrs,
+  var attrs = this.attrs,
       root = !this.parent,
       namespaces = this.namespaces;
 
@@ -6421,8 +6490,7 @@ Factory.prototype.createType = function(descriptor) {
 
 var _ = (window._);
 
-var Types = _dereq_(52),
-    Factory = _dereq_(47),
+var Factory = _dereq_(47),
     Registry = _dereq_(51),
     Properties = _dereq_(50);
 
@@ -6887,8 +6955,7 @@ Registry.prototype.mapTypes = function(nsName, iterator) {
  */
 Registry.prototype.getEffectiveDescriptor = function(name) {
 
-  var options = this.options,
-      nsName = parseNameNs(name);
+  var nsName = parseNameNs(name);
 
   var builder = new DescriptorBuilder(nsName);
 
@@ -10368,7 +10435,7 @@ module.exports={
 'use strict';
 
 module.exports = {
-  __depends__: [ _dereq_(86) ],
+  __depends__: [ _dereq_(91) ],
   __init__: [ 'directEditing' ],
   directEditing: [ 'type', _dereq_(58) ]
 };
@@ -10586,7 +10653,7 @@ module.exports = _dereq_(61);
 },{}],61:[function(_dereq_,module,exports){
 'use strict';
 
-var di = _dereq_(149);
+var di = _dereq_(158);
 
 /**
  * @namespace djs
@@ -10676,7 +10743,9 @@ function createInjector(options) {
 
 /**
  * The main diagram-js entry point that bootstraps the diagram with the given
- * configuration. To register extensions with the diagram, pass them as Array<didi.Module> to the constructor.
+ * configuration.
+ *
+ * To register extensions with the diagram, pass them as Array<didi.Module> to the constructor.
  *
  * @class djs.Diagram
  * @memberOf djs
@@ -10758,8 +10827,8 @@ function Diagram(options, injector) {
    *
    * @example
    *
-   * events.on('diagram.init', function() {
-   *   events.fire('my-custom-event', { foo: 'BAR' });
+   * eventBus.on('diagram.init', function() {
+   *   eventBus.fire('my-custom-event', { foo: 'BAR' });
    * });
    *
    * @type {Object}
@@ -11187,7 +11256,7 @@ module.exports = {
 
 var _ = (window._);
 
-var Collections = _dereq_(140);
+var Collections = _dereq_(148);
 
 
 function round(number, resolution) {
@@ -11280,7 +11349,6 @@ Canvas.prototype._init = function(config) {
 
   // html container
   var eventBus = this._eventBus,
-      graphicsFactory = this._graphicsFactory,
       snap = this._snap,
 
       container = createContainer(config),
@@ -11955,10 +12023,7 @@ Canvas.prototype.getAbsoluteBBox = function(element) {
 },{}],65:[function(_dereq_,module,exports){
 'use strict';
 
-var _ = (window._);
-
-
-var Model = _dereq_(134);
+var Model = _dereq_(142);
 
 
 /**
@@ -12006,6 +12071,8 @@ ElementFactory.prototype.create = function(type, attrs) {
   return Model.create(type, attrs);
 };
 },{}],66:[function(_dereq_,module,exports){
+'use strict';
+
 var ELEMENT_ID = 'data-element-id';
 
 /**
@@ -12422,8 +12489,8 @@ EventBus.prototype._getListeners = function(name) {
 },{}],68:[function(_dereq_,module,exports){
 var _ = (window._);
 
-var GraphicsUtil = _dereq_(145),
-    Dom = _dereq_(142);
+var GraphicsUtil = _dereq_(154),
+    Dom = _dereq_(150);
 
 
 /**
@@ -12499,8 +12566,10 @@ GraphicsFactory.prototype._clear = function(gfx) {
  */
 GraphicsFactory.prototype._createContainer = function(type, parentGfx) {
   var outerGfx = parentGfx.group().attr('class', 'djs-group'),
-      gfx = outerGfx.group().attr('class', 'djs-element djs-' + type),
-      visual = gfx.group().attr('class', 'djs-visual');
+      gfx = outerGfx.group().attr('class', 'djs-element djs-' + type);
+
+  // create visual
+  gfx.group().attr('class', 'djs-visual');
 
   return gfx;
 };
@@ -12921,9 +12990,625 @@ Snap.plugin(function(Snap, Element, Paper, global) {
   };
 });
 },{}],75:[function(_dereq_,module,exports){
-'use strict';
+var _ = (window._);
 
-var updateLine = _dereq_(70).updateLine;
+var Geometry = _dereq_(153),
+    Util = _dereq_(78);
+
+var MARKER_OK = 'connect-ok',
+    MARKER_NOT_OK = 'connect-not-ok',
+    MARKER_CONNECT_HOVER = 'connect-hover',
+    MARKER_CONNECT_UPDATING = 'djs-updating';
+
+var COMMAND_BENDPOINT_UPDATE = 'connection.updateWaypoints',
+    COMMAND_RECONNECT_START = 'connection.reconnectStart',
+    COMMAND_RECONNECT_END = 'connection.reconnectEnd';
+
+/**
+ * A component that implements moving of bendpoints
+ */
+function BendpointMove(injector, eventBus, canvas, dragging, graphicsFactory, rules, modeling) {
+
+  var connectionDocking;
+
+  // optional connection docking integration
+  try {
+    connectionDocking = injector.get('connectionDocking');
+  } catch (e) {}
+
+
+  // API
+
+  this.start = function(event, connection, bendpointIndex, insert) {
+
+    var type,
+        context,
+        waypoints = connection.waypoints,
+        gfx = canvas.getGraphics(connection);
+
+    if (!insert && bendpointIndex === 0) {
+      type = COMMAND_RECONNECT_START;
+    } else
+    if (!insert && bendpointIndex === waypoints.length - 1) {
+      type = COMMAND_RECONNECT_END;
+    } else {
+      type = COMMAND_BENDPOINT_UPDATE;
+    }
+
+    context = {
+      connection: connection,
+      bendpointIndex: bendpointIndex,
+      insert: insert,
+      type: type
+    };
+
+    dragging.activate(event, 'bendpoint.move', {
+      data: {
+        connection: connection,
+        connectionGfx: gfx,
+        context: context
+      }
+    });
+  };
+
+
+  // DRAGGING IMPLEMENTATION
+
+
+  function redrawConnection(data) {
+    graphicsFactory.update('connection', data.connection, data.connectionGfx);
+  }
+
+  function filterRedundantWaypoints(waypoints) {
+    return waypoints.filter(function(r, idx) {
+      return !Geometry.pointsOnLine(waypoints[idx - 1], waypoints[idx + 1], r);
+    });
+  }
+
+  eventBus.on('bendpoint.move.start', function(e) {
+
+    var context = e.context,
+        connection = context.connection,
+        originalWaypoints = connection.waypoints,
+        waypoints = originalWaypoints.slice(),
+        insert = context.insert,
+        idx = context.bendpointIndex;
+
+    context.originalWaypoints = originalWaypoints;
+
+    if (insert) {
+      // insert placeholder for bendpoint to-be-added
+      waypoints.splice(idx, 0, null);
+    }
+
+    connection.waypoints = waypoints;
+
+    // add dragger gfx
+    context.draggerGfx = Util.addBendpoint(canvas.getLayer('overlays'));
+    context.draggerGfx.addClass('djs-dragging');
+
+    canvas.addMarker(connection, MARKER_CONNECT_UPDATING);
+  });
+
+  eventBus.on('bendpoint.move.hover', function(e) {
+    e.context.hover = e.hover;
+
+    canvas.addMarker(e.hover, MARKER_CONNECT_HOVER);
+  });
+
+  eventBus.on([
+    'bendpoint.move.out',
+    'bendpoint.move.cleanup'
+  ], function(e) {
+
+    // remove connect marker
+    // if it was added
+    var hover = e.context.hover;
+
+    if (hover) {
+      canvas.removeMarker(hover, MARKER_CONNECT_HOVER);
+      canvas.removeMarker(hover, e.context.target ? MARKER_OK : MARKER_NOT_OK);
+    }
+  });
+
+  eventBus.on('bendpoint.move.move', function(e) {
+
+    var context = e.context,
+        connection = e.connection;
+
+    connection.waypoints[context.bendpointIndex] = { x: e.x, y: e.y };
+
+    if (connectionDocking) {
+      connection.waypoints = connectionDocking.getCroppedWaypoints(connection);
+    }
+
+    // asks whether reconnect / bendpoint move / bendpoint add
+    // is allowed at the given position
+    var allowed = context.allowed = rules.allowed(context.type, context);
+
+    if (allowed) {
+
+      if (context.hover) {
+        canvas.removeMarker(context.hover, MARKER_NOT_OK);
+        canvas.addMarker(context.hover, MARKER_OK);
+
+        context.target = context.hover;
+      }
+    } else
+    if (allowed === false) {
+      if (context.hover) {
+        canvas.removeMarker(context.hover, MARKER_OK);
+        canvas.addMarker(context.hover, MARKER_NOT_OK);
+
+        context.target = null;
+      }
+    }
+
+    // add dragger gfx
+    context.draggerGfx.translate(e.x, e.y);
+
+    redrawConnection(e);
+  });
+
+  eventBus.on([
+    'bendpoint.move.end',
+    'bendpoint.move.cancel'
+  ], function(e) {
+
+    var context = e.context,
+        connection = context.connection;
+
+    // remove dragger gfx
+    context.draggerGfx.remove();
+
+    context.newWaypoints = _.clone(connection.waypoints);
+
+    connection.waypoints = context.originalWaypoints;
+
+    canvas.removeMarker(connection, MARKER_CONNECT_UPDATING);
+  });
+
+  eventBus.on('bendpoint.move.end', function(e) {
+
+    var context = e.context,
+        waypoints = context.newWaypoints,
+        bendpointIndex = context.bendpointIndex,
+        bendpoint = waypoints[bendpointIndex],
+        allowed = context.allowed;
+
+    if (allowed === true && context.type === COMMAND_RECONNECT_START) {
+      modeling.reconnectStart(context.connection, context.target, bendpoint);
+    } else
+    if (allowed === true && context.type === COMMAND_RECONNECT_END) {
+      modeling.reconnectEnd(context.connection, context.target, bendpoint);
+    } else
+    if (allowed !== false && context.type === COMMAND_BENDPOINT_UPDATE) {
+      modeling.updateWaypoints(context.connection, filterRedundantWaypoints(waypoints));
+    } else {
+      redrawConnection(e);
+    }
+  });
+
+  eventBus.on('bendpoint.move.cancel', function(e) {
+    redrawConnection(e);
+  });
+}
+
+BendpointMove.$inject = [ 'injector', 'eventBus', 'canvas', 'dragging', 'graphicsFactory', 'rules', 'modeling' ];
+
+module.exports = BendpointMove;
+},{}],76:[function(_dereq_,module,exports){
+var _ = (window._),
+    Snap = (window.Snap);
+
+
+function BendpointSnapping(eventBus) {
+
+  function snapTo(candidates, point) {
+    return Snap.snapTo(candidates, point);
+  }
+
+  function toPoint(e) {
+    return _.pick(e, [ 'x', 'y' ]);
+  }
+
+  function mid(element) {
+    if (element.width) {
+      return {
+        x: element.width / 2 + element.x,
+        y: element.height / 2 + element.y
+      };
+    }
+  }
+
+  function getSnapPoints(context) {
+
+    var snapPoints = context.snapPoints,
+        waypoints = context.connection.waypoints,
+        bendpointIndex = context.bendpointIndex,
+        referenceWaypoints = [ waypoints[bendpointIndex - 1], waypoints[bendpointIndex + 1] ];
+
+    if (!snapPoints) {
+      context.snapPoints = snapPoints = { horizontal: [] , vertical: [] };
+
+      _.forEach(referenceWaypoints, function(p) {
+        // we snap on existing bendpoints only,
+        // not placeholders that are inserted during add
+        if (p) {
+          p = p.original || p;
+
+          snapPoints.horizontal.push(p.y);
+          snapPoints.vertical.push(p.x);
+        }
+      });
+    }
+
+    return snapPoints;
+  }
+
+  eventBus.on('bendpoint.move.start', function(event) {
+    event.context.snapStart = toPoint(event);
+  });
+
+  eventBus.on('bendpoint.move.move', 1500, function(event) {
+
+    var context = event.context,
+        snapPoints = getSnapPoints(context),
+        start = context.snapStart,
+        target = context.target,
+        targetMid = target && mid(target),
+        x = start.x + event.dx,
+        y = start.y + event.dy,
+        sx, sy;
+
+    if (!snapPoints) {
+      return;
+    }
+
+    // snap
+    sx = snapTo(targetMid ? snapPoints.vertical.concat([ targetMid.x ]) : snapPoints.vertical, x);
+    sy = snapTo(targetMid ? snapPoints.horizontal.concat([ targetMid.y ]) : snapPoints.horizontal, y);
+
+
+    // correction x/y
+    var cx = (x - sx),
+        cy = (y - sy);
+
+    // update delta
+    _.extend(event, {
+      dx: event.dx - cx,
+      dy: event.dy - cy,
+      x: event.x - cx,
+      y: event.y - cy
+    });
+  });
+}
+
+
+BendpointSnapping.$inject = [ 'eventBus' ];
+
+module.exports = BendpointSnapping;
+},{}],77:[function(_dereq_,module,exports){
+var Dom = _dereq_(150),
+    Util = _dereq_(78);
+
+var BENDPOINT_CLS = Util.BENDPOINT_CLS;
+
+
+/**
+ * A service that adds editable bendpoints to connections.
+ */
+function Bendpoints(injector, eventBus, canvas, interactionEvents, bendpointMove) {
+
+  function getConnectionIntersection(waypoints, event) {
+    var localPosition = Util.toCanvasCoordinates(canvas, event);
+    return Util.getApproxIntersection(waypoints, localPosition);
+  }
+
+  function activateBendpointMove(event, connection) {
+    var waypoints = connection.waypoints,
+        intersection = getConnectionIntersection(waypoints, event);
+
+    if (!intersection) {
+      return;
+    }
+
+    bendpointMove.start(event, connection, intersection.index, !intersection.bendpoint);
+  }
+
+  function getBendpointsContainer(element, create) {
+
+    var layer = canvas.getLayer('overlays'),
+        gfx = layer.select('.djs-bendpoints[data-element-id=' + element.id + ']');
+
+    if (!gfx && create) {
+      gfx = layer.group().addClass('djs-bendpoints').attr('data-element-id', element.id);
+
+      Dom.on(gfx.node, 'mousedown', function(event) {
+        activateBendpointMove(event, element);
+      });
+    }
+
+    return gfx;
+  }
+
+  function createBendpoints(gfx, connection) {
+    connection.waypoints.forEach(function(p, idx) {
+      Util.addBendpoint(gfx).translate(p.x, p.y);
+    });
+
+    // add floating bendpoint
+    Util.addBendpoint(gfx).addClass('floating');
+  }
+
+  function clearBendpoints(gfx) {
+    gfx.selectAll('.' + BENDPOINT_CLS).forEach(function(s) {
+      s.remove();
+    });
+  }
+
+  function addBendpoints(connection) {
+    var gfx = getBendpointsContainer(connection);
+
+    if (!gfx) {
+      gfx = getBendpointsContainer(connection, true);
+      createBendpoints(gfx, connection);
+    }
+
+    return gfx;
+  }
+
+  function updateBendpoints(connection) {
+
+    var gfx = getBendpointsContainer(connection);
+
+    if (gfx) {
+      clearBendpoints(gfx);
+      createBendpoints(gfx, connection);
+    }
+  }
+
+  eventBus.on('connection.changed', function(event) {
+    updateBendpoints(event.element);
+  });
+
+  eventBus.on('connection.remove', function(event) {
+    var gfx = getBendpointsContainer(event.element);
+    if (gfx) {
+      gfx.remove();
+    }
+  });
+
+  eventBus.on('element.marker.update', function(event) {
+
+    var element = event.element,
+        bendpointsGfx;
+
+    if (!element.waypoints) {
+      return;
+    }
+
+    bendpointsGfx = addBendpoints(element);
+    bendpointsGfx[event.add ? 'addClass' : 'removeClass'](event.marker);
+  });
+
+  eventBus.on('element.mousemove', function(event) {
+
+    var element = event.element,
+        waypoints = element.waypoints,
+        bendpointsGfx,
+        floating,
+        intersection;
+
+    if (waypoints) {
+
+      bendpointsGfx = getBendpointsContainer(element, true);
+      floating = bendpointsGfx.select('.floating');
+
+      if (!floating) {
+        return;
+      }
+
+      intersection = getConnectionIntersection(waypoints, event.originalEvent);
+
+      if (intersection) {
+        floating.translate(intersection.point.x, intersection.point.y);
+      }
+    }
+  });
+
+  eventBus.on('element.mousedown', function(event) {
+
+    var originalEvent = event.originalEvent,
+        element = event.element,
+        waypoints = element.waypoints;
+
+    if (!waypoints) {
+      return;
+    }
+
+    activateBendpointMove(originalEvent, element, waypoints);
+  });
+
+  eventBus.on('selection.changed', function(event) {
+    var newSelection = event.newSelection,
+        primary = newSelection[0];
+
+    if (primary && primary.waypoints) {
+      addBendpoints(primary);
+    }
+  });
+
+  eventBus.on('element.hover', function(event) {
+    var element = event.element;
+
+    if (element.waypoints) {
+      addBendpoints(element);
+
+      Dom.on(event.gfx.node, 'mousemove', interactionEvents.mouseHandler('element.mousemove'));
+    }
+  });
+
+  eventBus.on('element.out', function(event) {
+    Dom.off(event.gfx.node, 'mousemove', interactionEvents.mouseHandler('element.mousemove'));
+  });
+}
+
+Bendpoints.$inject = [ 'injector', 'eventBus', 'canvas', 'interactionEvents', 'bendpointMove' ];
+
+module.exports = Bendpoints;
+},{}],78:[function(_dereq_,module,exports){
+var Snap = (window.Snap);
+
+var Events = _dereq_(152),
+    Geometry = _dereq_(153);
+
+var BENDPOINT_CLS = module.exports.BENDPOINT_CLS = 'djs-bendpoint';
+
+module.exports.toCanvasCoordinates = function(canvas, event) {
+
+  var position = Events.toPoint(event),
+      clientRect = canvas._container.getBoundingClientRect(),
+      offset;
+
+  // canvas relative position
+
+  offset = {
+    x: clientRect.left,
+    y: clientRect.top
+  };
+
+  // update actual event payload with canvas relative measures
+
+  var viewbox = canvas.viewbox();
+
+  return {
+    x: viewbox.x + (position.x - offset.x) / viewbox.scale,
+    y: viewbox.y + (position.y - offset.y) / viewbox.scale
+  };
+};
+
+module.exports.addBendpoint = function(parentGfx) {
+  var groupGfx = parentGfx.group().addClass(BENDPOINT_CLS);
+
+  groupGfx.circle(0, 0, 4).addClass('djs-visual');
+  groupGfx.circle(0, 0, 10).addClass('djs-hit');
+
+  return groupGfx;
+};
+
+
+function circlePath(center, r) {
+  var x = center.x,
+      y = center.y;
+
+  return [
+    ['M', x, y],
+    ['m', 0, -r],
+    ['a', r, r, 0, 1, 1, 0, 2 * r],
+    ['a', r, r, 0, 1, 1, 0, -2 * r],
+    ['z']
+  ];
+}
+
+function linePath(points) {
+  var segments = [];
+
+  points.forEach(function(p, idx) {
+    segments.push([ idx === 0 ? 'M' : 'L', p.x, p.y ]);
+  });
+
+  return segments;
+}
+
+
+var INTERSECTION_THRESHOLD = 10;
+
+function getBendpointIntersection(waypoints, reference) {
+
+  var i, w;
+
+  for (i = 0; !!(w = waypoints[i]); i++) {
+
+    if (Geometry.distance(w, reference) <= INTERSECTION_THRESHOLD) {
+      return {
+        point: waypoints[i],
+        bendpoint: true,
+        index: i
+      };
+    }
+  }
+
+  return null;
+}
+
+function getPathIntersection(waypoints, reference) {
+
+  var intersections = Snap.path.intersection(circlePath(reference, INTERSECTION_THRESHOLD), linePath(waypoints));
+
+  var a = intersections[0],
+      b = intersections[intersections.length - 1],
+      idx;
+
+  if (!a) {
+    // no intersection
+    return null;
+  }
+
+  if (a !== b) {
+
+    if (a.segment2 !== b.segment2) {
+      // we use the bendpoint in between both segments
+      // as the intersection point
+
+      idx = Math.max(a.segment2, b.segment2) - 1;
+
+      return {
+        point: waypoints[idx],
+        bendpoint: true,
+        index: idx
+      };
+    }
+
+    return {
+      point: {
+        x: (Math.round(a.x + b.x) / 2),
+        y: (Math.round(a.y + b.y) / 2)
+      },
+      index: a.segment2
+    };
+  }
+
+  return {
+    point: {
+      x: Math.round(a.x),
+      y: Math.round(a.y)
+    },
+    index: a.segment2
+  };
+}
+
+/**
+ * Returns the closest point on the connection towards a given reference point.
+ *
+ * @param  {Array<Point>} waypoints
+ * @param  {Point} reference
+ *
+ * @return {Object} intersection data (segment, point)
+ */
+module.exports.getApproxIntersection = function(waypoints, reference) {
+  return getBendpointIntersection(waypoints, reference) || getPathIntersection(waypoints, reference);
+};
+},{}],79:[function(_dereq_,module,exports){
+module.exports = {
+  __depends__: [ _dereq_(89), _dereq_(129) ],
+  __init__: [ 'bendpoints', 'bendpointSnapping' ],
+  bendpoints: [ 'type', _dereq_(77) ],
+  bendpointMove: [ 'type', _dereq_(75) ],
+  bendpointSnapping: [ 'type', _dereq_(76) ]
+};
+},{}],80:[function(_dereq_,module,exports){
+'use strict';
 
 /**
  * Adds change support to the diagram, including
@@ -12984,14 +13669,13 @@ ChangeSupport.$inject = [ 'eventBus', 'elementRegistry', 'graphicsFactory' ];
 
 module.exports = ChangeSupport;
 
-},{}],76:[function(_dereq_,module,exports){
+},{}],81:[function(_dereq_,module,exports){
 module.exports = {
   __init__: [ 'changeSupport'],
-  changeSupport: [ 'type', _dereq_(75) ]
+  changeSupport: [ 'type', _dereq_(80) ]
 };
-},{}],77:[function(_dereq_,module,exports){
-var LayoutUtil = _dereq_(133),
-    Dom = _dereq_(142);
+},{}],82:[function(_dereq_,module,exports){
+var LayoutUtil = _dereq_(141);
 
 var MARKER_OK = 'connect-ok',
     MARKER_NOT_OK = 'connect-not-ok';
@@ -13132,17 +13816,17 @@ function Connect(eventBus, dragging, modeling, rules, elementRegistry, canvas) {
 Connect.$inject = [ 'eventBus', 'dragging', 'modeling', 'rules', 'elementRegistry', 'canvas' ];
 
 module.exports = Connect;
-},{}],78:[function(_dereq_,module,exports){
+},{}],83:[function(_dereq_,module,exports){
 module.exports = {
   __depends__: [
-    _dereq_(125),
-    _dereq_(121),
-    _dereq_(84)
+    _dereq_(133),
+    _dereq_(129),
+    _dereq_(89)
   ],
-  connect: [ 'type', _dereq_(77) ]
+  connect: [ 'type', _dereq_(82) ]
 };
 
-},{}],79:[function(_dereq_,module,exports){
+},{}],84:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._),
@@ -13298,8 +13982,6 @@ ContextPad.prototype._updateAndOpen = function(element) {
 
   var html = pad.html.html('');
 
-  var self = this;
-
   _.forEach(entries, function(entry, id) {
     var control = $(entry.html || '<div class="entry" draggable="true"></div>').attr('data-action', id);
 
@@ -13412,15 +14094,15 @@ ContextPad.prototype.isOpen = function() {
 
 module.exports = ContextPad;
 
-},{}],80:[function(_dereq_,module,exports){
+},{}],85:[function(_dereq_,module,exports){
 module.exports = {
   __depends__: [
-    _dereq_(86),
-    _dereq_(113)
+    _dereq_(91),
+    _dereq_(121)
   ],
-  contextPad: [ 'type', _dereq_(79) ]
+  contextPad: [ 'type', _dereq_(84) ]
 };
-},{}],81:[function(_dereq_,module,exports){
+},{}],86:[function(_dereq_,module,exports){
 
 var MARKER_OK = 'drop-ok',
     MARKER_NOT_OK = 'drop-not-ok';
@@ -13554,22 +14236,22 @@ function Create(eventBus, dragging, rules, modeling, canvas, elementFactory, ren
 Create.$inject = [ 'eventBus', 'dragging', 'rules', 'modeling', 'canvas', 'elementFactory', 'renderer', 'styles' ];
 
 module.exports = Create;
-},{}],82:[function(_dereq_,module,exports){
+},{}],87:[function(_dereq_,module,exports){
 module.exports = {
   __depends__: [
-    _dereq_(84),
-    _dereq_(125)
+    _dereq_(89),
+    _dereq_(133)
   ],
-  create: [ 'type', _dereq_(81) ]
+  create: [ 'type', _dereq_(86) ]
 };
-},{}],83:[function(_dereq_,module,exports){
+},{}],88:[function(_dereq_,module,exports){
 /* global TouchEvent */
 
 var _ = (window._);
 
-var Dom = _dereq_(142),
-    Event = _dereq_(144),
-    Cursor = _dereq_(141);
+var Dom = _dereq_(150),
+    Event = _dereq_(152),
+    Cursor = _dereq_(149);
 
 function suppressEvent(event) {
   if (event instanceof MouseEvent) {
@@ -13952,24 +14634,20 @@ function Dragging(eventBus, canvas, selection) {
 Dragging.$inject = [ 'eventBus', 'canvas', 'selection' ];
 
 module.exports = Dragging;
-},{}],84:[function(_dereq_,module,exports){
+},{}],89:[function(_dereq_,module,exports){
 module.exports = {
   __depends__: [
-    _dereq_(125)
+    _dereq_(133)
   ],
-  dragging: [ 'type', _dereq_(83) ]
+  dragging: [ 'type', _dereq_(88) ]
 };
-},{}],85:[function(_dereq_,module,exports){
+},{}],90:[function(_dereq_,module,exports){
 'use strict';
-
-
-var _ = (window._);
 
 var Snap = (window.Snap);
 
-var GraphicsUtil = _dereq_(145),
-    Renderer = _dereq_(70),
-    Dom = _dereq_(142),
+var Renderer = _dereq_(70),
+    Dom = _dereq_(150),
     createLine = Renderer.createLine,
     updateLine = Renderer.updateLine;
 
@@ -13995,7 +14673,7 @@ function InteractionEvents(eventBus, elementRegistry, styles, snap) {
 
   var HIT_STYLE = styles.cls('djs-hit', [ 'no-fill', 'no-border' ], {
     stroke: 'white',
-    strokeWidth: 10
+    strokeWidth: 15
   });
 
   function fire(type, event) {
@@ -14137,10 +14815,8 @@ function InteractionEvents(eventBus, elementRegistry, styles, snap) {
   eventBus.on([ 'shape.added', 'connection.added' ], function(event) {
     var element = event.element,
         gfx = event.gfx,
-        visual = GraphicsUtil.getVisual(gfx),
-        baseEvent = { element: element, gfx: gfx };
-
-    var hit, type;
+        hit,
+        type;
 
     if (element.waypoints) {
       hit = createLine(element.waypoints);
@@ -14180,6 +14856,8 @@ function InteractionEvents(eventBus, elementRegistry, styles, snap) {
   // API
 
   this.fire = fire;
+
+  this.mouseHandler = mouseHandler;
 }
 
 
@@ -14187,17 +14865,15 @@ InteractionEvents.$inject = [ 'eventBus', 'elementRegistry', 'styles', 'snap' ];
 
 module.exports = InteractionEvents;
 
-},{}],86:[function(_dereq_,module,exports){
+},{}],91:[function(_dereq_,module,exports){
 module.exports = {
   __init__: [ 'interactionEvents' ],
-  interactionEvents: [ 'type', _dereq_(85) ]
+  interactionEvents: [ 'type', _dereq_(90) ]
 };
-},{}],87:[function(_dereq_,module,exports){
+},{}],92:[function(_dereq_,module,exports){
 'use strict';
 
-var _ = (window._);
-
-var Dom = _dereq_(142);
+var Dom = _dereq_(150);
 
 /**
  * A keyboard abstraction that may be activated and
@@ -14214,12 +14890,15 @@ var Dom = _dereq_(142);
  *
  * All events contain the fields (node, listeners).
  *
+ * A default binding for the keyboard may be specified via the
+ * `keyboard.bindTo` configuration option.
+ *
  * @param {EventBus} eventBus
  * @param {CommandStack} commandStack
  * @param {Modeling} modeling
  * @param {Selection} selection
  */
-function Keyboard(eventBus, commandStack, modeling, selection) {
+function Keyboard(config, eventBus, commandStack, modeling, selection) {
 
   var self = this;
 
@@ -14258,12 +14937,16 @@ function Keyboard(eventBus, commandStack, modeling, selection) {
 
   eventBus.on('diagram.init', function() {
     self._fire('init');
+
+    if (config && config.bindTo) {
+      self.bind(config.bindTo);
+    }
   });
 
   this._init();
 }
 
-Keyboard.$inject = [ 'eventBus', 'commandStack', 'modeling', 'selection' ];
+Keyboard.$inject = [ 'config.keyboard', 'eventBus', 'commandStack', 'modeling', 'selection' ];
 
 module.exports = Keyboard;
 
@@ -14362,17 +15045,229 @@ Keyboard.prototype._init = function() {
   listeners.push(remove);
 };
 
-},{}],88:[function(_dereq_,module,exports){
+},{}],93:[function(_dereq_,module,exports){
 module.exports = {
   __init__: [ 'keyboard' ],
-  keyboard: [ 'type', _dereq_(87) ]
+  keyboard: [ 'type', _dereq_(92) ]
 };
 
-},{}],89:[function(_dereq_,module,exports){
+},{}],94:[function(_dereq_,module,exports){
+'use strict';
+
+var Dom = _dereq_(150);
+
+var Snap = (window.Snap);
+
+var _ = (window._),
+    getEnclosedElements = _dereq_(151).getEnclosedElements;
+
+
+function LassoTool(eventBus, canvas, dragging, elementRegistry, selection) {
+
+  this._selection = selection;
+  this._dragging = dragging;
+
+  var self = this;
+
+  // lasso visuals implementation
+
+  /**
+  * A helper that realizes the selection box visual
+  */
+  var visuals = {
+
+    create: function(context) {
+      var container = canvas.getDefaultLayer(),
+          frame;
+
+      frame = context.frame = Snap.create('rect', {
+        class: 'djs-lasso-overlay',
+        width:  1,
+        height: 1,
+        x: 0,
+        y: 0
+      });
+
+      frame.appendTo(container);
+    },
+
+    update: function(context) {
+      var frame = context.frame,
+          bbox  = context.bbox;
+
+      frame.attr({
+        x: bbox.x,
+        y: bbox.y,
+        width: bbox.width,
+        height: bbox.height
+      });
+    },
+
+    remove: function(context) {
+
+      if (context.frame) {
+        context.frame.remove();
+      }
+    }
+  };
+
+
+  // lasso interaction implementation
+
+  eventBus.on('lasso.end', function(event) {
+
+    var bbox = toBBox(event);
+
+    var elements = elementRegistry.filter(function(element) {
+      return element;
+    });
+
+    self.select(elements, bbox);
+  });
+
+  eventBus.on('lasso.start', function(event) {
+
+    var context = event.context;
+
+    context.bbox = toBBox(event);
+    visuals.create(context);
+  });
+
+  eventBus.on('lasso.move', function(event) {
+
+    var context = event.context;
+
+    context.bbox = toBBox(event);
+    visuals.update(context);
+  });
+
+  eventBus.on('lasso.end', function(event) {
+
+    var context = event.context;
+
+    visuals.remove(context);
+  });
+
+  eventBus.on('lasso.cleanup', function(event) {
+
+    var context = event.context;
+
+    visuals.remove(context);
+  });
+
+
+  // dom integration
+
+  Dom.on(canvas._container, 'mousedown', function(event) {
+    if (!event.button && event.altKey) {
+      self.activate(event);
+    }
+  }, true);
+}
+
+LassoTool.$inject = [
+  'eventBus',
+  'canvas',
+  'dragging',
+  'elementRegistry',
+  'selection'
+];
+
+module.exports = LassoTool;
+
+
+LassoTool.prototype.activate = function(event) {
+
+  this._dragging.activate(event, 'lasso', {
+    autoActivate: true,
+    data: {
+      context: {}
+    }
+  });
+};
+
+LassoTool.prototype.select = function(elements, bbox) {
+  var selectedElements = getEnclosedElements(elements, bbox);
+
+  this._selection.select(_.values(selectedElements));
+};
+
+
+function toBBox(event) {
+
+  var start = {
+
+    x: event.x - event.dx,
+    y: event.y - event.dy
+  };
+
+  var end = {
+    x: event.x,
+    y: event.y
+  };
+
+  var bbox;
+
+  if ((start.x <= end.x && start.y < end.y) ||
+      (start.x < end.x && start.y <= end.y)) {
+
+      bbox = {
+        x: start.x,
+        y: start.y,
+        width:  end.x - start.x,
+        height: end.y - start.y
+      };
+  } else if ((start.x >= end.x && start.y < end.y) ||
+             (start.x > end.x && start.y <= end.y)) {
+
+    bbox = {
+      x: end.x,
+      y: start.y,
+      width:  start.x - end.x,
+      height: end.y - start.y
+    };
+  } else if ((start.x <= end.x && start.y > end.y) ||
+             (start.x < end.x && start.y >= end.y)) {
+
+    bbox = {
+      x: start.x,
+      y: end.y,
+      width:  end.x - start.x,
+      height: start.y - end.y
+    };
+  } else if ((start.x >= end.x && start.y > end.y) ||
+             (start.x > end.x && start.y >= end.y)) {
+
+    bbox = {
+      x: end.x,
+      y: end.y,
+      width:  start.x - end.x,
+      height: start.y - end.y
+    };
+  } else {
+
+    bbox = {
+      x: end.x,
+      y: end.y,
+      width:  0,
+      height: 0
+    };
+  }
+  return bbox;
+}
+},{}],95:[function(_dereq_,module,exports){
+'use strict';
+
+module.exports = {
+  __init__: [ 'lassoTool' ],
+  lassoTool: [ 'type', _dereq_(94) ]
+};
+
+},{}],96:[function(_dereq_,module,exports){
 'use strict';
 
 
-var LayoutUtil = _dereq_(133);
+var LayoutUtil = _dereq_(141);
 
 function Layouter() {}
 
@@ -14386,12 +15281,12 @@ Layouter.prototype.getConnectionWaypoints = function(connection) {
   ];
 };
 
-},{}],90:[function(_dereq_,module,exports){
+},{}],97:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
 
-var model = _dereq_(134);
+var model = _dereq_(142);
 
 /**
  * The basic modeling entry point.
@@ -14420,24 +15315,27 @@ module.exports = Modeling;
 
 Modeling.prototype.getHandlers = function() {
   return {
-    'shape.create': _dereq_(94),
-    'shape.delete': _dereq_(97),
-    'shape.move': _dereq_(100),
-    'shapes.move': _dereq_(101),
-    'shape.resize': _dereq_(103),
+    'shape.create': _dereq_(101),
+    'shape.delete': _dereq_(104),
+    'shape.move': _dereq_(107),
+    'shapes.move': _dereq_(108),
+    'shape.resize': _dereq_(111),
 
-    'shape.append': _dereq_(91),
+    'shape.append': _dereq_(98),
 
-    'label.create': _dereq_(93),
+    'label.create': _dereq_(100),
 
-    'connection.create': _dereq_(92),
-    'connection.delete': _dereq_(95),
-    'connection.move': _dereq_(99),
-    'connection.layout': _dereq_(98),
+    'connection.create': _dereq_(99),
+    'connection.delete': _dereq_(102),
+    'connection.move': _dereq_(106),
+    'connection.layout': _dereq_(105),
 
-    'connection.updateWaypoints': _dereq_(104),
+    'connection.updateWaypoints': _dereq_(112),
 
-    'elements.delete': _dereq_(96)
+    'connection.reconnectStart': _dereq_(110),
+    'connection.reconnectEnd': _dereq_(110),
+
+    'elements.delete': _dereq_(103)
   };
 };
 
@@ -14617,6 +15515,26 @@ Modeling.prototype.updateWaypoints = function(connection, newWaypoints) {
   this._commandStack.execute('connection.updateWaypoints', context);
 };
 
+Modeling.prototype.reconnectStart = function(connection, newSource, dockingPoint) {
+  var context = {
+    connection: connection,
+    newSource: newSource,
+    dockingPoint: dockingPoint
+  };
+
+  this._commandStack.execute('connection.reconnectStart', context);
+};
+
+Modeling.prototype.reconnectEnd = function(connection, newTarget, dockingPoint) {
+  var context = {
+    connection: connection,
+    newTarget: newTarget,
+    dockingPoint: dockingPoint
+  };
+
+  this._commandStack.execute('connection.reconnectEnd', context);
+};
+
 Modeling.prototype.connect = function(source, target, attrs) {
   return this.createConnection(source, target, attrs || {}, source.parent);
 };
@@ -14629,12 +15547,10 @@ Modeling.prototype._create = function(type, attrs) {
     return this._elementFactory.create(type, attrs);
   }
 };
-},{}],91:[function(_dereq_,module,exports){
+},{}],98:[function(_dereq_,module,exports){
 'use strict';
 
-var _ = (window._);
-
-var NoopHandler = _dereq_(102);
+var NoopHandler = _dereq_(109);
 
 
 /**
@@ -14685,10 +15601,8 @@ AppendShapeHandler.prototype.postExecute = function(context) {
   // create connection
   this._modeling.createConnection(context.source, context.shape, context.connection, parent);
 };
-},{}],92:[function(_dereq_,module,exports){
+},{}],99:[function(_dereq_,module,exports){
 'use strict';
-
-var _ = (window._);
 
 
 function CreateConnectionHandler(canvas, layouter) {
@@ -14749,10 +15663,10 @@ CreateConnectionHandler.prototype.revert = function(context) {
   connection.source = null;
   connection.target = null;
 };
-},{}],93:[function(_dereq_,module,exports){
+},{}],100:[function(_dereq_,module,exports){
 'use strict';
 
-var CreateShapeHandler = _dereq_(94);
+var CreateShapeHandler = _dereq_(101);
 
 
 /**
@@ -14806,7 +15720,7 @@ CreateLabelHandler.prototype.addElement = function(shape, parent, context) {
   shape.labelTarget = context.labelTarget;
   this._canvas.addShape(shape, parent, true);
 };
-},{}],94:[function(_dereq_,module,exports){
+},{}],101:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -14893,10 +15807,10 @@ CreateShapeHandler.prototype.setPosition = function(shape, context) {
     y: position.y - shape.height / 2
   });
 };
-},{}],95:[function(_dereq_,module,exports){
+},{}],102:[function(_dereq_,module,exports){
 'use strict';
 
-var Collections = _dereq_(140);
+var Collections = _dereq_(148);
 
 
 /**
@@ -14962,12 +15876,12 @@ DeleteConnectionHandler.prototype.revert = function(context) {
   this._canvas.addConnection(connection, parent);
 };
 
-},{}],96:[function(_dereq_,module,exports){
+},{}],103:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
 
-var NoopHandler = _dereq_(102);
+var NoopHandler = _dereq_(109);
 
 
 function DeleteElementsHandler(modeling, elementRegistry) {
@@ -15003,12 +15917,10 @@ DeleteElementsHandler.prototype.postExecute = function(context) {
     }
   });
 };
-},{}],97:[function(_dereq_,module,exports){
+},{}],104:[function(_dereq_,module,exports){
 'use strict';
 
-var _ = (window._);
-
-var Collections = _dereq_(140);
+var Collections = _dereq_(148);
 
 
 /**
@@ -15112,7 +16024,7 @@ DeleteShapeHandler.prototype.revert = function(context) {
   this._canvas.addShape(shape, parent);
 };
 
-},{}],98:[function(_dereq_,module,exports){
+},{}],105:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -15149,12 +16061,12 @@ LayoutConnectionHandler.prototype.revert = function(context) {
 
   return connection;
 };
-},{}],99:[function(_dereq_,module,exports){
+},{}],106:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
 
-var Collections = _dereq_(140);
+var Collections = _dereq_(148);
 
 /**
  * A handler that implements reversible moving of connections.
@@ -15230,13 +16142,13 @@ MoveConnectionHandler.prototype.getNewParent = function(connection, context) {
   return context.newParent || connection.parent;
 };
 
-},{}],100:[function(_dereq_,module,exports){
+},{}],107:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
 
-var MoveHelper = _dereq_(105),
-    Collections = _dereq_(140);
+var MoveHelper = _dereq_(113),
+    Collections = _dereq_(148);
 
 
 /**
@@ -15300,7 +16212,6 @@ MoveShapeHandler.prototype.revert = function(context) {
   var shape = context.shape,
       oldParent = context.oldParent,
       oldParentIndex = context.oldParentIndex,
-      currentIdx,
       delta = context.delta;
 
   // restore previous location in old parent
@@ -15327,12 +16238,10 @@ MoveShapeHandler.prototype.moveChildren = function(context) {
 MoveShapeHandler.prototype.getNewParent = function(context) {
   return context.newParent || context.shape.parent;
 };
-},{}],101:[function(_dereq_,module,exports){
+},{}],108:[function(_dereq_,module,exports){
 'use strict';
 
-var _ = (window._);
-
-var MoveHelper = _dereq_(105);
+var MoveHelper = _dereq_(113);
 
 
 /**
@@ -15358,7 +16267,7 @@ MoveShapesHandler.prototype.postExecute = function(context) {
 MoveShapesHandler.prototype.execute = function(context) { };
 MoveShapesHandler.prototype.revert = function(context) { };
 
-},{}],102:[function(_dereq_,module,exports){
+},{}],109:[function(_dereq_,module,exports){
 'use strict';
 
 function NoopHandler() {}
@@ -15367,12 +16276,70 @@ module.exports = NoopHandler;
 
 NoopHandler.prototype.execute = function() {};
 NoopHandler.prototype.revert = function() {};
-},{}],103:[function(_dereq_,module,exports){
+},{}],110:[function(_dereq_,module,exports){
+
+
+function ReconnectConnectionHandler(layouter) { }
+
+ReconnectConnectionHandler.$inject = [ 'layouter' ];
+
+module.exports = ReconnectConnectionHandler;
+
+ReconnectConnectionHandler.prototype.execute = function(context) {
+
+  var newSource = context.newSource,
+      newTarget = context.newTarget,
+      connection = context.connection;
+
+  if (!newSource && !newTarget) {
+    throw new Error('newSource or newTarget are required');
+  }
+
+  if (newSource && newTarget) {
+    throw new Error('must specify either newSource or newTarget');
+  }
+
+  if (newSource) {
+    context.oldSource = connection.source;
+    connection.source = newSource;
+
+    context.oldDockingPoint = connection.waypoints[0];
+    connection.waypoints[0] = context.dockingPoint;
+  }
+
+  if (newTarget) {
+    context.oldTarget = connection.target;
+    connection.target = newTarget;
+
+    context.oldDockingPoint = connection.waypoints[connection.waypoints.length - 1];
+    connection.waypoints[connection.waypoints.length - 1] = context.dockingPoint;
+  }
+
+  return connection;
+};
+
+ReconnectConnectionHandler.prototype.revert = function(context) {
+
+  var newSource = context.newSource,
+      newTarget = context.newTarget,
+      connection = context.connection;
+
+  if (newSource) {
+    connection.source = context.oldSource;
+    connection.waypoints[0] = context.oldDockingPoint;
+  }
+
+  if (newTarget) {
+    connection.target = context.oldTarget;
+    connection.waypoints[connection.waypoints.length - 1] = context.oldDockingPoint;
+  }
+
+  return connection;
+};
+},{}],111:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
-
-var Elements = _dereq_(143);
 
 
 /**
@@ -15455,7 +16422,7 @@ ResizeShapeHandler.prototype.revert = function(context) {
   return shape;
 };
 
-},{}],104:[function(_dereq_,module,exports){
+},{}],112:[function(_dereq_,module,exports){
 function UpdateWaypointsHandler() { }
 
 module.exports = UpdateWaypointsHandler;
@@ -15481,10 +16448,10 @@ UpdateWaypointsHandler.prototype.revert = function(context) {
 
   return connection;
 };
-},{}],105:[function(_dereq_,module,exports){
+},{}],113:[function(_dereq_,module,exports){
 var _ = (window._);
 
-var Elements = _dereq_(143);
+var Elements = _dereq_(151);
 
 /**
  * A helper that is able to carry out serialized move operations on multiple elements.
@@ -15540,6 +16507,8 @@ MoveHelper.prototype.moveClosure = function(closure, delta, newParent) {
     if (enclosedConnections[c.id]) {
       modeling.moveConnection(c, delta, topLevel[c.id] && newParent);
     } else {
+
+      // TODO: update anchor for incoming / outgoing connections
       modeling.layoutConnection(c);
     }
   });
@@ -15554,19 +16523,19 @@ MoveHelper.prototype.moveClosure = function(closure, delta, newParent) {
 MoveHelper.prototype.getClosure = function(elements) {
   return Elements.getClosure(elements);
 };
-},{}],106:[function(_dereq_,module,exports){
+},{}],114:[function(_dereq_,module,exports){
 module.exports = {
   __depends__: [
     _dereq_(63),
-    _dereq_(76),
-    _dereq_(121)
+    _dereq_(81),
+    _dereq_(129)
   ],
   __init__: [ 'modeling' ],
-  modeling: [ 'type', _dereq_(90) ],
-  layouter: [ 'type', _dereq_(89) ]
+  modeling: [ 'type', _dereq_(97) ],
+  layouter: [ 'type', _dereq_(96) ]
 };
 
-},{}],107:[function(_dereq_,module,exports){
+},{}],115:[function(_dereq_,module,exports){
 var _ = (window._);
 
 
@@ -15728,10 +16697,10 @@ MoveEvents.$inject = [ 'eventBus', 'dragging', 'modeling', 'selection', 'rules' 
 
 module.exports = MoveEvents;
 
-},{}],108:[function(_dereq_,module,exports){
+},{}],116:[function(_dereq_,module,exports){
 var _ = (window._);
 
-var Elements = _dereq_(143);
+var Elements = _dereq_(151);
 
 var LOW_PRIORITY = 500;
 
@@ -15857,28 +16826,25 @@ function MoveVisuals(eventBus, elementRegistry, canvas, styles) {
 MoveVisuals.$inject = [ 'eventBus', 'elementRegistry', 'canvas', 'styles' ];
 
 module.exports = MoveVisuals;
-},{}],109:[function(_dereq_,module,exports){
+},{}],117:[function(_dereq_,module,exports){
 module.exports = {
   __depends__: [
-    _dereq_(86),
-    _dereq_(125),
-    _dereq_(111),
-    _dereq_(121),
-    _dereq_(84)
+    _dereq_(91),
+    _dereq_(133),
+    _dereq_(119),
+    _dereq_(129),
+    _dereq_(89)
   ],
   __init__: [ 'move', 'moveVisuals' ],
-  move: [ 'type', _dereq_(107) ],
-  moveVisuals: [ 'type', _dereq_(108) ]
+  move: [ 'type', _dereq_(115) ],
+  moveVisuals: [ 'type', _dereq_(116) ]
 };
 
-},{}],110:[function(_dereq_,module,exports){
+},{}],118:[function(_dereq_,module,exports){
 'use strict';
 
 var Snap = (window.Snap);
-var _ = (window._);
-var getConnectionBBox = _dereq_(143).getConnectionBBox;
-
-var GraphicsUtil = _dereq_(145);
+var getBBox = _dereq_(151).getBBox;
 
 
 /**
@@ -15911,7 +16877,7 @@ function Outline(eventBus, styles, elementRegistry) {
 
   function updateConnectionOutline(outline, connection) {
 
-    var bbox = getConnectionBBox(connection);
+    var bbox = getBBox(connection);
 
     outline.attr({
       x: bbox.x - OUTLINE_OFFSET,
@@ -15955,22 +16921,22 @@ Outline.$inject = ['eventBus', 'styles', 'elementRegistry'];
 
 module.exports = Outline;
 
-},{}],111:[function(_dereq_,module,exports){
+},{}],119:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = {
   __init__: [ 'outline' ],
-  outline: [ 'type', _dereq_(110) ]
+  outline: [ 'type', _dereq_(118) ]
 };
-},{}],112:[function(_dereq_,module,exports){
+},{}],120:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._),
     $ = (window.$),
-    getConnectionBBox = _dereq_(143).getConnectionBBox;
+    getBBox = _dereq_(151).getBBox;
 
 // document wide unique overlay ids
-var ids = new (_dereq_(146))('ov');
+var ids = new (_dereq_(155))('ov');
 
 
 /**
@@ -16233,7 +17199,7 @@ Overlays.prototype._updateOverlayContainer = function(container) {
       y = element.y;
 
   if (element.waypoints) {
-    var bbox = getConnectionBBox(element);
+    var bbox = getBBox(element);
     x = bbox.x;
     y = bbox.y;
   }
@@ -16260,7 +17226,7 @@ Overlays.prototype._updateOverlay = function(overlay) {
     var width;
 
     if (element.waypoints) {
-      width = getConnectionBBox(element).width;
+      width = getBBox(element).width;
     } else {
       width = element.width;
     }
@@ -16273,7 +17239,7 @@ Overlays.prototype._updateOverlay = function(overlay) {
     var height;
 
     if (element.waypoints) {
-      height = getConnectionBBox(element).height;
+      height = getBBox(element).height;
     } else {
       height = element.height;
     }
@@ -16308,8 +17274,6 @@ Overlays.prototype._createOverlayContainer = function(element) {
 Overlays.prototype._updateRoot = function(viewbox) {
   var a = viewbox.scale || 1;
   var d = viewbox.scale || 1;
-  var e = viewbox.x || 0;
-  var f = viewbox.y || 0;
 
   var matrix = 'matrix(' + a + ',0,0,' + d + ',' + (-1 * viewbox.x * a) + ',' + (-1 * viewbox.y * d) + ')';
 
@@ -16436,14 +17400,14 @@ Overlays.prototype._init = function(config) {
   });
 };
 
-},{}],113:[function(_dereq_,module,exports){
+},{}],121:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = {
   __init__: [ 'overlays' ],
-  overlays: [ 'type', _dereq_(112) ]
+  overlays: [ 'type', _dereq_(120) ]
 };
-},{}],114:[function(_dereq_,module,exports){
+},{}],122:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._),
@@ -16540,8 +17504,7 @@ Palette.prototype._init = function() {
 Palette.prototype._update = function() {
 
   var entriesContainer = this._container.find('.djs-palette-entries').empty(),
-      entries = this._entries = this.getEntries(),
-      self = this;
+      entries = this._entries = this.getEntries();
 
   _.forEach(entries, function(entry, id) {
 
@@ -16661,20 +17624,20 @@ Palette.HTML_MARKUP =
     '<div class="djs-palette-entries"></div>' +
     '<div class="djs-palette-toggle"></div>' +
   '</div>';
-},{}],115:[function(_dereq_,module,exports){
+},{}],123:[function(_dereq_,module,exports){
 module.exports = {
   __init__: [ 'palette' ],
-  palette: [ 'type', _dereq_(114) ],
+  palette: [ 'type', _dereq_(122) ],
 };
 
-},{}],116:[function(_dereq_,module,exports){
+},{}],124:[function(_dereq_,module,exports){
 'use strict';
 
 var Snap = (window.Snap);
 
 var _ = (window._),
-    ResizeUtil = _dereq_(117),
-    Dom = _dereq_(142);
+    ResizeUtil = _dereq_(125),
+    Dom = _dereq_(150);
 
 
 var HANDLE_OFFSET = -2,
@@ -16770,7 +17733,6 @@ function Resize(eventBus, elementRegistry, rules, modeling, canvas, selection, d
     var context = event.context,
         shape = context.shape,
         direction = context.direction,
-        newBounds,
         delta;
 
     delta = {
@@ -16846,8 +17808,8 @@ function Resize(eventBus, elementRegistry, rules, modeling, canvas, selection, d
     var origin = -HANDLE_SIZE + HANDLE_OFFSET;
 
     // Create four drag indicators on the outline
-    var visual = group.rect(origin, origin, HANDLE_SIZE, HANDLE_SIZE).addClass(CLS_RESIZER + '-visual');
-    var hit = group.rect(origin, origin, HANDLE_HIT_SIZE, HANDLE_HIT_SIZE).addClass(CLS_RESIZER + '-hit');
+    group.rect(origin, origin, HANDLE_SIZE, HANDLE_SIZE).addClass(CLS_RESIZER + '-visual');
+    group.rect(origin, origin, HANDLE_HIT_SIZE, HANDLE_HIT_SIZE).addClass(CLS_RESIZER + '-hit');
 
     var matrix = new Snap.Matrix().translate(x, y).rotate(rotation, 0, 0);
     group.transform(matrix);
@@ -16931,7 +17893,8 @@ function Resize(eventBus, elementRegistry, rules, modeling, canvas, selection, d
 Resize.$inject = [ 'eventBus', 'elementRegistry', 'rules', 'modeling', 'canvas', 'selection', 'dragging' ];
 
 module.exports = Resize;
-},{}],117:[function(_dereq_,module,exports){
+
+},{}],125:[function(_dereq_,module,exports){
 /**
  * Resize the given bounds by the specified delta from a given anchor point.
  *
@@ -16995,18 +17958,18 @@ module.exports.reattachPoint = function(bounds, newBounds, point) {
     y: Math.round((newBounds.y + newBounds.height / 2)) - Math.floor(((bounds.y + bounds.height / 2) - point.y) / sy)
   };
 };
-},{}],118:[function(_dereq_,module,exports){
+},{}],126:[function(_dereq_,module,exports){
 module.exports = {
   __depends__: [
-    _dereq_(106),
-    _dereq_(121),
-    _dereq_(84)
+    _dereq_(114),
+    _dereq_(129),
+    _dereq_(89)
   ],
   __init__: [ 'resize' ],
-  resize: [ 'type', _dereq_(116) ]
+  resize: [ 'type', _dereq_(124) ]
 };
 
-},{}],119:[function(_dereq_,module,exports){
+},{}],127:[function(_dereq_,module,exports){
 /**
  * A basic provider that may be extended to implement modeling rules.
  *
@@ -17082,7 +18045,7 @@ RuleProvider.prototype.addRule = function(actions, fn) {
     });
   });
 };
-},{}],120:[function(_dereq_,module,exports){
+},{}],128:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -17112,14 +18075,14 @@ module.exports = Rules;
 Rules.prototype.allowed = function(action, context) {
   return this._commandStack.canExecute(action, context);
 };
-},{}],121:[function(_dereq_,module,exports){
+},{}],129:[function(_dereq_,module,exports){
 module.exports = {
   __depends__: [ _dereq_(63) ],
   __init__: [ 'rules' ],
-  rules: [ 'type', _dereq_(120) ]
+  rules: [ 'type', _dereq_(128) ]
 };
 
-},{}],122:[function(_dereq_,module,exports){
+},{}],130:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -17195,8 +18158,6 @@ Selection.prototype.select = function(elements, add) {
     elements = elements ? [ elements ] : [];
   }
 
-  var self = this;
-
   // selection may be cleared by passing an empty array or null
   // to the method
   if (add) {
@@ -17214,10 +18175,11 @@ Selection.prototype.select = function(elements, add) {
   this._eventBus.fire('selection.changed', { oldSelection: oldSelection, newSelection: selectedElements });
 };
 
-},{}],123:[function(_dereq_,module,exports){
+},{}],131:[function(_dereq_,module,exports){
 'use strict';
 
-var getOriginalEvent = _dereq_(144).getOriginal;
+
+var getOriginalEvent = _dereq_(152).getOriginal;
 
 function SelectionBehavior(eventBus, selection, canvas) {
 
@@ -17237,6 +18199,8 @@ function SelectionBehavior(eventBus, selection, canvas) {
     selection.select(e.context.shapes);
   });
 
+
+  // Shift + click selection
   eventBus.on('element.click', function(event) {
 
     var element = event.element;
@@ -17247,22 +18211,30 @@ function SelectionBehavior(eventBus, selection, canvas) {
       element = null;
     }
 
-    var add = (getOriginalEvent(event) || event).shiftKey;
-    selection.select(element, add);
+    if (!selection.isSelected(element)) {
+      var ev = (getOriginalEvent(event) || event);
+      var add = ev.shiftKey;
+
+      if (!ev.altKey) {
+        selection.select(element, add);
+      }
+    } else {
+      selection.deselect(element);
+    }
   });
 }
 
 SelectionBehavior.$inject = [ 'eventBus', 'selection', 'canvas' ];
 
 module.exports = SelectionBehavior;
-},{}],124:[function(_dereq_,module,exports){
+
+},{}],132:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
 
 var MARKER_HOVER = 'hover',
     MARKER_SELECTED = 'selected';
-
 
 /**
  * A plugin that adds a visible selection UI to shapes and connections
@@ -17276,7 +18248,9 @@ var MARKER_HOVER = 'hover',
  * @param {SelectionService} selection
  * @param {Canvas} canvas
  */
-function SelectionVisuals(events, canvas) {
+function SelectionVisuals(events, canvas, selection, graphicsFactory, styles) {
+
+  this._multiSelectionBox = null;
 
   function addMarker(e, cls) {
     canvas.addMarker(e, cls);
@@ -17323,25 +18297,29 @@ function SelectionVisuals(events, canvas) {
 
 SelectionVisuals.$inject = [
   'eventBus',
-  'canvas'
+  'canvas',
+  'selection',
+  'graphicsFactory',
+  'styles'
 ];
 
 module.exports = SelectionVisuals;
 
-},{}],125:[function(_dereq_,module,exports){
+},{}],133:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = {
   __init__: [ 'selectionVisuals', 'selectionBehavior' ],
   __depends__: [
-    _dereq_(86),
-    _dereq_(111)
+    _dereq_(91),
+    _dereq_(119)
   ],
-  selection: [ 'type', _dereq_(122) ],
-  selectionVisuals: [ 'type', _dereq_(124) ],
-  selectionBehavior: [ 'type', _dereq_(123) ]
+  selection: [ 'type', _dereq_(130) ],
+  selectionVisuals: [ 'type', _dereq_(132) ],
+  selectionBehavior: [ 'type', _dereq_(131) ]
 };
-},{}],126:[function(_dereq_,module,exports){
+
+},{}],134:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._),
@@ -17555,12 +18533,12 @@ Snapping.prototype.getSnapTargets = function(element, target) {
     return !e.hidden && !e.labelTarget && !e.waypoints && e !== element;
   });
 };
-},{}],127:[function(_dereq_,module,exports){
+},{}],135:[function(_dereq_,module,exports){
 module.exports = {
   __init__: [ 'snapping' ],
-  snapping: [ 'type', _dereq_(126) ]
+  snapping: [ 'type', _dereq_(134) ]
 };
-},{}],128:[function(_dereq_,module,exports){
+},{}],136:[function(_dereq_,module,exports){
 'use strict';
 
 function TouchFix(canvas, eventBus) {
@@ -17595,12 +18573,11 @@ TouchFix.prototype.addBBoxMarker = function(paper) {
   paper.rect(10000, 10000, 10, 10).attr(markerStyle);
 };
 
-},{}],129:[function(_dereq_,module,exports){
-var _ = (window._),
-    Hammer = (window.Hammer),
+},{}],137:[function(_dereq_,module,exports){
+var Hammer = (window.Hammer),
     Snap = (window.Snap),
-    Dom = _dereq_(142),
-    Event = _dereq_(144);
+    Dom = _dereq_(150),
+    Event = _dereq_(152);
 
 var MIN_ZOOM = 0.2,
     MAX_ZOOM = 4;
@@ -17918,19 +18895,19 @@ TouchInteractionEvents.$inject = [
 ];
 
 module.exports = TouchInteractionEvents;
-},{}],130:[function(_dereq_,module,exports){
+},{}],138:[function(_dereq_,module,exports){
 module.exports = {
-  __depends__: [ _dereq_(86) ],
+  __depends__: [ _dereq_(91) ],
   __init__: [ 'touchInteractionEvents' ],
-  touchInteractionEvents: [ 'type', _dereq_(129) ],
-  touchFix: [ 'type', _dereq_(128) ]
+  touchInteractionEvents: [ 'type', _dereq_(137) ],
+  touchFix: [ 'type', _dereq_(136) ]
 };
-},{}],131:[function(_dereq_,module,exports){
+},{}],139:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
 
-var LayoutUtil = _dereq_(133);
+var LayoutUtil = _dereq_(141);
 
 /**
  * @memberOf djs.layout
@@ -18029,16 +19006,15 @@ CroppingConnectionDocking.prototype._getShapePath = function(shape) {
 CroppingConnectionDocking.prototype._getGfx = function(element) {
   return this._elementRegistry.getGraphics(element);
 };
-},{}],132:[function(_dereq_,module,exports){
+},{}],140:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
 
-var LayoutUtil = _dereq_(133);
+var LayoutUtil = _dereq_(141),
+    Geometry = _dereq_(153);
 
 var MIN_DISTANCE = 20;
-
-var NEXT_TO = [ 'top', 'right', 'bottom', 'left' ];
 
 
 /**
@@ -18253,15 +19229,13 @@ module.exports._repairConnectionSide = function(moved, other, newDocking, points
       return false;
     }
 
-    var relativeOrientation = LayoutUtil.getOrientation(points[0], points[1], 5),
-        absoluteOrientation = LayoutUtil.getOrientation(moved, other, -30);
+    // relayout if two points overlap
+    // this is most likely due to
+    return !!_.find(points, function(p, idx) {
+      var q = points[idx - 1];
 
-    if (NEXT_TO.indexOf(relativeOrientation) !== -1 &&
-        NEXT_TO.indexOf(absoluteOrientation) !== -1) {
-      return relativeOrientation !== absoluteOrientation;
-    }
-
-    return false;
+      return q && Geometry.distance(p, q) < 3;
+    });
   }
 
   function repairBendpoint(candidate, oldPeer, newPeer) {
@@ -18286,8 +19260,8 @@ module.exports._repairConnectionSide = function(moved, other, newDocking, points
     for (i = points.length - 2; i !== 0; i--) {
 
       // intersects (?) break, remove all bendpoints up to this one and relayout
-      if (LayoutUtil.isPointInRect(points[i], a, MIN_DISTANCE) ||
-          LayoutUtil.isPointInRect(points[i], b, MIN_DISTANCE)) {
+      if (Geometry.pointInRect(points[i], a, MIN_DISTANCE) ||
+          Geometry.pointInRect(points[i], b, MIN_DISTANCE)) {
 
         // return sliced old connection
         return points.slice(i);
@@ -18356,7 +19330,7 @@ module.exports.getDirections = function(source, target, preferVertical) {
       return preferVertical ? 'v:v' : 'h:h';
   }
 };
-},{}],133:[function(_dereq_,module,exports){
+},{}],141:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -18396,18 +19370,6 @@ function roundPoint(point) {
 }
 
 module.exports.roundPoint = roundPoint;
-
-
-function isPointInRect(p, rect, tolerance) {
-  tolerance = tolerance || 0;
-
-  return p.x > rect.x - tolerance &&
-         p.y > rect.y - tolerance &&
-         p.x < rect.x + rect.width + tolerance &&
-         p.y < rect.y + rect.height + tolerance;
-}
-
-module.exports.isPointInRect = isPointInRect;
 
 
 function pointsEqual(a, b) {
@@ -18509,6 +19471,7 @@ function getConnectionPath(points) {
 
   // create a connection path from the connections waypoints
   return _.collect(points, function(p, idx) {
+    p = p.original || p;
     return (idx ? 'L' : 'M') + p.x + ' ' + p.y;
   }).join('');
 }
@@ -18565,12 +19528,12 @@ function getIntersections(a, b) {
 }
 
 module.exports.getIntersections = getIntersections;
-},{}],134:[function(_dereq_,module,exports){
+},{}],142:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
 
-var Refs = _dereq_(152);
+var Refs = _dereq_(163);
 
 var parentRefs = new Refs({ name: 'children', enumerable: true, collection: true }, { name: 'parent' }),
     labelRefs = new Refs({ name: 'label', enumerable: true }, { name: 'labelTarget' }),
@@ -18766,12 +19729,10 @@ module.exports.Root = Root;
 module.exports.Shape = Shape;
 module.exports.Connection = Connection;
 module.exports.Label = Label;
-},{}],135:[function(_dereq_,module,exports){
-var _ = (window._);
-
-var Cursor = _dereq_(141),
-    Dom = _dereq_(142),
-    Event = _dereq_(144);
+},{}],143:[function(_dereq_,module,exports){
+var Cursor = _dereq_(149),
+    Dom = _dereq_(150),
+    Event = _dereq_(152);
 
 function substract(p1, p2) {
   return {
@@ -18841,7 +19802,8 @@ function MoveCanvas(eventBus, canvas) {
 
     // reject non-left mouse button drags
     // left = 0
-    if (event.button) {
+    // left click + alt pressed is reserved for other use
+    if (event.button ||  event.altKey) {
       return;
     }
 
@@ -18863,16 +19825,17 @@ function MoveCanvas(eventBus, canvas) {
 MoveCanvas.$inject = [ 'eventBus', 'canvas' ];
 
 module.exports = MoveCanvas;
-},{}],136:[function(_dereq_,module,exports){
+
+},{}],144:[function(_dereq_,module,exports){
 module.exports = {
   __init__: [ 'moveCanvas' ],
-  moveCanvas: [ 'type', _dereq_(135) ]
+  moveCanvas: [ 'type', _dereq_(143) ]
 };
-},{}],137:[function(_dereq_,module,exports){
+},{}],145:[function(_dereq_,module,exports){
 module.exports = {
-  __depends__: [ _dereq_(130) ]
+  __depends__: [ _dereq_(138) ]
 };
-},{}],138:[function(_dereq_,module,exports){
+},{}],146:[function(_dereq_,module,exports){
 'use strict';
 
 var $ = (window.$);
@@ -18964,12 +19927,12 @@ ZoomScroll.$inject = [ 'eventBus', 'canvas' ];
 module.exports = ZoomScroll;
 
 
-},{}],139:[function(_dereq_,module,exports){
+},{}],147:[function(_dereq_,module,exports){
 module.exports = {
   __init__: [ 'zoomScroll' ],
-  zoomScroll: [ 'type', _dereq_(138) ]
+  zoomScroll: [ 'type', _dereq_(146) ]
 };
-},{}],140:[function(_dereq_,module,exports){
+},{}],148:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -19061,7 +20024,7 @@ module.exports.indexOf = function(collection, element) {
   return collection.indexOf(element);
 };
 
-},{}],141:[function(_dereq_,module,exports){
+},{}],149:[function(_dereq_,module,exports){
 'use strict';
 
 var _ = (window._);
@@ -19086,7 +20049,7 @@ module.exports.set = function(mode) {
 module.exports.unset = function() {
   this.set(null);
 };
-},{}],142:[function(_dereq_,module,exports){
+},{}],150:[function(_dereq_,module,exports){
 
 var elementProto = Element.prototype;
 
@@ -19188,7 +20151,7 @@ function once(element, type, fn, useCapture) {
 }
 
 module.exports.once = once;
-},{}],143:[function(_dereq_,module,exports){
+},{}],151:[function(_dereq_,module,exports){
 var _ = (window._);
 
 /**
@@ -19294,9 +20257,6 @@ function getClosure(elements) {
       enclosedElements = {},
       enclosedConnections = {};
 
-  var modeling = this._modeling;
-
-
   function handleConnection(c) {
     if (topLevel[c.source.id] && topLevel[c.target.id]) {
       topLevel[c.id] = c;
@@ -19344,18 +20304,32 @@ function getClosure(elements) {
 }
 
 /**
- * Returns the bbox for a connection based on the element object.
+ * Returns the surrounding bbox for all elements in the array or the element primitive.
  */
-function getConnectionBBox(connection) {
+function getBBox(elements, stopRecursion) {
+
+  stopRecursion = !!stopRecursion;
+  if (!_.isArray(elements)) {
+    elements = [elements];
+  }
 
   var minX,
-  minY,
-  maxX,
-  maxY;
+      minY,
+      maxX,
+      maxY;
 
-  _.forEach(connection.waypoints, function(waypoint) {
-    var x = waypoint.x,
-    y = waypoint.y;
+  _.forEach(elements, function(element) {
+
+    // If element is a connection the bbox must be computed first
+    var bbox = element;
+    if (element.waypoints && !stopRecursion) {
+      bbox = getBBox(element.waypoints, true);
+    }
+
+    var x = bbox.x,
+        y = bbox.y,
+        height = bbox.height || 0,
+        width  = bbox.width  || 0;
 
     if (x < minX || minX === undefined) {
       minX = x;
@@ -19364,31 +20338,81 @@ function getConnectionBBox(connection) {
       minY = y;
     }
 
-    if (x > maxX || maxX === undefined) {
-      maxX = x;
+    if ((x + width) > maxX || maxX === undefined) {
+      maxX = x + width;
     }
-    if (y > maxY || maxY === undefined) {
-      maxY = y;
+    if ((y + height) > maxY || maxY === undefined) {
+      maxY = y + height;
     }
   });
 
   return {
     x: minX,
     y: minY,
-    width: maxX - minX,
-    height: maxY - minY
+    height: maxY - minY,
+    width: maxX - minX
   };
 }
+
+
+/**
+ * Returns all elements that are enclosed from the bounding box.
+ *
+ * @param {Array<Object>} elements List of Elements to search through
+ * @param {Object} bbox the enclosing bbox.
+ * <ul>
+ *  <li>If bbox.(width|height) is not specified
+ * the method returns all elements with element.x/y &gt; bbox.x/y
+ * </li>
+ *  <li>If only bbox.x or bbox.y is specified, method return all elements with
+ *  e.x &gt; bbox.x or e.y &gt; bbox.y.</li>
+ * </ul>
+ *
+ */
+function getEnclosedElements(elements, bbox) {
+
+  var filteredElements = {};
+
+  _.forEach(elements, function(element) {
+
+    var e = element;
+
+    if (e.waypoints) {
+      e = getBBox(e);
+    }
+
+    if (!_.isNumber(bbox.y) && (e.x > bbox.x)) {
+      filteredElements[element.id] = element;
+    }
+    if (!_.isNumber(bbox.x) && (e.y > bbox.y)) {
+      filteredElements[element.id] = element;
+    }
+    if (e.x > bbox.x && e.y > bbox.y) {
+      if (_.isNumber(bbox.width) && _.isNumber(bbox.height) &&
+          e.width  + e.x < bbox.width  + bbox.x &&
+          e.height + e.y < bbox.height + bbox.y) {
+
+        filteredElements[element.id] = element;
+      } else if (!_.isNumber(bbox.width) || !_.isNumber(bbox.height)) {
+        filteredElements[element.id] = element;
+      }
+    }
+  });
+
+  return filteredElements;
+}
+
 
 
 module.exports.eachElement = eachElement;
 module.exports.selfAndDirectChildren = selfAndDirectChildren;
 module.exports.selfAndAllChildren = selfAndAllChildren;
-module.exports.getConnectionBBox = getConnectionBBox;
+module.exports.getBBox = getBBox;
+module.exports.getEnclosedElements = getEnclosedElements;
 
 module.exports.getClosure = getClosure;
 
-},{}],144:[function(_dereq_,module,exports){
+},{}],152:[function(_dereq_,module,exports){
 function __preventDefault(event) {
   return event && event.preventDefault();
 }
@@ -19456,7 +20480,51 @@ function toPoint(event) {
 }
 
 module.exports.toPoint = toPoint;
-},{}],145:[function(_dereq_,module,exports){
+
+},{}],153:[function(_dereq_,module,exports){
+/**
+ * Computes the distance between two points
+ *
+ * @param  {Point}  p
+ * @param  {Point}  q
+ *
+ * @return {Number}  distance
+ */
+var distance = module.exports.distance = function(p, q) {
+  return Math.sqrt(Math.pow(q.x - p.x, 2) + Math.pow(q.y - p.y, 2));
+};
+
+/**
+ * Returns true if the point r is on the line between p and y
+ *
+ * @param  {Point}  p
+ * @param  {Point}  q
+ * @param  {Point}  r
+ *
+ * @return {Boolean}
+ */
+module.exports.pointsOnLine = function(p, q, r) {
+
+  if (!p || !q || !r) {
+    return false;
+  }
+
+  var val = (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x),
+      dist = distance(p, q);
+
+  // @see http://stackoverflow.com/a/907491/412190
+  return Math.abs(val / dist) < 5;
+};
+
+module.exports.pointInRect = function(p, rect, tolerance) {
+  tolerance = tolerance || 0;
+
+  return p.x > rect.x - tolerance &&
+         p.y > rect.y - tolerance &&
+         p.x < rect.x + rect.width + tolerance &&
+         p.y < rect.y + rect.height + tolerance;
+};
+},{}],154:[function(_dereq_,module,exports){
 /**
  * SVGs for elements are generated by the {@link GraphicsFactory}.
  *
@@ -19500,7 +20568,7 @@ function getBBox(gfx) {
 module.exports.getVisual = getVisual;
 module.exports.getChildren = getChildren;
 module.exports.getBBox = getBBox;
-},{}],146:[function(_dereq_,module,exports){
+},{}],155:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -19534,7 +20602,7 @@ IdGenerator.prototype.next = function() {
   return this._prefix + (++this._counter);
 };
 
-},{}],147:[function(_dereq_,module,exports){
+},{}],156:[function(_dereq_,module,exports){
 'use strict';
 
 var Snap = (window.Snap);
@@ -19731,10 +20799,6 @@ Text.prototype.createText = function(parent, text, options) {
     return sum + line.height;
   }, 0);
 
-
-  // the center x position to align against
-  var cx = box.width / 2;
-
   // the y position of the next line
   var y, x;
 
@@ -19781,7 +20845,7 @@ Text.prototype.createText = function(parent, text, options) {
 
 
 module.exports = Text;
-},{}],148:[function(_dereq_,module,exports){
+},{}],157:[function(_dereq_,module,exports){
 
 var isArray = function(obj) {
   return Object.prototype.toString.call(obj) === '[object Array]';
@@ -19831,18 +20895,18 @@ exports.annotate = annotate;
 exports.parse = parse;
 exports.isArray = isArray;
 
-},{}],149:[function(_dereq_,module,exports){
+},{}],158:[function(_dereq_,module,exports){
 module.exports = {
-  annotate: _dereq_(148).annotate,
-  Module: _dereq_(151),
-  Injector: _dereq_(150)
+  annotate: _dereq_(157).annotate,
+  Module: _dereq_(160),
+  Injector: _dereq_(159)
 };
 
-},{}],150:[function(_dereq_,module,exports){
-var Module = _dereq_(151);
-var autoAnnotate = _dereq_(148).parse;
-var annotate = _dereq_(148).annotate;
-var isArray = _dereq_(148).isArray;
+},{}],159:[function(_dereq_,module,exports){
+var Module = _dereq_(160);
+var autoAnnotate = _dereq_(157).parse;
+var annotate = _dereq_(157).annotate;
+var isArray = _dereq_(157).isArray;
 
 
 var Injector = function(modules, parent) {
@@ -20054,7 +21118,7 @@ var Injector = function(modules, parent) {
 
 module.exports = Injector;
 
-},{}],151:[function(_dereq_,module,exports){
+},{}],160:[function(_dereq_,module,exports){
 var Module = function() {
   var providers = [];
 
@@ -20080,11 +21144,146 @@ var Module = function() {
 
 module.exports = Module;
 
-},{}],152:[function(_dereq_,module,exports){
-module.exports = _dereq_(154);
+},{}],161:[function(_dereq_,module,exports){
+'use strict';
 
-module.exports.Collection = _dereq_(153);
-},{}],153:[function(_dereq_,module,exports){
+var hat = _dereq_(162);
+
+
+/**
+ * Create a new id generator / cache instance.
+ *
+ * You may optionally provide a seed that is used internally.
+ *
+ * @param {Seed} seed
+ */
+function Ids(seed) {
+  seed = seed || [ 128, 36, 1 ];
+  this._seed = seed.length ? hat.rack(seed[0], seed[1], seed[2]) : seed;
+}
+
+module.exports = Ids;
+
+/**
+ * Generate a next id.
+ *
+ * @param {Object} [element] element to bind the id to
+ *
+ * @return {String} id
+ */
+Ids.prototype.next = function(element) {
+  return this._seed(element || true);
+};
+
+/**
+ * Generate a next id with a given prefix.
+ *
+ * @param {Object} [element] element to bind the id to
+ *
+ * @return {String} id
+ */
+Ids.prototype.nextPrefixed = function(prefix, element) {
+  var id;
+
+  do {
+    id = prefix + this.next(true);
+  } while (this.assigned(id));
+
+  // claim {prefix}{random}
+  this.claim(id, element);
+
+  // return
+  return id;
+};
+
+/**
+ * Manually claim an existing id.
+ *
+ * @param {String} id
+ * @param {String} [element] element the id is claimed by
+ */
+Ids.prototype.claim = function(id, element) {
+  this._seed.set(id, element || true);
+};
+
+/**
+ * Returns true if the given id has already been assigned.
+ *
+ * @param  {String} id
+ * @return {Boolean}
+ */
+Ids.prototype.assigned = function(id) {
+  return this._seed.get(id) || false;
+};
+},{}],162:[function(_dereq_,module,exports){
+var hat = module.exports = function (bits, base) {
+    if (!base) base = 16;
+    if (bits === undefined) bits = 128;
+    if (bits <= 0) return '0';
+    
+    var digits = Math.log(Math.pow(2, bits)) / Math.log(base);
+    for (var i = 2; digits === Infinity; i *= 2) {
+        digits = Math.log(Math.pow(2, bits / i)) / Math.log(base) * i;
+    }
+    
+    var rem = digits - Math.floor(digits);
+    
+    var res = '';
+    
+    for (var i = 0; i < Math.floor(digits); i++) {
+        var x = Math.floor(Math.random() * base).toString(base);
+        res = x + res;
+    }
+    
+    if (rem) {
+        var b = Math.pow(base, rem);
+        var x = Math.floor(Math.random() * b).toString(base);
+        res = x + res;
+    }
+    
+    var parsed = parseInt(res, base);
+    if (parsed !== Infinity && parsed >= Math.pow(2, bits)) {
+        return hat(bits, base)
+    }
+    else return res;
+};
+
+hat.rack = function (bits, base, expandBy) {
+    var fn = function (data) {
+        var iters = 0;
+        do {
+            if (iters ++ > 10) {
+                if (expandBy) bits += expandBy;
+                else throw new Error('too many ID collisions, use more bits')
+            }
+            
+            var id = hat(bits, base);
+        } while (Object.hasOwnProperty.call(hats, id));
+        
+        hats[id] = data;
+        return id;
+    };
+    var hats = fn.hats = {};
+    
+    fn.get = function (id) {
+        return fn.hats[id];
+    };
+    
+    fn.set = function (id, value) {
+        fn.hats[id] = value;
+        return fn;
+    };
+    
+    fn.bits = bits || 128;
+    fn.base = base || 16;
+    return fn;
+};
+
+},{}],163:[function(_dereq_,module,exports){
+module.exports = _dereq_(165);
+
+module.exports.Collection = _dereq_(164);
+},{}],164:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -20166,10 +21365,10 @@ function extend(collection, refs, property, target) {
 
 
 module.exports.extend = extend;
-},{}],154:[function(_dereq_,module,exports){
+},{}],165:[function(_dereq_,module,exports){
 'use strict';
 
-var Collection = _dereq_(153);
+var Collection = _dereq_(164);
 
 function hasOwnProperty(e, property) {
   return Object.prototype.hasOwnProperty.call(e, property.name || property);
@@ -20348,147 +21547,6 @@ module.exports = Refs;
  * @property {boolean} [collection=false]
  * @property {boolean} [enumerable=false]
  */
-},{}],155:[function(_dereq_,module,exports){
-'use strict';
-
-var hat = _dereq_(156);
-
-
-/**
- * Create a new id generator / cache instance.
- *
- * You may optionally provide a seed that is used internally.
- *
- * @param {Seed} seed
- */
-function Ids(seed) {
-  seed = seed || [ 128, 36, 1 ];
-  this._seed = seed.length ? hat.rack(seed[0], seed[1], seed[2]) : seed;
-}
-
-module.exports = Ids;
-
-/**
- * Generate a next id.
- *
- * @param {Object} [element] element to bind the id to
- *
- * @return {String} id
- */
-Ids.prototype.next = function(element) {
-  return this._seed(element || true);
-};
-
-/**
- * Generate a next id with a given prefix.
- *
- * @param {Object} [element] element to bind the id to
- *
- * @return {String} id
- */
-Ids.prototype.nextPrefixed = function(prefix, element) {
-  var id;
-
-  do {
-    id = prefix + this.next(true);
-  } while (this.assigned(id));
-
-  // claim {prefix}{random}
-  this.claim(id, element);
-
-  // return
-  return id;
-};
-
-/**
- * Manually claim an existing id.
- *
- * @param {String} id
- * @param {String} [element] element the id is claimed by
- */
-Ids.prototype.claim = function(id, element) {
-  this._seed.set(id, element || true);
-};
-
-/**
- * Returns true if the given id has already been assigned.
- *
- * @param  {String} id
- * @return {Boolean}
- */
-Ids.prototype.assigned = function(id) {
-  return this._seed.get(id) || false;
-};
-},{}],156:[function(_dereq_,module,exports){
-var hat = module.exports = function (bits, base) {
-    if (!base) base = 16;
-    if (bits === undefined) bits = 128;
-    if (bits <= 0) return '0';
-    
-    var digits = Math.log(Math.pow(2, bits)) / Math.log(base);
-    for (var i = 2; digits === Infinity; i *= 2) {
-        digits = Math.log(Math.pow(2, bits / i)) / Math.log(base) * i;
-    }
-    
-    var rem = digits - Math.floor(digits);
-    
-    var res = '';
-    
-    for (var i = 0; i < Math.floor(digits); i++) {
-        var x = Math.floor(Math.random() * base).toString(base);
-        res = x + res;
-    }
-    
-    if (rem) {
-        var b = Math.pow(base, rem);
-        var x = Math.floor(Math.random() * b).toString(base);
-        res = x + res;
-    }
-    
-    var parsed = parseInt(res, base);
-    if (parsed !== Infinity && parsed >= Math.pow(2, bits)) {
-        return hat(bits, base)
-    }
-    else return res;
-};
-
-hat.rack = function (bits, base, expandBy) {
-    var fn = function (data) {
-        var iters = 0;
-        do {
-            if (iters ++ > 10) {
-                if (expandBy) bits += expandBy;
-                else throw new Error('too many ID collisions, use more bits')
-            }
-            
-            var id = hat(bits, base);
-        } while (Object.hasOwnProperty.call(hats, id));
-        
-        hats[id] = data;
-        return id;
-    };
-    var hats = fn.hats = {};
-    
-    fn.get = function (id) {
-        return fn.hats[id];
-    };
-    
-    fn.set = function (id, value) {
-        fn.hats[id] = value;
-        return fn;
-    };
-    
-    fn.bits = bits || 128;
-    fn.base = base || 16;
-    return fn;
-};
-
-},{}],157:[function(_dereq_,module,exports){
-arguments[4][152][0].apply(exports,arguments)
-},{}],158:[function(_dereq_,module,exports){
-arguments[4][153][0].apply(exports,arguments)
-},{}],159:[function(_dereq_,module,exports){
-arguments[4][154][0].apply(exports,arguments)
 },{}]},{},[1])(1)
 });
 //# sourceMappingURL=bpmn-modeler.js.map

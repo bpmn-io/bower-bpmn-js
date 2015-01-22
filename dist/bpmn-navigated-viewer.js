@@ -1,5 +1,5 @@
 /*!
- * bpmn-js - bpmn-navigated-viewer v0.7.0
+ * bpmn-js - bpmn-navigated-viewer v0.8.0
 
  * Copyright 2014, 2015 camunda Services GmbH and other contributors
  *
@@ -8,7 +8,7 @@
  *
  * Source Code: https://github.com/bpmn-io/bpmn-js
  *
- * Date: 2015-01-12
+ * Date: 2015-01-22
  */
 !function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.BpmnJS=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 var Viewer = _dereq_(2);
@@ -232,11 +232,12 @@ Viewer.prototype.importDefinitions = function(definitions, done) {
     }
 
     this.definitions = definitions;
-    this.diagram = this._createDiagram(this.options);
 
-    this._init(this.diagram);
+    var diagram = this.diagram = this._createDiagram(this.options);
 
-    Importer.importBpmnDiagram(this.diagram, definitions, done);
+    this._init(diagram);
+
+    Importer.importBpmnDiagram(diagram, definitions, done);
   } catch (e) {
     done(e);
   }
@@ -307,7 +308,6 @@ Viewer.prototype.on = function(event, handler) {
   var diagram = this.diagram,
       listeners = this.__listeners = this.__listeners || [];
 
-  listeners = this.__listeners || [];
   listeners.push({ event: event, handler: handler });
 
   if (diagram) {
@@ -2500,7 +2500,7 @@ BpmnImporter.prototype._getElement = function(semantic) {
 
 var _ = (window._);
 
-var Refs = _dereq_(78);
+var Refs = _dereq_(75);
 
 var elementToString = _dereq_(10).elementToString;
 
@@ -3092,11 +3092,6 @@ var _ = (window._);
 var Moddle = _dereq_(22),
     ModdleXml = _dereq_(17);
 
-
-function createModel(packages) {
-  return new Moddle(packages);
-}
-
 /**
  * A sub class of {@link Moddle} with support for import and export of BPMN 2.0 xml files.
  *
@@ -3283,7 +3278,7 @@ function normalizeType(node, attr, model) {
  * @param  {Uri} defaultNsUri
  */
 function normalizeNamespaces(node, model, defaultNsUri) {
-  var uri, childUri, prefix;
+  var uri, prefix;
 
   uri = node.uri || defaultNsUri;
 
@@ -3707,8 +3702,7 @@ XMLReader.prototype.fromXML = function(xml, rootHandler, done) {
   var parser = sax.parser(true, { xmlns: true, trim: true }),
       stack = new Stack();
 
-  var model = this.model,
-      self = this;
+  var model = this.model;
 
   rootHandler.context = context;
 
@@ -3922,8 +3916,7 @@ ReferenceSerializer.prototype.serializeTo = function(writer) {
 function BodySerializer() {}
 
 BodySerializer.prototype.serializeValue = BodySerializer.prototype.serializeTo = function(writer) {
-  var value = this.value,
-      escape = this.escape;
+  var escape = this.escape;
 
   if (escape) {
     writer.append('<![CDATA[');
@@ -4109,8 +4102,7 @@ ElementSerializer.prototype.parseContainments = function(properties) {
 
   var self = this,
       body = this.body,
-      element = this.element,
-      typeDesc = element.$descriptor;
+      element = this.element;
 
   _.forEach(properties, function(p) {
     var value = element.get(p.name),
@@ -4244,8 +4236,7 @@ ElementSerializer.prototype.addAttribute = function(name, value) {
 };
 
 ElementSerializer.prototype.serializeAttributes = function(writer) {
-  var element = this.element,
-      attrs = this.attrs,
+  var attrs = this.attrs,
       root = !this.parent,
       namespaces = this.namespaces;
 
@@ -4797,8 +4788,7 @@ Factory.prototype.createType = function(descriptor) {
 
 var _ = (window._);
 
-var Types = _dereq_(30),
-    Factory = _dereq_(25),
+var Factory = _dereq_(25),
     Registry = _dereq_(29),
     Properties = _dereq_(28);
 
@@ -5263,8 +5253,7 @@ Registry.prototype.mapTypes = function(nsName, iterator) {
  */
 Registry.prototype.getEffectiveDescriptor = function(name) {
 
-  var options = this.options,
-      nsName = parseNameNs(name);
+  var nsName = parseNameNs(name);
 
   var builder = new DescriptorBuilder(nsName);
 
@@ -8835,7 +8824,9 @@ function createInjector(options) {
 
 /**
  * The main diagram-js entry point that bootstraps the diagram with the given
- * configuration. To register extensions with the diagram, pass them as Array<didi.Module> to the constructor.
+ * configuration.
+ *
+ * To register extensions with the diagram, pass them as Array<didi.Module> to the constructor.
  *
  * @class djs.Diagram
  * @memberOf djs
@@ -8917,8 +8908,8 @@ function Diagram(options, injector) {
    *
    * @example
    *
-   * events.on('diagram.init', function() {
-   *   events.fire('my-custom-event', { foo: 'BAR' });
+   * eventBus.on('diagram.init', function() {
+   *   eventBus.fire('my-custom-event', { foo: 'BAR' });
    * });
    *
    * @type {Object}
@@ -9036,7 +9027,6 @@ Canvas.prototype._init = function(config) {
 
   // html container
   var eventBus = this._eventBus,
-      graphicsFactory = this._graphicsFactory,
       snap = this._snap,
 
       container = createContainer(config),
@@ -9711,9 +9701,6 @@ Canvas.prototype.getAbsoluteBBox = function(element) {
 },{}],38:[function(_dereq_,module,exports){
 'use strict';
 
-var _ = (window._);
-
-
 var Model = _dereq_(58);
 
 
@@ -9762,6 +9749,8 @@ ElementFactory.prototype.create = function(type, attrs) {
   return Model.create(type, attrs);
 };
 },{}],39:[function(_dereq_,module,exports){
+'use strict';
+
 var ELEMENT_ID = 'data-element-id';
 
 /**
@@ -10255,8 +10244,10 @@ GraphicsFactory.prototype._clear = function(gfx) {
  */
 GraphicsFactory.prototype._createContainer = function(type, parentGfx) {
   var outerGfx = parentGfx.group().attr('class', 'djs-group'),
-      gfx = outerGfx.group().attr('class', 'djs-element djs-' + type),
-      visual = gfx.group().attr('class', 'djs-visual');
+      gfx = outerGfx.group().attr('class', 'djs-element djs-' + type);
+
+  // create visual
+  gfx.group().attr('class', 'djs-visual');
 
   return gfx;
 };
@@ -10679,13 +10670,9 @@ Snap.plugin(function(Snap, Element, Paper, global) {
 },{}],48:[function(_dereq_,module,exports){
 'use strict';
 
-
-var _ = (window._);
-
 var Snap = (window.Snap);
 
-var GraphicsUtil = _dereq_(68),
-    Renderer = _dereq_(43),
+var Renderer = _dereq_(43),
     Dom = _dereq_(65),
     createLine = Renderer.createLine,
     updateLine = Renderer.updateLine;
@@ -10712,7 +10699,7 @@ function InteractionEvents(eventBus, elementRegistry, styles, snap) {
 
   var HIT_STYLE = styles.cls('djs-hit', [ 'no-fill', 'no-border' ], {
     stroke: 'white',
-    strokeWidth: 10
+    strokeWidth: 15
   });
 
   function fire(type, event) {
@@ -10854,10 +10841,8 @@ function InteractionEvents(eventBus, elementRegistry, styles, snap) {
   eventBus.on([ 'shape.added', 'connection.added' ], function(event) {
     var element = event.element,
         gfx = event.gfx,
-        visual = GraphicsUtil.getVisual(gfx),
-        baseEvent = { element: element, gfx: gfx };
-
-    var hit, type;
+        hit,
+        type;
 
     if (element.waypoints) {
       hit = createLine(element.waypoints);
@@ -10897,6 +10882,8 @@ function InteractionEvents(eventBus, elementRegistry, styles, snap) {
   // API
 
   this.fire = fire;
+
+  this.mouseHandler = mouseHandler;
 }
 
 
@@ -10913,10 +10900,7 @@ module.exports = {
 'use strict';
 
 var Snap = (window.Snap);
-var _ = (window._);
-var getConnectionBBox = _dereq_(66).getConnectionBBox;
-
-var GraphicsUtil = _dereq_(68);
+var getBBox = _dereq_(66).getBBox;
 
 
 /**
@@ -10949,7 +10933,7 @@ function Outline(eventBus, styles, elementRegistry) {
 
   function updateConnectionOutline(outline, connection) {
 
-    var bbox = getConnectionBBox(connection);
+    var bbox = getBBox(connection);
 
     outline.attr({
       x: bbox.x - OUTLINE_OFFSET,
@@ -11005,7 +10989,7 @@ module.exports = {
 
 var _ = (window._),
     $ = (window.$),
-    getConnectionBBox = _dereq_(66).getConnectionBBox;
+    getBBox = _dereq_(66).getBBox;
 
 // document wide unique overlay ids
 var ids = new (_dereq_(69))('ov');
@@ -11271,7 +11255,7 @@ Overlays.prototype._updateOverlayContainer = function(container) {
       y = element.y;
 
   if (element.waypoints) {
-    var bbox = getConnectionBBox(element);
+    var bbox = getBBox(element);
     x = bbox.x;
     y = bbox.y;
   }
@@ -11298,7 +11282,7 @@ Overlays.prototype._updateOverlay = function(overlay) {
     var width;
 
     if (element.waypoints) {
-      width = getConnectionBBox(element).width;
+      width = getBBox(element).width;
     } else {
       width = element.width;
     }
@@ -11311,7 +11295,7 @@ Overlays.prototype._updateOverlay = function(overlay) {
     var height;
 
     if (element.waypoints) {
-      height = getConnectionBBox(element).height;
+      height = getBBox(element).height;
     } else {
       height = element.height;
     }
@@ -11346,8 +11330,6 @@ Overlays.prototype._createOverlayContainer = function(element) {
 Overlays.prototype._updateRoot = function(viewbox) {
   var a = viewbox.scale || 1;
   var d = viewbox.scale || 1;
-  var e = viewbox.x || 0;
-  var f = viewbox.y || 0;
 
   var matrix = 'matrix(' + a + ',0,0,' + d + ',' + (-1 * viewbox.x * a) + ',' + (-1 * viewbox.y * d) + ')';
 
@@ -11557,8 +11539,6 @@ Selection.prototype.select = function(elements, add) {
     elements = elements ? [ elements ] : [];
   }
 
-  var self = this;
-
   // selection may be cleared by passing an empty array or null
   // to the method
   if (add) {
@@ -11578,6 +11558,7 @@ Selection.prototype.select = function(elements, add) {
 
 },{}],55:[function(_dereq_,module,exports){
 'use strict';
+
 
 var getOriginalEvent = _dereq_(67).getOriginal;
 
@@ -11599,6 +11580,8 @@ function SelectionBehavior(eventBus, selection, canvas) {
     selection.select(e.context.shapes);
   });
 
+
+  // Shift + click selection
   eventBus.on('element.click', function(event) {
 
     var element = event.element;
@@ -11609,14 +11592,23 @@ function SelectionBehavior(eventBus, selection, canvas) {
       element = null;
     }
 
-    var add = (getOriginalEvent(event) || event).shiftKey;
-    selection.select(element, add);
+    if (!selection.isSelected(element)) {
+      var ev = (getOriginalEvent(event) || event);
+      var add = ev.shiftKey;
+
+      if (!ev.altKey) {
+        selection.select(element, add);
+      }
+    } else {
+      selection.deselect(element);
+    }
   });
 }
 
 SelectionBehavior.$inject = [ 'eventBus', 'selection', 'canvas' ];
 
 module.exports = SelectionBehavior;
+
 },{}],56:[function(_dereq_,module,exports){
 'use strict';
 
@@ -11624,7 +11616,6 @@ var _ = (window._);
 
 var MARKER_HOVER = 'hover',
     MARKER_SELECTED = 'selected';
-
 
 /**
  * A plugin that adds a visible selection UI to shapes and connections
@@ -11638,7 +11629,9 @@ var MARKER_HOVER = 'hover',
  * @param {SelectionService} selection
  * @param {Canvas} canvas
  */
-function SelectionVisuals(events, canvas) {
+function SelectionVisuals(events, canvas, selection, graphicsFactory, styles) {
+
+  this._multiSelectionBox = null;
 
   function addMarker(e, cls) {
     canvas.addMarker(e, cls);
@@ -11685,7 +11678,10 @@ function SelectionVisuals(events, canvas) {
 
 SelectionVisuals.$inject = [
   'eventBus',
-  'canvas'
+  'canvas',
+  'selection',
+  'graphicsFactory',
+  'styles'
 ];
 
 module.exports = SelectionVisuals;
@@ -11703,6 +11699,7 @@ module.exports = {
   selectionVisuals: [ 'type', _dereq_(56) ],
   selectionBehavior: [ 'type', _dereq_(55) ]
 };
+
 },{}],58:[function(_dereq_,module,exports){
 'use strict';
 
@@ -11905,8 +11902,6 @@ module.exports.Shape = Shape;
 module.exports.Connection = Connection;
 module.exports.Label = Label;
 },{}],59:[function(_dereq_,module,exports){
-var _ = (window._);
-
 var Cursor = _dereq_(64),
     Dom = _dereq_(65),
     Event = _dereq_(67);
@@ -11979,7 +11974,8 @@ function MoveCanvas(eventBus, canvas) {
 
     // reject non-left mouse button drags
     // left = 0
-    if (event.button) {
+    // left click + alt pressed is reserved for other use
+    if (event.button ||  event.altKey) {
       return;
     }
 
@@ -12001,6 +11997,7 @@ function MoveCanvas(eventBus, canvas) {
 MoveCanvas.$inject = [ 'eventBus', 'canvas' ];
 
 module.exports = MoveCanvas;
+
 },{}],60:[function(_dereq_,module,exports){
 module.exports = {
   __init__: [ 'moveCanvas' ],
@@ -12428,9 +12425,6 @@ function getClosure(elements) {
       enclosedElements = {},
       enclosedConnections = {};
 
-  var modeling = this._modeling;
-
-
   function handleConnection(c) {
     if (topLevel[c.source.id] && topLevel[c.target.id]) {
       topLevel[c.id] = c;
@@ -12478,18 +12472,32 @@ function getClosure(elements) {
 }
 
 /**
- * Returns the bbox for a connection based on the element object.
+ * Returns the surrounding bbox for all elements in the array or the element primitive.
  */
-function getConnectionBBox(connection) {
+function getBBox(elements, stopRecursion) {
+
+  stopRecursion = !!stopRecursion;
+  if (!_.isArray(elements)) {
+    elements = [elements];
+  }
 
   var minX,
-  minY,
-  maxX,
-  maxY;
+      minY,
+      maxX,
+      maxY;
 
-  _.forEach(connection.waypoints, function(waypoint) {
-    var x = waypoint.x,
-    y = waypoint.y;
+  _.forEach(elements, function(element) {
+
+    // If element is a connection the bbox must be computed first
+    var bbox = element;
+    if (element.waypoints && !stopRecursion) {
+      bbox = getBBox(element.waypoints, true);
+    }
+
+    var x = bbox.x,
+        y = bbox.y,
+        height = bbox.height || 0,
+        width  = bbox.width  || 0;
 
     if (x < minX || minX === undefined) {
       minX = x;
@@ -12498,27 +12506,77 @@ function getConnectionBBox(connection) {
       minY = y;
     }
 
-    if (x > maxX || maxX === undefined) {
-      maxX = x;
+    if ((x + width) > maxX || maxX === undefined) {
+      maxX = x + width;
     }
-    if (y > maxY || maxY === undefined) {
-      maxY = y;
+    if ((y + height) > maxY || maxY === undefined) {
+      maxY = y + height;
     }
   });
 
   return {
     x: minX,
     y: minY,
-    width: maxX - minX,
-    height: maxY - minY
+    height: maxY - minY,
+    width: maxX - minX
   };
 }
+
+
+/**
+ * Returns all elements that are enclosed from the bounding box.
+ *
+ * @param {Array<Object>} elements List of Elements to search through
+ * @param {Object} bbox the enclosing bbox.
+ * <ul>
+ *  <li>If bbox.(width|height) is not specified
+ * the method returns all elements with element.x/y &gt; bbox.x/y
+ * </li>
+ *  <li>If only bbox.x or bbox.y is specified, method return all elements with
+ *  e.x &gt; bbox.x or e.y &gt; bbox.y.</li>
+ * </ul>
+ *
+ */
+function getEnclosedElements(elements, bbox) {
+
+  var filteredElements = {};
+
+  _.forEach(elements, function(element) {
+
+    var e = element;
+
+    if (e.waypoints) {
+      e = getBBox(e);
+    }
+
+    if (!_.isNumber(bbox.y) && (e.x > bbox.x)) {
+      filteredElements[element.id] = element;
+    }
+    if (!_.isNumber(bbox.x) && (e.y > bbox.y)) {
+      filteredElements[element.id] = element;
+    }
+    if (e.x > bbox.x && e.y > bbox.y) {
+      if (_.isNumber(bbox.width) && _.isNumber(bbox.height) &&
+          e.width  + e.x < bbox.width  + bbox.x &&
+          e.height + e.y < bbox.height + bbox.y) {
+
+        filteredElements[element.id] = element;
+      } else if (!_.isNumber(bbox.width) || !_.isNumber(bbox.height)) {
+        filteredElements[element.id] = element;
+      }
+    }
+  });
+
+  return filteredElements;
+}
+
 
 
 module.exports.eachElement = eachElement;
 module.exports.selfAndDirectChildren = selfAndDirectChildren;
 module.exports.selfAndAllChildren = selfAndAllChildren;
-module.exports.getConnectionBBox = getConnectionBBox;
+module.exports.getBBox = getBBox;
+module.exports.getEnclosedElements = getEnclosedElements;
 
 module.exports.getClosure = getClosure;
 
@@ -12590,6 +12648,7 @@ function toPoint(event) {
 }
 
 module.exports.toPoint = toPoint;
+
 },{}],68:[function(_dereq_,module,exports){
 /**
  * SVGs for elements are generated by the {@link GraphicsFactory}.
@@ -12864,10 +12923,6 @@ Text.prototype.createText = function(parent, text, options) {
   var totalHeight = _.reduce(layouted, function(sum, line, idx) {
     return sum + line.height;
   }, 0);
-
-
-  // the center x position to align against
-  var cx = box.width / 2;
 
   // the y position of the next line
   var y, x;
@@ -13482,12 +13537,6 @@ module.exports = Refs;
  * @property {boolean} [collection=false]
  * @property {boolean} [enumerable=false]
  */
-},{}],78:[function(_dereq_,module,exports){
-arguments[4][75][0].apply(exports,arguments)
-},{}],79:[function(_dereq_,module,exports){
-arguments[4][76][0].apply(exports,arguments)
-},{}],80:[function(_dereq_,module,exports){
-arguments[4][77][0].apply(exports,arguments)
 },{}]},{},[1])(1)
 });
 //# sourceMappingURL=bpmn-navigated-viewer.js.map
