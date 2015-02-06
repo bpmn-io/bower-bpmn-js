@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "dependencies": {
-    "bpmn-js": "*"
+    "bpmn-js": "*",
+    "jquery": "~2.1.1"
   }
 }
