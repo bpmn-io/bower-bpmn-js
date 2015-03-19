@@ -1,5 +1,5 @@
 /*!
- * bpmn-js - bpmn-viewer v0.9.1
+ * bpmn-js - bpmn-viewer v0.9.2
 
  * Copyright 2014, 2015 camunda Services GmbH and other contributors
  *
@@ -8,7 +8,7 @@
  *
  * Source Code: https://github.com/bpmn-io/bpmn-js
  *
- * Date: 2015-03-13
+ * Date: 2015-03-19
  */
 !function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.BpmnJS=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 'use strict';
@@ -11130,7 +11130,7 @@ Canvas.prototype.scroll = function(delta) {
 Canvas.prototype.zoom = function(newScale, center) {
 
   if (newScale === 'fit-viewport') {
-    return this._fitViewport();
+    return this._fitViewport(center);
   }
 
   var vbox = this.viewbox();
@@ -11160,7 +11160,7 @@ function setCTM(node, m) {
   node.setAttribute('transform', mstr);
 }
 
-Canvas.prototype._fitViewport = function() {
+Canvas.prototype._fitViewport = function(center) {
 
   var vbox = this.viewbox(),
       outer = vbox.outer,
@@ -11178,7 +11178,8 @@ Canvas.prototype._fitViewport = function() {
   if (inner.x >= 0 &&
       inner.y >= 0 &&
       inner.x + inner.width <= outer.width &&
-      inner.y + inner.height <= outer.height) {
+      inner.y + inner.height <= outer.height &&
+      !center) {
 
     newViewbox = {
       x: 0,
@@ -11190,8 +11191,8 @@ Canvas.prototype._fitViewport = function() {
 
     newScale = Math.min(1, outer.width / inner.width, outer.height / inner.height);
     newViewbox = {
-      x: inner.x,
-      y: inner.y,
+      x: inner.x + (center ? inner.width / 2 - outer.width / newScale / 2 : 0),
+      y: inner.y + (center ? inner.height / 2 - outer.height / newScale / 2 : 0),
       width: outer.width / newScale,
       height: outer.height / newScale
     };
@@ -25667,7 +25668,8 @@ ClassList.prototype.toggle = function(name, force){
  */
 
 ClassList.prototype.array = function(){
-  var str = this.el.className.replace(/^\s+|\s+$/g, '');
+  var className = this.el.getAttribute('class') || '';
+  var str = className.replace(/^\s+|\s+$/g, '');
   var arr = str.split(re);
   if ('' === arr[0]) arr.shift();
   return arr;
