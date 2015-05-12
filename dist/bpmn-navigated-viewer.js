@@ -1,5 +1,5 @@
 /*!
- * bpmn-js - bpmn-navigated-viewer v0.9.2
+ * bpmn-js - bpmn-navigated-viewer v0.10.0
 
  * Copyright 2014, 2015 camunda Services GmbH and other contributors
  *
@@ -8,10 +8,12 @@
  *
  * Source Code: https://github.com/bpmn-io/bpmn-js
  *
- * Date: 2015-03-19
+ * Date: 2015-05-12
  */
 !function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.BpmnJS=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 'use strict';
+
+var inherits = _dereq_(78);
 
 var Viewer = _dereq_(2);
 
@@ -25,32 +27,32 @@ function NavigatedViewer(options) {
   Viewer.call(this, options);
 }
 
-NavigatedViewer.prototype = Object.create(Viewer.prototype);
+inherits(NavigatedViewer, Viewer);
 
 module.exports = NavigatedViewer;
 
 NavigatedViewer.prototype._navigationModules = [
-  _dereq_(60),
-  _dereq_(58)
+  _dereq_(61),
+  _dereq_(59)
 ];
 
 NavigatedViewer.prototype._modules = [].concat(
   NavigatedViewer.prototype._modules,
   NavigatedViewer.prototype._navigationModules);
-},{"2":2,"58":58,"60":60}],2:[function(_dereq_,module,exports){
+},{"2":2,"59":59,"61":61,"78":78}],2:[function(_dereq_,module,exports){
 'use strict';
 
-var assign = _dereq_(159),
-    omit = _dereq_(163),
-    isString = _dereq_(156),
-    isNumber = _dereq_(153);
+var assign = _dereq_(174),
+    omit = _dereq_(178),
+    isString = _dereq_(171),
+    isNumber = _dereq_(168);
 
-var domify = _dereq_(173),
-    domQuery = _dereq_(175),
-    domRemove = _dereq_(176);
+var domify = _dereq_(189),
+    domQuery = _dereq_(191),
+    domRemove = _dereq_(192);
 
-var Diagram = _dereq_(35),
-    BpmnModdle = _dereq_(14);
+var Diagram = _dereq_(36),
+    BpmnModdle = _dereq_(15);
 
 var Importer = _dereq_(9);
 
@@ -98,10 +100,41 @@ function ensureUnit(val) {
 /**
  * A viewer for BPMN 2.0 diagrams.
  *
- * Includes the basic viewing functionality.
- *
  * Have a look at {@link NavigatedViewer} or {@link Modeler} for bundles that include
  * additional features.
+ *
+ *
+ * ## Extending the Viewer
+ *
+ * In order to extend the viewer pass extension modules to bootstrap via the
+ * `additionalModules` option. An extension module is an object that exposes
+ * named services.
+ *
+ * The following example depicts the integration of a simple
+ * logging component that integrates with interaction events:
+ *
+ *
+ * ```javascript
+ *
+ * // logging component
+ * function InteractionLogger(eventBus) {
+ *   eventBus.on('element.hover', function(event) {
+ *     console.log()
+ *   })
+ * }
+ *
+ * InteractionLogger.$inject = [ 'eventBus' ]; // minification save
+ *
+ * // extension module
+ * var extensionModule = {
+ *   __init__: [ 'interactionLogger' ],
+ *   interactionLogger: [ 'type', InteractionLogger ]
+ * };
+ *
+ * // extend the viewer
+ * var bpmnViewer = new Viewer({ additionalModules: [ extensionModule ] });
+ * bpmnViewer.importXML(...);
+ * ```
  *
  * @param {Object} [options] configuration options to pass to the viewer
  * @param {DOMElement} [options.container] the container to render the viewer in, defaults to body.
@@ -354,13 +387,13 @@ Viewer.prototype.on = function(event, handler) {
 // modules the viewer is composed of
 Viewer.prototype._modules = [
   _dereq_(3),
-  _dereq_(55),
-  _dereq_(51)
+  _dereq_(56),
+  _dereq_(52)
 ];
 
 module.exports = Viewer;
 
-},{"14":14,"153":153,"156":156,"159":159,"163":163,"173":173,"175":175,"176":176,"3":3,"35":35,"51":51,"55":55,"9":9}],3:[function(_dereq_,module,exports){
+},{"15":15,"168":168,"171":171,"174":174,"178":178,"189":189,"191":191,"192":192,"3":3,"36":36,"52":52,"56":56,"9":9}],3:[function(_dereq_,module,exports){
 module.exports = {
   __depends__: [
     _dereq_(6),
@@ -370,16 +403,17 @@ module.exports = {
 },{"11":11,"6":6}],4:[function(_dereq_,module,exports){
 'use strict';
 
-var isArray = _dereq_(150),
-    isObject = _dereq_(154),
-    assign = _dereq_(159),
-    forEach = _dereq_(80),
-    every = _dereq_(77),
-    includes = _dereq_(82),
-    some = _dereq_(85);
+var inherits = _dereq_(78),
+    isArray = _dereq_(165),
+    isObject = _dereq_(169),
+    assign = _dereq_(174),
+    forEach = _dereq_(83),
+    every = _dereq_(80),
+    includes = _dereq_(85),
+    some = _dereq_(88);
 
-var DefaultRenderer = _dereq_(43),
-    TextUtil = _dereq_(68),
+var DefaultRenderer = _dereq_(44),
+    TextUtil = _dereq_(70),
     DiUtil = _dereq_(12);
 
 var createLine = DefaultRenderer.createLine;
@@ -451,7 +485,7 @@ function BpmnRenderer(events, styles, pathMap) {
     });
 
     createMarker('messageflow-start', {
-      element: svg.circle(6, 6, 5),
+      element: svg.circle(6, 6, 3.5),
       attrs: {
         fill: 'white',
         stroke: 'black'
@@ -460,12 +494,13 @@ function BpmnRenderer(events, styles, pathMap) {
     });
 
     createMarker('messageflow-end', {
-      element: svg.path('M 1 5 L 11 10 L 1 15 Z'),
+      element: svg.path('m 1 5 l 0 -3 l 7 3 l -7 3 z'),
       attrs: {
         fill: 'white',
-        stroke: 'black'
+        stroke: 'black',
+        strokeLinecap: 'butt'
       },
-      ref: { x: 11, y: 10 }
+      ref: { x: 8.5, y: 5 }
     });
 
     createMarker('data-association-end', {
@@ -980,8 +1015,8 @@ function BpmnRenderer(events, styles, pathMap) {
       return drawRect(p, element.width, element.height, TASK_BORDER_RADIUS, attrs);
     },
 
-    'bpmn:Task': function(p, element) {
-      var rect = renderer('bpmn:Activity')(p, element);
+    'bpmn:Task': function(p, element, attrs) {
+      var rect = renderer('bpmn:Activity')(p, element, attrs);
       renderEmbeddedLabel(p, element, 'center-middle');
       attachTaskMarkers(p, element);
       return rect;
@@ -1230,15 +1265,17 @@ function BpmnRenderer(events, styles, pathMap) {
       return outer;
     },
     'bpmn:CallActivity': function(p, element) {
-      return renderer('bpmn:SubProcess')(p, element, {
+      return renderer('bpmn:Task')(p, element, {
         strokeWidth: 5
       });
     },
     'bpmn:Participant': function(p, element) {
 
-      var lane = renderer('bpmn:Lane')(p, element);
+      var lane = renderer('bpmn:Lane')(p, element, {
+        fill: 'White'
+      });
 
-      var expandedPool = DiUtil.isExpandedPool(getSemantic(element));
+      var expandedPool = DiUtil.isExpanded(element);
 
       if (expandedPool) {
         drawLine(p, [
@@ -1261,8 +1298,8 @@ function BpmnRenderer(events, styles, pathMap) {
 
       return lane;
     },
-    'bpmn:Lane': function(p, element) {
-      var rect = drawRect(p, element.width, element.height, 0, {
+    'bpmn:Lane': function(p, element, attrs) {
+      var rect = drawRect(p, element.width, element.height, 0, attrs || {
         fill: 'none'
       });
 
@@ -1424,6 +1461,7 @@ function BpmnRenderer(events, styles, pathMap) {
     'bpmn:SequenceFlow': function(p, element) {
       var pathData = createPathFromConnection(element);
       var path = drawPath(p, pathData, {
+        strokeLinejoin: 'round',
         markerEnd: marker('sequenceflow-end')
       });
 
@@ -1450,7 +1488,8 @@ function BpmnRenderer(events, styles, pathMap) {
 
       attrs = assign({
         strokeDasharray: '1,6',
-        strokeLinecap: 'round'
+        strokeLinecap: 'round',
+        strokeLinejoin: 'round'
       }, attrs || {});
 
       // TODO(nre): style according to directed state
@@ -1475,9 +1514,10 @@ function BpmnRenderer(events, styles, pathMap) {
       var path = drawPath(p, pathData, {
         markerEnd: marker('messageflow-end'),
         markerStart: marker('messageflow-start'),
-        strokeDasharray: '10',
+        strokeDasharray: '10, 12',
         strokeLinecap: 'round',
-        strokeWidth: 1
+        strokeLinejoin: 'round',
+        strokeWidth: '1.5px'
       });
 
       if (semantic.messageRef) {
@@ -1870,6 +1910,110 @@ function BpmnRenderer(events, styles, pathMap) {
     return (event.$type === 'bpmn:IntermediateThrowEvent') || (event.$type === 'bpmn:EndEvent');
   }
 
+
+  /////// cropping path customizations /////////////////////////
+
+  function componentsToPath(elements) {
+    return elements.join(',').replace(/,?([A-z]),?/g, '$1');
+  }
+
+  function getCirclePath(shape) {
+
+    var cx = shape.x + shape.width / 2,
+        cy = shape.y + shape.height / 2,
+        radius = shape.width / 2;
+
+    var circlePath = [
+        ['M', cx, cy],
+        ['m', 0, -radius],
+        ['a', radius, radius, 0, 1, 1, 0, 2 * radius],
+        ['a', radius, radius, 0, 1, 1, 0, -2 * radius],
+        ['z']
+    ];
+
+    return componentsToPath(circlePath);
+  }
+
+  function getRoundRectPath(shape) {
+
+    var radius = TASK_BORDER_RADIUS,
+        x = shape.x,
+        y = shape.y,
+        width = shape.width,
+        height = shape.height;
+
+    var roundRectPath = [
+      ['M', x + radius, y],
+      ['l', width - radius * 2, 0],
+      ['a', radius, radius, 0, 0, 1, radius, radius],
+      ['l', 0, height - radius * 2],
+      ['a', radius, radius, 0, 0, 1, -radius, radius],
+      ['l', radius * 2 - width, 0],
+      ['a', radius, radius, 0, 0, 1, -radius, -radius],
+      ['l', 0, radius * 2 - height],
+      ['a', radius, radius, 0, 0, 1, radius, -radius],
+      ['z']
+    ];
+
+    return componentsToPath(roundRectPath);
+  }
+
+  function getDiamondPath(shape) {
+
+    var width = shape.width,
+        height = shape.height,
+        x = shape.x,
+        y = shape.y,
+        halfWidth = width / 2,
+        halfHeight = height / 2;
+
+    var diamondPath = [
+      ['M', x + halfWidth, y],
+      ['l', halfWidth, halfHeight],
+      ['l', -halfWidth, halfHeight],
+      ['l', -halfWidth, -halfHeight],
+      ['z']
+    ];
+
+    return componentsToPath(diamondPath);
+  }
+
+  function getRectPath(shape) {
+    var x = shape.x,
+        y = shape.y,
+        width = shape.width,
+        height = shape.height;
+
+    var rectPath = [
+      ['M', x, y],
+      ['l', width, 0],
+      ['l', 0, height],
+      ['l', -width, 0],
+      ['z']
+    ];
+
+    return componentsToPath(rectPath);
+  }
+
+  function getShapePath(element) {
+    var obj = getSemantic(element);
+
+    if (obj.$instanceOf('bpmn:Event')) {
+      return getCirclePath(element);
+    }
+
+    if (obj.$instanceOf('bpmn:Activity')) {
+      return getRoundRectPath(element);
+    }
+
+    if (obj.$instanceOf('bpmn:Gateway')) {
+      return getDiamondPath(element);
+    }
+
+    return getRectPath(element);
+  }
+
+
   // hook onto canvas init event to initialize
   // connection start/end markers on svg
   events.on('canvas.init', function(event) {
@@ -1878,19 +2022,21 @@ function BpmnRenderer(events, styles, pathMap) {
 
   this.drawShape = drawShape;
   this.drawConnection = drawConnection;
+
+  this.getShapePath = getShapePath;
 }
 
-BpmnRenderer.prototype = Object.create(DefaultRenderer.prototype);
+inherits(BpmnRenderer, DefaultRenderer);
 
 
 BpmnRenderer.$inject = [ 'eventBus', 'styles', 'pathMap' ];
 
 module.exports = BpmnRenderer;
 
-},{"12":12,"150":150,"154":154,"159":159,"43":43,"68":68,"77":77,"80":80,"82":82,"85":85}],5:[function(_dereq_,module,exports){
+},{"12":12,"165":165,"169":169,"174":174,"44":44,"70":70,"78":78,"80":80,"83":83,"85":85,"88":88}],5:[function(_dereq_,module,exports){
 'use strict';
 
-var Snap = _dereq_(71);
+var Snap = _dereq_(73);
 
 /**
  * Map containing SVG paths needed by BpmnRenderer.
@@ -2342,7 +2488,7 @@ function PathMap() {
 
 module.exports = PathMap;
 
-},{"71":71}],6:[function(_dereq_,module,exports){
+},{"73":73}],6:[function(_dereq_,module,exports){
 module.exports = {
   renderer: [ 'type', _dereq_(4) ],
   pathMap: [ 'type', _dereq_(5) ]
@@ -2350,8 +2496,8 @@ module.exports = {
 },{"4":4,"5":5}],7:[function(_dereq_,module,exports){
 'use strict';
 
-var assign = _dereq_(159),
-    map = _dereq_(83);
+var assign = _dereq_(174),
+    map = _dereq_(86);
 
 var LabelUtil = _dereq_(13);
 
@@ -2539,14 +2685,14 @@ BpmnImporter.prototype._getElement = function(semantic) {
   return this._elementRegistry.get(semantic.id);
 };
 
-},{"10":10,"12":12,"13":13,"159":159,"83":83}],8:[function(_dereq_,module,exports){
+},{"10":10,"12":12,"13":13,"174":174,"86":86}],8:[function(_dereq_,module,exports){
 'use strict';
 
-var filter = _dereq_(78),
-    find = _dereq_(79),
-    forEach = _dereq_(80);
+var filter = _dereq_(81),
+    find = _dereq_(82),
+    forEach = _dereq_(83);
 
-var Refs = _dereq_(185);
+var Refs = _dereq_(201);
 
 var elementToString = _dereq_(10).elementToString;
 
@@ -2947,7 +3093,7 @@ function BpmnTreeWalker(handler) {
 }
 
 module.exports = BpmnTreeWalker;
-},{"10":10,"185":185,"78":78,"79":79,"80":80}],9:[function(_dereq_,module,exports){
+},{"10":10,"201":201,"81":81,"82":82,"83":83}],9:[function(_dereq_,module,exports){
 'use strict';
 
 var BpmnTreeWalker = _dereq_(8);
@@ -3023,25 +3169,30 @@ module.exports = {
 },{"7":7}],12:[function(_dereq_,module,exports){
 'use strict';
 
-module.exports.isExpandedPool = function(semantic) {
-  return !!semantic.processRef;
+var is = _dereq_(14).is,
+    getBusinessObject = _dereq_(14).getBusinessObject;
+
+module.exports.isExpanded = function(element) {
+
+  if (is(element, 'bpmn:CallActivity')) {
+    return false;
+  }
+
+  if (is(element, 'bpmn:SubProcess')) {
+    return getBusinessObject(element).di.isExpanded;
+  }
+
+  if (is(element, 'bpmn:Participant')) {
+    return !!getBusinessObject(element).processRef;
+  }
+
+  return true;
 };
 
-module.exports.isExpanded = function(semantic) {
-
-  // Is type expanded by default?
-  var isDefaultExpanded = !(semantic.$instanceOf('bpmn:SubProcess') || semantic.$instanceOf('bpmn:CallActivity'));
-
-  // For non default expanded types -> evaluate the expanded flag
-  var isExpanded = isDefaultExpanded || semantic.di.isExpanded;
-
-  return isExpanded;
-};
-
-},{}],13:[function(_dereq_,module,exports){
+},{"14":14}],13:[function(_dereq_,module,exports){
 'use strict';
 
-var assign = _dereq_(159);
+var assign = _dereq_(174);
 
 
 var DEFAULT_LABEL_SIZE = module.exports.DEFAULT_LABEL_SIZE = {
@@ -3138,18 +3289,51 @@ module.exports.getExternalLabelBounds = function(semantic, element) {
     y: mid.y - size.height / 2
   }, size);
 };
-},{"159":159}],14:[function(_dereq_,module,exports){
-module.exports = _dereq_(16);
-},{"16":16}],15:[function(_dereq_,module,exports){
+},{"174":174}],14:[function(_dereq_,module,exports){
 'use strict';
 
-var isString = _dereq_(156),
-    isFunction = _dereq_(151),
-    assign = _dereq_(159);
+/**
+ * Is an element of the given BPMN type?
+ *
+ * @param  {djs.model.Base|ModdleElement} element
+ * @param  {String} type
+ *
+ * @return {Boolean}
+ */
+function is(element, type) {
+  var bo = getBusinessObject(element);
 
-var Moddle = _dereq_(22),
-    XmlReader = _dereq_(18),
-    XmlWriter = _dereq_(19);
+  return bo && bo.$instanceOf(type);
+}
+
+module.exports.is = is;
+
+
+/**
+ * Return the business object for a given element.
+ *
+ * @param  {djs.model.Base|ModdleElement} element
+ *
+ * @return {ModdleElement}
+ */
+function getBusinessObject(element) {
+  return (element && element.businessObject) || element;
+}
+
+module.exports.getBusinessObject = getBusinessObject;
+
+},{}],15:[function(_dereq_,module,exports){
+module.exports = _dereq_(17);
+},{"17":17}],16:[function(_dereq_,module,exports){
+'use strict';
+
+var isString = _dereq_(171),
+    isFunction = _dereq_(166),
+    assign = _dereq_(174);
+
+var Moddle = _dereq_(23),
+    XmlReader = _dereq_(19),
+    XmlWriter = _dereq_(20);
 
 /**
  * A sub class of {@link Moddle} with support for import and export of BPMN 2.0 xml files.
@@ -3221,24 +3405,24 @@ BpmnModdle.prototype.toXML = function(element, options, done) {
   }
 };
 
-},{"151":151,"156":156,"159":159,"18":18,"19":19,"22":22}],16:[function(_dereq_,module,exports){
+},{"166":166,"171":171,"174":174,"19":19,"20":20,"23":23}],17:[function(_dereq_,module,exports){
 'use strict';
 
-var assign = _dereq_(159);
+var assign = _dereq_(174);
 
-var BpmnModdle = _dereq_(15);
+var BpmnModdle = _dereq_(16);
 
 var packages = {
-  bpmn: _dereq_(31),
-  bpmndi: _dereq_(32),
-  dc: _dereq_(33),
-  di: _dereq_(34)
+  bpmn: _dereq_(32),
+  bpmndi: _dereq_(33),
+  dc: _dereq_(34),
+  di: _dereq_(35)
 };
 
 module.exports = function(additionalPackages, options) {
   return new BpmnModdle(assign({}, packages, additionalPackages), options);
 };
-},{"15":15,"159":159,"31":31,"32":32,"33":33,"34":34}],17:[function(_dereq_,module,exports){
+},{"16":16,"174":174,"32":32,"33":33,"34":34,"35":35}],18:[function(_dereq_,module,exports){
 'use strict';
 
 function capitalize(string) {
@@ -3275,23 +3459,23 @@ module.exports.DEFAULT_NS_MAP = {
 };
 
 module.exports.XSI_TYPE = 'xsi:type';
-},{}],18:[function(_dereq_,module,exports){
+},{}],19:[function(_dereq_,module,exports){
 'use strict';
 
-var reduce = _dereq_(84),
-    forEach = _dereq_(80),
-    find = _dereq_(79),
-    assign = _dereq_(159),
-    defer = _dereq_(88);
+var reduce = _dereq_(87),
+    forEach = _dereq_(83),
+    find = _dereq_(82),
+    assign = _dereq_(174),
+    defer = _dereq_(91);
 
-var Stack = _dereq_(21),
-    SaxParser = _dereq_(20).parser,
-    Moddle = _dereq_(22),
-    parseNameNs = _dereq_(27).parseName,
-    Types = _dereq_(30),
+var Stack = _dereq_(22),
+    SaxParser = _dereq_(21).parser,
+    Moddle = _dereq_(23),
+    parseNameNs = _dereq_(28).parseName,
+    Types = _dereq_(31),
     coerceType = Types.coerceType,
     isSimpleType = Types.isSimple,
-    common = _dereq_(17),
+    common = _dereq_(18),
     XSI_TYPE = common.XSI_TYPE,
     XSI_URI = common.DEFAULT_NS_MAP.xsi,
     aliasToName = common.aliasToName;
@@ -3914,18 +4098,18 @@ XMLReader.prototype.handler = function(name) {
 
 module.exports = XMLReader;
 module.exports.ElementHandler = ElementHandler;
-},{"159":159,"17":17,"20":20,"21":21,"22":22,"27":27,"30":30,"79":79,"80":80,"84":84,"88":88}],19:[function(_dereq_,module,exports){
+},{"174":174,"18":18,"21":21,"22":22,"23":23,"28":28,"31":31,"82":82,"83":83,"87":87,"91":91}],20:[function(_dereq_,module,exports){
 'use strict';
 
-var map = _dereq_(83),
-    forEach = _dereq_(80),
-    isString = _dereq_(156),
-    filter = _dereq_(78),
-    assign = _dereq_(159);
+var map = _dereq_(86),
+    forEach = _dereq_(83),
+    isString = _dereq_(171),
+    filter = _dereq_(81),
+    assign = _dereq_(174);
 
-var Types = _dereq_(30),
-    parseNameNs = _dereq_(27).parseName,
-    common = _dereq_(17),
+var Types = _dereq_(31),
+    parseNameNs = _dereq_(28).parseName,
+    common = _dereq_(18),
     nameToAlias = common.nameToAlias;
 
 var XML_PREAMBLE = '<?xml version="1.0" encoding="UTF-8"?>\n',
@@ -4518,7 +4702,7 @@ function XMLWriter(options) {
 }
 
 module.exports = XMLWriter;
-},{"156":156,"159":159,"17":17,"27":27,"30":30,"78":78,"80":80,"83":83}],20:[function(_dereq_,module,exports){
+},{"171":171,"174":174,"18":18,"28":28,"31":31,"81":81,"83":83,"86":86}],21:[function(_dereq_,module,exports){
 (function (Buffer){
 // wrapper for non-node envs
 ;(function (sax) {
@@ -5933,7 +6117,7 @@ if (!String.fromCodePoint) {
 
 }).call(this,undefined)
 
-},{"undefined":undefined}],21:[function(_dereq_,module,exports){
+},{"undefined":undefined}],22:[function(_dereq_,module,exports){
 /**
  * Tiny stack for browser or server
  *
@@ -6050,9 +6234,9 @@ else {
 }
 } )( this );
 
-},{}],22:[function(_dereq_,module,exports){
-module.exports = _dereq_(26);
-},{"26":26}],23:[function(_dereq_,module,exports){
+},{}],23:[function(_dereq_,module,exports){
+module.exports = _dereq_(27);
+},{"27":27}],24:[function(_dereq_,module,exports){
 'use strict';
 
 function Base() { }
@@ -6067,14 +6251,14 @@ Base.prototype.set = function(name, value) {
 
 
 module.exports = Base;
-},{}],24:[function(_dereq_,module,exports){
+},{}],25:[function(_dereq_,module,exports){
 'use strict';
 
-var pick = _dereq_(164),
-    assign = _dereq_(159),
-    forEach = _dereq_(80);
+var pick = _dereq_(179),
+    assign = _dereq_(174),
+    forEach = _dereq_(83);
 
-var parseNameNs = _dereq_(27).parseName;
+var parseNameNs = _dereq_(28).parseName;
 
 
 function DescriptorBuilder(nameNs) {
@@ -6253,12 +6437,12 @@ DescriptorBuilder.prototype.addTrait = function(t) {
   allTypes.push(t);
 };
 
-},{"159":159,"164":164,"27":27,"80":80}],25:[function(_dereq_,module,exports){
+},{"174":174,"179":179,"28":28,"83":83}],26:[function(_dereq_,module,exports){
 'use strict';
 
-var forEach = _dereq_(80);
+var forEach = _dereq_(83);
 
-var Base = _dereq_(23);
+var Base = _dereq_(24);
 
 
 function Factory(model, properties) {
@@ -6311,20 +6495,20 @@ Factory.prototype.createType = function(descriptor) {
 
   return ModdleElement;
 };
-},{"23":23,"80":80}],26:[function(_dereq_,module,exports){
+},{"24":24,"83":83}],27:[function(_dereq_,module,exports){
 'use strict';
 
-var isString = _dereq_(156),
-    isObject = _dereq_(154),
-    forEach = _dereq_(80),
-    find = _dereq_(79);
+var isString = _dereq_(171),
+    isObject = _dereq_(169),
+    forEach = _dereq_(83),
+    find = _dereq_(82);
 
 
-var Factory = _dereq_(25),
-    Registry = _dereq_(29),
-    Properties = _dereq_(28);
+var Factory = _dereq_(26),
+    Registry = _dereq_(30),
+    Properties = _dereq_(29);
 
-var parseNameNs = _dereq_(27).parseName;
+var parseNameNs = _dereq_(28).parseName;
 
 
 //// Moddle implementation /////////////////////////////////////////////////
@@ -6533,7 +6717,7 @@ Moddle.prototype.getPropertyDescriptor = function(element, property) {
   return this.getElementDescriptor(element).propertiesByName[property];
 };
 
-},{"154":154,"156":156,"25":25,"27":27,"28":28,"29":29,"79":79,"80":80}],27:[function(_dereq_,module,exports){
+},{"169":169,"171":171,"26":26,"28":28,"29":29,"30":30,"82":82,"83":83}],28:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -6570,7 +6754,7 @@ module.exports.parseName = function(name, defaultPrefix) {
     localName: localName
   };
 };
-},{}],28:[function(_dereq_,module,exports){
+},{}],29:[function(_dereq_,module,exports){
 'use strict';
 
 
@@ -6664,16 +6848,16 @@ Properties.prototype.defineDescriptor = function(target, descriptor) {
 Properties.prototype.defineModel = function(target, model) {
   this.define(target, '$model', { value: model });
 };
-},{}],29:[function(_dereq_,module,exports){
+},{}],30:[function(_dereq_,module,exports){
 'use strict';
 
-var assign = _dereq_(159),
-    forEach = _dereq_(80);
+var assign = _dereq_(174),
+    forEach = _dereq_(83);
 
-var Types = _dereq_(30),
-    DescriptorBuilder = _dereq_(24);
+var Types = _dereq_(31),
+    DescriptorBuilder = _dereq_(25);
 
-var parseNameNs = _dereq_(27).parseName,
+var parseNameNs = _dereq_(28).parseName,
     isBuiltInType = Types.isBuiltIn;
 
 
@@ -6840,7 +7024,7 @@ Registry.prototype.getEffectiveDescriptor = function(name) {
 Registry.prototype.definePackage = function(target, pkg) {
   this.properties.define(target, '$pkg', { value: pkg });
 };
-},{"159":159,"24":24,"27":27,"30":30,"80":80}],30:[function(_dereq_,module,exports){
+},{"174":174,"25":25,"28":28,"31":31,"83":83}],31:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -6891,7 +7075,7 @@ module.exports.isBuiltIn = function(type) {
 module.exports.isSimple = function(type) {
   return !!TYPE_CONVERTERS[type];
 };
-},{}],31:[function(_dereq_,module,exports){
+},{}],32:[function(_dereq_,module,exports){
 module.exports={
   "name": "BPMN20",
   "uri": "http://www.omg.org/spec/BPMN/20100524/MODEL",
@@ -9193,7 +9377,8 @@ module.exports={
       "name": "SubProcess",
       "superClass": [
         "Activity",
-        "FlowElementsContainer"
+        "FlowElementsContainer",
+        "InteractionNode"
       ],
       "properties": [
         {
@@ -9779,7 +9964,7 @@ module.exports={
     "typePrefix": "t"
   }
 }
-},{}],32:[function(_dereq_,module,exports){
+},{}],33:[function(_dereq_,module,exports){
 module.exports={
   "name": "BPMNDI",
   "uri": "http://www.omg.org/spec/BPMN/20100524/DI",
@@ -9973,7 +10158,7 @@ module.exports={
   "associations": [],
   "prefix": "bpmndi"
 }
-},{}],33:[function(_dereq_,module,exports){
+},{}],34:[function(_dereq_,module,exports){
 module.exports={
   "name": "DC",
   "uri": "http://www.omg.org/spec/DD/20100524/DC",
@@ -10073,7 +10258,7 @@ module.exports={
   "prefix": "dc",
   "associations": []
 }
-},{}],34:[function(_dereq_,module,exports){
+},{}],35:[function(_dereq_,module,exports){
 module.exports={
   "name": "DI",
   "uri": "http://www.omg.org/spec/DD/20100524/DI",
@@ -10290,12 +10475,12 @@ module.exports={
     "tagAlias": "lowerCase"
   }
 }
-},{}],35:[function(_dereq_,module,exports){
-module.exports = _dereq_(36);
-},{"36":36}],36:[function(_dereq_,module,exports){
+},{}],36:[function(_dereq_,module,exports){
+module.exports = _dereq_(37);
+},{"37":37}],37:[function(_dereq_,module,exports){
 'use strict';
 
-var di = _dereq_(73);
+var di = _dereq_(75);
 
 
 /**
@@ -10372,7 +10557,7 @@ function createInjector(options) {
     'config': ['value', options]
   };
 
-  var coreModule = _dereq_(42);
+  var coreModule = _dereq_(43);
 
   var modules = [ configModule, coreModule ].concat(options.modules || []);
 
@@ -10486,16 +10671,16 @@ module.exports = Diagram;
 Diagram.prototype.destroy = function() {
   this.get('eventBus').fire('diagram.destroy');
 };
-},{"42":42,"73":73}],37:[function(_dereq_,module,exports){
+},{"43":43,"75":75}],38:[function(_dereq_,module,exports){
 'use strict';
 
-var isNumber = _dereq_(153),
-    assign = _dereq_(159),
-    forEach = _dereq_(80);
+var isNumber = _dereq_(168),
+    assign = _dereq_(174),
+    forEach = _dereq_(83);
 
-var Collections = _dereq_(62);
+var Collections = _dereq_(63);
 
-var Snap = _dereq_(71);
+var Snap = _dereq_(73);
 
 function round(number, resolution) {
   return Math.round(number * resolution) / resolution;
@@ -10677,20 +10862,25 @@ Canvas.prototype.getContainer = function() {
 /////////////// markers ///////////////////////////////////
 
 Canvas.prototype._updateMarker = function(element, marker, add) {
-  var gfx;
+  var container;
 
   if (!element.id) {
     element = this._elementRegistry.get(element);
   }
 
-  gfx = this.getGraphics(element);
+  // we need to access all
+  container = this._elementRegistry._elements[element.id];
 
-  if (!gfx) {
+  if (!container) {
     return;
   }
 
-  // invoke either addClass or removeClass based on mode
-  gfx[add ? 'addClass' : 'removeClass'](marker);
+  forEach([ container.gfx, container.secondaryGfx ], function(gfx) {
+    if (gfx) {
+      // invoke either addClass or removeClass based on mode
+      gfx[add ? 'addClass' : 'removeClass'](marker);
+    }
+  });
 
   /**
    * An event indicating that a marker has been updated for an element
@@ -10702,7 +10892,7 @@ Canvas.prototype._updateMarker = function(element, marker, add) {
    * @property {String} marker
    * @property {Boolean} add true if the marker was added, false if it got removed
    */
-  this._eventBus.fire('element.marker.update', { element: element, gfx: gfx, marker: marker, add: !!add });
+  this._eventBus.fire('element.marker.update', { element: element, gfx: container.gfx, marker: marker, add: !!add });
 };
 
 
@@ -10787,25 +10977,41 @@ Canvas.prototype.getRootElement = function() {
 
 /**
  * Sets a given element as the new root element for the canvas
- * and returns it.
+ * and returns the new root element.
  *
  * @param {Object|djs.model.Root} element
  * @param {Boolean} [override] whether to override the current root element, if any
+ *
+ * @return {Object|djs.model.Root} new root element
  */
 Canvas.prototype.setRootElement = function(element, override) {
 
-  var rootElement = this._rootElement,
-      elementRegistry = this._elementRegistry;
+  this._ensureValidId(element);
 
-  if (rootElement) {
+  var oldRoot = this._rootElement,
+      elementRegistry = this._elementRegistry,
+      eventBus = this._eventBus;
+
+  if (oldRoot) {
     if (!override) {
-      throw new Error('rootElement already defined');
+      throw new Error('rootElement already set, need to specify override');
     }
 
-    elementRegistry.remove(rootElement);
+    // simulate element remove event sequence
+    eventBus.fire('root.remove', { element: oldRoot });
+    eventBus.fire('root.removed', { element: oldRoot });
+
+    elementRegistry.remove(oldRoot);
   }
 
-  elementRegistry.add(element, this.getDefaultLayer(), this._svg);
+  var gfx = this.getDefaultLayer();
+
+  // resemble element add event sequence
+  eventBus.fire('root.add', { element: element });
+
+  elementRegistry.add(element, gfx, this._svg);
+
+  eventBus.fire('root.added', { element: element, gfx: gfx });
 
   this._rootElement = element;
 
@@ -11035,9 +11241,12 @@ Canvas.prototype.sendToFront = function(shape, bubble) {
  * Return the graphical object underlaying a certain diagram element
  *
  * @param {String|djs.model.Base} element descriptor of the element
+ * @param {Boolean} [secondary=false] whether to return the secondary connected element
+ *
+ * @return {SVGElement}
  */
-Canvas.prototype.getGraphics = function(element) {
-  return this._elementRegistry.getGraphics(element);
+Canvas.prototype.getGraphics = function(element, secondary) {
+  return this._elementRegistry.getGraphics(element, secondary);
 };
 
 
@@ -11334,10 +11543,10 @@ Canvas.prototype.getAbsoluteBBox = function(element) {
   };
 };
 
-},{"153":153,"159":159,"62":62,"71":71,"80":80}],38:[function(_dereq_,module,exports){
+},{"168":168,"174":174,"63":63,"73":73,"83":83}],39:[function(_dereq_,module,exports){
 'use strict';
 
-var Model = _dereq_(56);
+var Model = _dereq_(57);
 
 
 /**
@@ -11384,7 +11593,7 @@ ElementFactory.prototype.create = function(type, attrs) {
 
   return Model.create(type, attrs);
 };
-},{"56":56}],39:[function(_dereq_,module,exports){
+},{"57":57}],40:[function(_dereq_,module,exports){
 'use strict';
 
 var ELEMENT_ID = 'data-element-id';
@@ -11412,13 +11621,7 @@ ElementRegistry.prototype.add = function(element, gfx, secondaryGfx) {
 
   var id = element.id;
 
-  if (!id) {
-    throw new Error('element must have an id');
-  }
-
-  if (this._elements[id]) {
-    throw new Error('element with id ' + id + ' already added');
-  }
+  this._validateId(id);
 
   // associate dom node with element
   gfx.attr(ELEMENT_ID, id);
@@ -11429,7 +11632,6 @@ ElementRegistry.prototype.add = function(element, gfx, secondaryGfx) {
 
   this._elements[id] = { element: element, gfx: gfx, secondaryGfx: secondaryGfx };
 };
-
 
 /**
  * Removes an element from the registry.
@@ -11454,6 +11656,29 @@ ElementRegistry.prototype.remove = function(element) {
   }
 };
 
+/**
+ * Update the id of an element
+ *
+ * @param {djs.model.Base} element
+ * @param {String} newId
+ */
+ElementRegistry.prototype.updateId = function(element, newId) {
+
+  this._validateId(newId);
+
+  if (typeof element === 'string') {
+    element = this.get(element);
+  }
+
+  var gfx = this.getGraphics(element),
+      secondaryGfx = this.getGraphics(element, true);
+
+  this.remove(element);
+
+  element.id = newId;
+
+  this.add(element, gfx, secondaryGfx);
+};
 
 /**
  * Return the model element for a given id or graphics.
@@ -11490,15 +11715,10 @@ ElementRegistry.prototype.get = function(filter) {
  */
 ElementRegistry.prototype.filter = function(fn) {
 
-  var map = this._elements,
-      filtered = [];
+  var filtered = [];
 
-  Object.keys(map).forEach(function(id) {
-    var container = map[id],
-        element = container.element,
-        gfx = container.gfx;
-
-    if (fn(element, gfx)) {
+  this.forEach(function(element, gfx) {
+    if(fn(element, gfx)) {
       filtered.push(element);
     }
   });
@@ -11507,54 +11727,149 @@ ElementRegistry.prototype.filter = function(fn) {
 };
 
 /**
- * Return the graphics for a given id or element.
+ * Iterate over all diagram elements.
+ *
+ * @param {Function} fn
+ */
+ElementRegistry.prototype.forEach = function(fn) {
+
+  var map = this._elements;
+
+  Object.keys(map).forEach(function(id) {
+    var container = map[id],
+        element = container.element,
+        gfx = container.gfx;
+
+    return fn(element, gfx);
+  });
+};
+
+/**
+ * Return the graphical representation of an element or its id.
  *
  * @example
- *
  * elementRegistry.getGraphics('SomeElementId_1');
- * elementRegistry.getGraphics(rootElement);
+ * elementRegistry.getGraphics(rootElement); // <g ...>
+ *
+ * elementRegistry.getGraphics(rootElement, true); // <svg ...>
  *
  *
  * @param {String|djs.model.Base} filter
+ * @param {Boolean} [secondary=false] whether to return the secondary connected element
  *
  * @return {SVGElement}
  */
-ElementRegistry.prototype.getGraphics = function(filter) {
+ElementRegistry.prototype.getGraphics = function(filter, secondary) {
   var id = filter.id || filter;
 
   var container = this._elements[id];
-  return container && container.gfx;
+  return container && (secondary ? container.secondaryGfx : container.gfx);
 };
 
-},{}],40:[function(_dereq_,module,exports){
+/**
+ * Validate the suitability of the given id and signals a problem
+ * with an exception.
+ *
+ * @param {String} id
+ *
+ * @throws {Error} if id is empty or already assigned
+ */
+ElementRegistry.prototype._validateId = function(id) {
+  if (!id) {
+    throw new Error('element must have an id');
+  }
+
+  if (this._elements[id]) {
+    throw new Error('element with id ' + id + ' already added');
+  }
+};
+},{}],41:[function(_dereq_,module,exports){
 'use strict';
 
-var isFunction = _dereq_(151),
-    isArray = _dereq_(150),
-    isNumber = _dereq_(153),
-    assign = _dereq_(159);
+var isFunction = _dereq_(166),
+    isArray = _dereq_(165),
+    isNumber = _dereq_(168),
+    assign = _dereq_(174);
 
 var DEFAULT_PRIORITY = 1000;
 
-function Event() { }
-
-Event.prototype = {
-  stopPropagation: function() {
-    this.propagationStopped = true;
-  },
-  preventDefault: function() {
-    this.defaultPrevented = true;
-  },
-  init: function(data) {
-    assign(this, data || {});
-  }
-};
-
 
 /**
- * A general purpose event bus
+ * A general purpose event bus.
  *
- * @class
+ * This component is used to communicate across a diagram instance.
+ * Other parts of a diagram can use it to listen to and broadcast events.
+ *
+ *
+ * ## Registering for Events
+ *
+ * The event bus provides the {@link EventBus#on} and {@link EventBus#once}
+ * methods to register for events. {@link EventBus#off} can be used to
+ * remove event registrations. Listeners receive an instance of {@link Event}
+ * as the first argument. It allows them to hook into the event execution.
+ *
+ * ```javascript
+ *
+ * // listen for event
+ * eventBus.on('foo', function(event) {
+ *
+ *   // access event type
+ *   event.type; // 'foo'
+ *
+ *   // stop propagation to other listeners
+ *   event.stopPropagation();
+ *
+ *   // prevent event default
+ *   event.preventDefault();
+ * });
+ *
+ * // listen for event with custom payload
+ * eventBus.on('bar', function(event, payload) {
+ *   console.log(payload);
+ * });
+ *
+ * // listen for event returning value
+ * eventBus.on('foobar', function(event) {
+ *
+ *   // stop event propagation + prevent default
+ *   return false;
+ *
+ *   // stop event propagation + return custom result
+ *   return {
+ *     complex: 'listening result'
+ *   };
+ * });
+ *
+ *
+ * // listen with custom priority (default=1000, higher is better)
+ * eventBus.on('priorityfoo', 1500, function(event) {
+ *   console.log('invoked first!');
+ * });
+ * ```
+ *
+ *
+ * ## Emitting Events
+ *
+ * Events can be emitted via the event bus using {@link EventBus#fire}.
+ *
+ * ```javascript
+ *
+ * // false indicates that the default action
+ * // was prevented by listeners
+ * if (eventBus.fire('foo') === false) {
+ *   console.log('default has been prevented!');
+ * };
+ *
+ *
+ * // custom args + return value listener
+ * eventBus.on('sum', function(event, a, b) {
+ *   return a + b;
+ * });
+ *
+ * // you can pass custom arguments + retrieve result values.
+ * var sum = eventBus.fire('sum', 1, 2);
+ * console.log(sum); // 3
+ * ```
  */
 function EventBus() {
   this._listeners = {};
@@ -11572,8 +11887,6 @@ function EventBus() {
 
 module.exports = EventBus;
 
-module.exports.Event = Event;
-
 
 /**
  * Register an event listener for events with the given name.
@@ -11584,6 +11897,8 @@ module.exports.Event = Event;
  * Returning false from a listener will prevent the events default action
  * (if any is specified). To stop an event from being processed further in
  * other listeners execute {@link Event#stopPropagation}.
+ *
+ * Returning anything but `undefined` from a listener will stop the listener propagation.
  *
  * @param {String|Array<String>} events
  * @param {Number} [priority=1000] the priority in which this listener is called, larger is higher
@@ -11640,15 +11955,15 @@ EventBus.prototype.once = function(event, callback) {
  */
 EventBus.prototype.off = function(event, callback) {
   var listeners = this._getListeners(event),
-      l, i;
+      listener, idx;
 
   if (callback) {
 
     // move through listeners from back to front
     // and remove matching listeners
-    for (i = listeners.length - 1; !!(l = listeners[i]); i--) {
-      if (l.callback === callback) {
-        listeners.splice(i, 1);
+    for (idx = listeners.length - 1; !!(listener = listeners[idx]); idx--) {
+      if (listener.callback === callback) {
+        listeners.splice(idx, 1);
       }
     }
   } else {
@@ -11685,21 +12000,20 @@ EventBus.prototype.off = function(event, callback) {
  * @param {Object} [event] the event object
  * @param {...Object} additional arguments to be passed to the callback functions
  *
- * @return {Boolean} false if default was prevented, null if the propagation got stopped and true otherwise
+ * @return {Boolean} the events return value, if specified or false if the
+ *                   default action was prevented by listeners
  */
 EventBus.prototype.fire = function(type, data) {
 
   var event,
       originalType,
-      listeners, i, l,
+      listeners, idx, listener,
+      returnValue,
       args;
 
   args = Array.prototype.slice.call(arguments);
 
-  if (typeof type === 'string') {
-    // remove name parameter
-    args.shift();
-  } else {
+  if (typeof type === 'object') {
     event = type;
     type = event.type;
   }
@@ -11711,7 +12025,7 @@ EventBus.prototype.fire = function(type, data) {
   listeners = this._listeners[type];
 
   if (!listeners) {
-    return true;
+    return;
   }
 
   // we make sure we fire instances of our home made
@@ -11720,7 +12034,7 @@ EventBus.prototype.fire = function(type, data) {
     // we are fine, we alread have an event
     event = data;
   } else {
-    event = Object.create(Event.prototype);
+    event = new Event();
     event.init(data);
   }
 
@@ -11737,16 +12051,24 @@ EventBus.prototype.fire = function(type, data) {
       event.type = type;
     }
 
-    for (i = 0, l; !!(l = listeners[i]); i++) {
+    for (idx = 0; !!(listener = listeners[idx]); idx++) {
 
       // handle stopped propagation
-      if (event.propagationStopped) {
+      if (event.cancelBubble) {
         break;
       }
 
       try {
-        // handle listener returning false
-        if (l.callback.apply(null, args) === false) {
+        // returning false prevents the default action
+        returnValue = event.returnValue = listener.callback.apply(null, args);
+
+        // stop propagation on return value
+        if (returnValue !== undefined) {
+          event.stopPropagation();
+        }
+
+        // prevent default on return false
+        if (returnValue === false) {
           event.preventDefault();
         }
       } catch (e) {
@@ -11765,32 +12087,55 @@ EventBus.prototype.fire = function(type, data) {
     }
   }
 
-  // distinguish between default prevented (false)
-  // and propagation stopped (null) as a return value
-  return event.defaultPrevented ? false : (event.propagationStopped ? null : true);
+  // set the return value to false if the event default
+  // got prevented and no other return value exists
+  if (returnValue === undefined && event.defaultPrevented) {
+    returnValue = false;
+  }
+
+  return returnValue;
 };
 
 
 EventBus.prototype.handleError = function(error) {
-  return !this.fire('error', { error: error });
+  return this.fire('error', { error: error }) === false;
 };
 
 
-EventBus.prototype._addListener = function(event, listener) {
+/*
+ * Add new listener with a certain priority to the list
+ * of listeners (for the given event).
+ *
+ * The semantics of listener registration / listener execution are
+ * first register, first serve: New listeners will always be inserted
+ * after existing listeners with the same priority.
+ *
+ * Example: Inserting two listeners with priority 1000 and 1300
+ *
+ *    * before: [ 1500, 1500, 1000, 1000 ]
+ *    * after: [ 1500, 1500, (new=1300), 1000, 1000, (new=1000) ]
+ *
+ * @param {String} event
+ * @param {Object} listener { priority, callback }
+ */
+EventBus.prototype._addListener = function(event, newListener) {
 
   var listeners = this._getListeners(event),
-      i, l;
+      existingListener,
+      idx;
 
   // ensure we order listeners by priority from
   // 0 (high) to n > 0 (low)
-  for (i = 0; !!(l = listeners[i]); i++) {
-    if (l.priority < listener.priority) {
-      listeners.splice(i, 0, listener);
+  for (idx = 0; !!(existingListener = listeners[idx]); idx++) {
+    if (existingListener.priority < newListener.priority) {
+
+      // prepend newListener at before existingListener
+      listeners.splice(idx, 0, newListener);
       return;
     }
   }
 
-  listeners.push(listener);
+  listeners.push(newListener);
 };
 
 
@@ -11804,14 +12149,34 @@ EventBus.prototype._getListeners = function(name) {
   return listeners;
 };
 
-},{"150":150,"151":151,"153":153,"159":159}],41:[function(_dereq_,module,exports){
+
+/**
+ * A event that is emitted via the event bus.
+ */
+function Event() { }
+
+module.exports.Event = Event;
+
+Event.prototype.stopPropagation = function() {
+  this.cancelBubble = true;
+};
+
+Event.prototype.preventDefault = function() {
+  this.defaultPrevented = true;
+};
+
+Event.prototype.init = function(data) {
+  assign(this, data || {});
+};
+
+},{"165":165,"166":166,"168":168,"174":174}],42:[function(_dereq_,module,exports){
 'use strict';
 
-var forEach = _dereq_(80),
-    reduce = _dereq_(84);
+var forEach = _dereq_(83),
+    reduce = _dereq_(87);
 
-var GraphicsUtil = _dereq_(66),
-    domClear = _dereq_(171);
+var GraphicsUtil = _dereq_(67),
+    domClear = _dereq_(187);
 
 /**
  * A factory that creates graphical elements
@@ -11935,6 +12300,11 @@ GraphicsFactory.prototype.updateContainments = function(elements) {
 
 GraphicsFactory.prototype.update = function(type, element, gfx) {
 
+  // Do not update root element
+  if (!element.parent) {
+    return;
+  }
+
   var visual = this._clear(gfx);
 
   // redraw
@@ -11960,20 +12330,21 @@ GraphicsFactory.prototype.remove = function(element) {
   // remove
   gfx.parent().remove();
 };
-},{"171":171,"66":66,"80":80,"84":84}],42:[function(_dereq_,module,exports){
+
+},{"187":187,"67":67,"83":83,"87":87}],43:[function(_dereq_,module,exports){
 module.exports = {
-  __depends__: [ _dereq_(45) ],
+  __depends__: [ _dereq_(46) ],
   __init__: [ 'canvas' ],
-  canvas: [ 'type', _dereq_(37) ],
-  elementRegistry: [ 'type', _dereq_(39) ],
-  elementFactory: [ 'type', _dereq_(38) ],
-  eventBus: [ 'type', _dereq_(40) ],
-  graphicsFactory: [ 'type', _dereq_(41) ]
+  canvas: [ 'type', _dereq_(38) ],
+  elementRegistry: [ 'type', _dereq_(40) ],
+  elementFactory: [ 'type', _dereq_(39) ],
+  eventBus: [ 'type', _dereq_(41) ],
+  graphicsFactory: [ 'type', _dereq_(42) ]
 };
-},{"37":37,"38":38,"39":39,"40":40,"41":41,"45":45}],43:[function(_dereq_,module,exports){
+},{"38":38,"39":39,"40":40,"41":41,"42":42,"46":46}],44:[function(_dereq_,module,exports){
 'use strict';
 
-var Snap = _dereq_(71);
+var Snap = _dereq_(73);
 
 
 /**
@@ -11992,11 +12363,62 @@ Renderer.$inject = ['styles'];
 
 
 Renderer.prototype.drawShape = function drawShape(gfxGroup, data) {
-  return gfxGroup.rect(0, 0, data.width || 0, data.height || 0, 10, 10).attr(this.SHAPE_STYLE);
+  return gfxGroup.rect(0, 0, data.width || 0, data.height || 0).attr(this.SHAPE_STYLE);
 };
 
 Renderer.prototype.drawConnection = function drawConnection(gfxGroup, data) {
   return createLine(data.waypoints, this.CONNECTION_STYLE).appendTo(gfxGroup);
+};
+
+function componentsToPath(components) {
+  return components.join(',').replace(/,?([A-z]),?/g, '$1');
+}
+
+/**
+ * Gets the default SVG path of a shape that represents it's visual bounds.
+ *
+ * @param {djs.model.Shape} shape
+ * @return {string} svg path
+ */
+Renderer.prototype.getShapePath = function getShapePath(shape) {
+
+  var x = shape.x,
+      y = shape.y,
+      width = shape.width,
+      height = shape.height;
+
+  var shapePath = [
+    ['M', x, y],
+    ['l', width, 0],
+    ['l', 0, height],
+    ['l', -width, 0],
+    ['z']
+  ];
+
+  return componentsToPath(shapePath);
+};
+
+/**
+ * Gets the default SVG path of a connection that represents it's visual bounds.
+ *
+ * @param {djs.model.Connection} connection
+ * @return {string} svg path
+ */
+Renderer.prototype.getConnectionPath = function getConnectionPath(connection) {
+  var waypoints = connection.waypoints;
+
+  var idx, point, connectionPath = [];
+
+  for (idx = 0; !!(point = waypoints[idx]); idx++) {
+
+    // take invisible docking into account
+    // when creating the path
+    point = point.original || point;
+
+    connectionPath.push([ idx === 0 ? 'M' : 'L', point.x, point.y ]);
+  }
+
+  return componentsToPath(connectionPath);
 };
 
 
@@ -12020,12 +12442,12 @@ function updateLine(gfx, points) {
 
 module.exports.createLine = createLine;
 module.exports.updateLine = updateLine;
-},{"71":71}],44:[function(_dereq_,module,exports){
+},{"73":73}],45:[function(_dereq_,module,exports){
 'use strict';
 
-var isArray = _dereq_(150),
-    assign = _dereq_(159),
-    reduce = _dereq_(84);
+var isArray = _dereq_(165),
+    assign = _dereq_(174),
+    reduce = _dereq_(87);
 
 
 /**
@@ -12085,21 +12507,24 @@ function Styles() {
 }
 
 module.exports = Styles;
-},{"150":150,"159":159,"84":84}],45:[function(_dereq_,module,exports){
+},{"165":165,"174":174,"87":87}],46:[function(_dereq_,module,exports){
 module.exports = {
-  renderer: [ 'type', _dereq_(43) ],
-  styles: [ 'type', _dereq_(44) ]
+  renderer: [ 'type', _dereq_(44) ],
+  styles: [ 'type', _dereq_(45) ]
 };
-},{"43":43,"44":44}],46:[function(_dereq_,module,exports){
+},{"44":44,"45":45}],47:[function(_dereq_,module,exports){
 'use strict';
 
-var forEach = _dereq_(80),
-    domDelegate = _dereq_(172),
-    Renderer = _dereq_(43),
+var forEach = _dereq_(83),
+    domDelegate = _dereq_(188),
+    Renderer = _dereq_(44),
     createLine = Renderer.createLine,
     updateLine = Renderer.updateLine;
 
-var Snap = _dereq_(71);
+
+var isPrimaryButton = _dereq_(69).isPrimaryButton;
+
+var Snap = _dereq_(73);
 
 /**
  * A plugin that provides interaction events for diagram elements.
@@ -12129,15 +12554,16 @@ function InteractionEvents(eventBus, elementRegistry, styles) {
     var target = event.delegateTarget || event.target,
         gfx = target && new Snap(target),
         element = elementRegistry.get(gfx),
-        defaultPrevented;
+        returnValue;
 
     if (!gfx || !element) {
       return;
     }
 
-    defaultPrevented = !eventBus.fire(type, { element: element, gfx: gfx, originalEvent: event });
+    returnValue = eventBus.fire(type, { element: element, gfx: gfx, originalEvent: event });
 
-    if (defaultPrevented) {
+    if (returnValue === false) {
+      event.stopPropagation();
       event.preventDefault();
     }
   }
@@ -12150,8 +12576,8 @@ function InteractionEvents(eventBus, elementRegistry, styles) {
 
     if (!fn) {
       fn = handlers[type] = function(event) {
-        // only indicate left mouse button=0 interactions
-        if (!event.button) {
+        // only indicate left mouse button interactions
+        if (isPrimaryButton(event)) {
           fire(type, event);
         }
       };
@@ -12325,16 +12751,16 @@ module.exports = InteractionEvents;
  * @property {Snap<Element>} gfx
  * @property {Event} originalEvent
  */
-},{"172":172,"43":43,"71":71,"80":80}],47:[function(_dereq_,module,exports){
+},{"188":188,"44":44,"69":69,"73":73,"83":83}],48:[function(_dereq_,module,exports){
 module.exports = {
   __init__: [ 'interactionEvents' ],
-  interactionEvents: [ 'type', _dereq_(46) ]
+  interactionEvents: [ 'type', _dereq_(47) ]
 };
-},{"46":46}],48:[function(_dereq_,module,exports){
+},{"47":47}],49:[function(_dereq_,module,exports){
 'use strict';
 
-var Snap = _dereq_(71);
-var getBBox = _dereq_(64).getBBox;
+var Snap = _dereq_(73);
+var getBBox = _dereq_(65).getBBox;
 
 
 /**
@@ -12411,32 +12837,32 @@ Outline.$inject = ['eventBus', 'styles', 'elementRegistry'];
 
 module.exports = Outline;
 
-},{"64":64,"71":71}],49:[function(_dereq_,module,exports){
+},{"65":65,"73":73}],50:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = {
   __init__: [ 'outline' ],
-  outline: [ 'type', _dereq_(48) ]
+  outline: [ 'type', _dereq_(49) ]
 };
-},{"48":48}],50:[function(_dereq_,module,exports){
+},{"49":49}],51:[function(_dereq_,module,exports){
 'use strict';
 
-var isArray = _dereq_(150),
-    isString = _dereq_(156),
-    isObject = _dereq_(154),
-    assign = _dereq_(159),
-    forEach = _dereq_(80),
-    filter = _dereq_(78),
-    debounce = _dereq_(87);
+var isArray = _dereq_(165),
+    isString = _dereq_(171),
+    isObject = _dereq_(169),
+    assign = _dereq_(174),
+    forEach = _dereq_(83),
+    filter = _dereq_(81),
+    debounce = _dereq_(90);
 
-var domify = _dereq_(173),
-    domClasses = _dereq_(170),
-    domRemove = _dereq_(176);
+var domify = _dereq_(189),
+    domClasses = _dereq_(186),
+    domRemove = _dereq_(192);
 
-var getBBox = _dereq_(64).getBBox;
+var getBBox = _dereq_(65).getBBox;
 
 // document wide unique overlay ids
-var ids = new (_dereq_(67))('ov');
+var ids = new (_dereq_(68))('ov');
 
 
 function createRoot(parent) {
@@ -12456,11 +12882,9 @@ function setVisible(el, visible) {
 }
 
 /**
- * A plugin that allows users to attach overlays to diagram elements.
+ * A service that allows users to attach overlays to diagram elements.
  *
  * The overlay service will take care of overlay positioning during updates.
- *
- * @class
  *
  * @example
  *
@@ -12469,7 +12893,7 @@ function setVisible(el, visible) {
  *   position: {
  *     top: -5,
  *     left: -5
- *   }
+ *   },
  *   html: '<div style="width: 10px; background: fuchsia; color: white;">0</div>'
  * });
  *
@@ -12513,19 +12937,18 @@ function Overlays(config, eventBus, canvas, elementRegistry) {
 
   this._overlayDefaults = {
     show: {
-      trigger: 'automatic',
       minZoom: 0.7,
       maxZoom: 5.0
     }
   };
 
   /**
-   * Mapping overlay-id > overlay
+   * Mapping overlayId -> overlay
    */
   this._overlays = {};
 
   /**
-   * Mapping element-id > overlay container
+   * Mapping elementId -> overlay container
    */
   this._overlayContainers = {};
 
@@ -12598,16 +13021,15 @@ Overlays.prototype.get = function(search) {
  * @param {String}                  [type]    optional type to assign to the overlay
  * @param {Object}                  overlay   the overlay configuration
  *
- * @param {String|DOMElement}       overlay.html                      html element to use as an overlay
- * @param {Object}                  [overlay.show]                    show configuration
- * @param {Number}                  overlay.show.minZoom              minimal zoom level to show the overlay
- * @param {Number}                  overlay.show.maxZoom              maximum zoom level to show the overlay
- * @param {String}                  [overlay.show.trigger=automatic]  automatic or manual (user triggers show)
- * @param {Object}                  overlay.show.position             where to attach the overlay
- * @param {Number}                  [overlay.show.position.left]      relative to element bbox left attachment
- * @param {Number}                  [overlay.show.position.top]       relative to element bbox top attachment
- * @param {Number}                  [overlay.show.position.bottom]    relative to element bbox bottom attachment
- * @param {Number}                  [overlay.show.position.right]     relative to element bbox right attachment
+ * @param {String|DOMElement}       overlay.html                 html element to use as an overlay
+ * @param {Object}                  [overlay.show]               show configuration
+ * @param {Number}                  [overlay.show.minZoom]       minimal zoom level to show the overlay
+ * @param {Number}                  [overlay.show.maxZoom]       maximum zoom level to show the overlay
+ * @param {Object}                  overlay.position             where to attach the overlay
+ * @param {Number}                  [overlay.position.left]      relative to element bbox left attachment
+ * @param {Number}                  [overlay.position.top]       relative to element bbox top attachment
+ * @param {Number}                  [overlay.position.bottom]    relative to element bbox bottom attachment
+ * @param {Number}                  [overlay.position.right]     relative to element bbox right attachment
  *
  * @return {String}                 id that may be used to reference the overlay for update or removal
  */
@@ -12826,7 +13248,7 @@ Overlays.prototype._addOverlay = function(overlay) {
 
   overlayContainer = this._getOverlayContainer(element);
 
-  htmlContainer = domify('<div id="' + id + '" class="djs-overlay" style="position: absolute">');
+  htmlContainer = domify('<div class="djs-overlay" data-overlay-id="' + id + '" style="position: absolute">');
 
   htmlContainer.appendChild(html);
 
@@ -12928,18 +13350,16 @@ Overlays.prototype._init = function(config) {
   });
 };
 
-},{"150":150,"154":154,"156":156,"159":159,"170":170,"173":173,"176":176,"64":64,"67":67,"78":78,"80":80,"87":87}],51:[function(_dereq_,module,exports){
-'use strict';
-
+},{"165":165,"169":169,"171":171,"174":174,"186":186,"189":189,"192":192,"65":65,"68":68,"81":81,"83":83,"90":90}],52:[function(_dereq_,module,exports){
 module.exports = {
   __init__: [ 'overlays' ],
-  overlays: [ 'type', _dereq_(50) ]
+  overlays: [ 'type', _dereq_(51) ]
 };
-},{"50":50}],52:[function(_dereq_,module,exports){
+},{"51":51}],53:[function(_dereq_,module,exports){
 'use strict';
 
-var isArray = _dereq_(150),
-    forEach = _dereq_(80);
+var isArray = _dereq_(165),
+    forEach = _dereq_(83);
 
 
 /**
@@ -13029,11 +13449,11 @@ Selection.prototype.select = function(elements, add) {
   this._eventBus.fire('selection.changed', { oldSelection: oldSelection, newSelection: selectedElements });
 };
 
-},{"150":150,"80":80}],53:[function(_dereq_,module,exports){
+},{"165":165,"83":83}],54:[function(_dereq_,module,exports){
 'use strict';
 
+var hasPrimaryModifier = _dereq_(69).hasPrimaryModifier;
 
-var getOriginalEvent = _dereq_(65).getOriginal;
 
 function SelectionBehavior(eventBus, selection, canvas) {
 
@@ -13065,13 +13485,22 @@ function SelectionBehavior(eventBus, selection, canvas) {
       element = null;
     }
 
-    if (!selection.isSelected(element)) {
-      var ev = (getOriginalEvent(event) || event);
-      var add = ev.shiftKey;
+    var isSelected = selection.isSelected(element),
+        isMultiSelect = selection.get().length > 1;
 
-      if (!ev.altKey) {
-        selection.select(element, add);
+    // mouse-event: SELECTION_KEY
+    var add = hasPrimaryModifier(event);
+
+    // select OR deselect element in multi selection
+    if (isSelected && isMultiSelect) {
+      if (add) {
+        return selection.deselect(element);
+      } else {
+        return selection.select(element);
       }
+    } else
+    if (!isSelected) {
+      selection.select(element, add);
     } else {
       selection.deselect(element);
     }
@@ -13082,10 +13511,10 @@ SelectionBehavior.$inject = [ 'eventBus', 'selection', 'canvas' ];
 
 module.exports = SelectionBehavior;
 
-},{"65":65}],54:[function(_dereq_,module,exports){
+},{"69":69}],55:[function(_dereq_,module,exports){
 'use strict';
 
-var forEach = _dereq_(80);
+var forEach = _dereq_(83);
 
 var MARKER_HOVER = 'hover',
     MARKER_SELECTED = 'selected';
@@ -13160,24 +13589,25 @@ SelectionVisuals.$inject = [
 
 module.exports = SelectionVisuals;
 
-},{"80":80}],55:[function(_dereq_,module,exports){
+},{"83":83}],56:[function(_dereq_,module,exports){
 module.exports = {
   __init__: [ 'selectionVisuals', 'selectionBehavior' ],
   __depends__: [
-    _dereq_(47),
-    _dereq_(49)
+    _dereq_(48),
+    _dereq_(50)
   ],
-  selection: [ 'type', _dereq_(52) ],
-  selectionVisuals: [ 'type', _dereq_(54) ],
-  selectionBehavior: [ 'type', _dereq_(53) ]
+  selection: [ 'type', _dereq_(53) ],
+  selectionVisuals: [ 'type', _dereq_(55) ],
+  selectionBehavior: [ 'type', _dereq_(54) ]
 };
 
-},{"47":47,"49":49,"52":52,"53":53,"54":54}],56:[function(_dereq_,module,exports){
+},{"48":48,"50":50,"53":53,"54":54,"55":55}],57:[function(_dereq_,module,exports){
 'use strict';
 
-var assign = _dereq_(159);
+var assign = _dereq_(174),
+    inherits = _dereq_(78);
 
-var Refs = _dereq_(185);
+var Refs = _dereq_(201);
 
 var parentRefs = new Refs({ name: 'children', enumerable: true, collection: true }, { name: 'parent' }),
     labelRefs = new Refs({ name: 'label', enumerable: true }, { name: 'labelTarget' }),
@@ -13263,7 +13693,7 @@ function Shape() {
   parentRefs.bind(this, 'children');
 }
 
-Shape.prototype = Object.create(Base.prototype);
+inherits(Shape, Base);
 
 
 /**
@@ -13278,7 +13708,7 @@ function Root() {
   Shape.call(this);
 }
 
-Root.prototype = Object.create(Shape.prototype);
+inherits(Root, Shape);
 
 
 /**
@@ -13301,7 +13731,7 @@ function Label() {
   labelRefs.bind(this, 'labelTarget');
 }
 
-Label.prototype = Object.create(Shape.prototype);
+inherits(Label, Shape);
 
 
 /**
@@ -13332,7 +13762,7 @@ function Connection() {
   incomingRefs.bind(this, 'target');
 }
 
-Connection.prototype = Object.create(Base.prototype);
+inherits(Connection, Base);
 
 
 var types = {
@@ -13373,13 +13803,13 @@ module.exports.Root = Root;
 module.exports.Shape = Shape;
 module.exports.Connection = Connection;
 module.exports.Label = Label;
-},{"159":159,"185":185}],57:[function(_dereq_,module,exports){
+},{"174":174,"201":201,"78":78}],58:[function(_dereq_,module,exports){
 'use strict';
 
-var Cursor = _dereq_(63),
-    ClickTrap = _dereq_(61),
-    domEvent = _dereq_(174),
-    Event = _dereq_(65);
+var Cursor = _dereq_(64),
+    ClickTrap = _dereq_(62),
+    domEvent = _dereq_(190),
+    Event = _dereq_(66);
 
 function substract(p1, p2) {
   return {
@@ -13451,10 +13881,8 @@ function MoveCanvas(eventBus, canvas) {
 
   function handleStart(event) {
 
-    // reject non-left mouse button drags
-    // left = 0
-    // left click + alt pressed is reserved for other use
-    if (event.button ||  event.altKey) {
+    // reject non-left left mouse button or modifier key
+    if (event.button || event.ctrlKey || event.shiftKey || event.altKey) {
       return;
     }
 
@@ -13477,15 +13905,19 @@ MoveCanvas.$inject = [ 'eventBus', 'canvas' ];
 
 module.exports = MoveCanvas;
 
-},{"174":174,"61":61,"63":63,"65":65}],58:[function(_dereq_,module,exports){
+},{"190":190,"62":62,"64":64,"66":66}],59:[function(_dereq_,module,exports){
 module.exports = {
   __init__: [ 'moveCanvas' ],
-  moveCanvas: [ 'type', _dereq_(57) ]
+  moveCanvas: [ 'type', _dereq_(58) ]
 };
-},{"57":57}],59:[function(_dereq_,module,exports){
+},{"58":58}],60:[function(_dereq_,module,exports){
 'use strict';
 
-var domEvent = _dereq_(174);
+var domEvent = _dereq_(190);
+
+var hasPrimaryModifier = _dereq_(69).hasPrimaryModifier,
+    hasSecondaryModifier = _dereq_(69).hasSecondaryModifier;
+
 
 function ZoomScroll(events, canvas) {
 
@@ -13517,40 +13949,35 @@ function ZoomScroll(events, canvas) {
 
       var factor = event.deltaMode === 0 ? 1/40 : 1/2;
 
-      var shift = event.shiftKey,
-          ctrl = event.ctrlKey;
+      // mouse-event: SELECTION_KEY
+      // mouse-event: AND_KEY
+      var isZoom = hasPrimaryModifier(event),
+          isHorizontalScroll = hasSecondaryModifier(event);
 
       var x = event.deltaX * factor,
           y = event.deltaY * factor;
 
-      if (shift || ctrl) {
+      if (isZoom) {
+
+        var elementRect = element.getBoundingClientRect();
+
+        var offset =  {
+          x: event.x - elementRect.left,
+          y: event.y - elementRect.top
+        };
+
+        // zoom in relative to diagram {x,y} coordinates
+        zoom(y * -1, offset);
+      } else {
         var delta = {};
 
-        if (ctrl) {
+        if (isHorizontalScroll) {
           delta.dx = SCROLL_OFFSET * (x || y);
         } else {
           delta.dy = SCROLL_OFFSET * (x || y);
         }
 
         canvas.scroll(delta);
-      } else {
-        var offset = {};
-
-        // gecko=layer*, other=offset*
-        if (isNaN(event.offsetX)) {
-          offset = {
-            x: event.layerX,
-            y: event.layerY
-          };
-        } else {
-          offset = {
-            x: event.offsetX,
-            y: event.offsetY
-          };
-        }
-
-        // zoom in relative to diagram {x,y} coordinates
-        zoom(y * -1, offset);
       }
 
       event.preventDefault();
@@ -13558,7 +13985,7 @@ function ZoomScroll(events, canvas) {
   }
 
   events.on('canvas.init', function(e) {
-    init(e.svg.node);
+    init(canvas._container);
   });
 
   // API
@@ -13572,16 +13999,16 @@ ZoomScroll.$inject = [ 'eventBus', 'canvas' ];
 module.exports = ZoomScroll;
 
 
-},{"174":174}],60:[function(_dereq_,module,exports){
+},{"190":190,"69":69}],61:[function(_dereq_,module,exports){
 module.exports = {
   __init__: [ 'zoomScroll' ],
-  zoomScroll: [ 'type', _dereq_(59) ]
+  zoomScroll: [ 'type', _dereq_(60) ]
 };
-},{"59":59}],61:[function(_dereq_,module,exports){
+},{"60":60}],62:[function(_dereq_,module,exports){
 'use strict';
 
-var domEvent = _dereq_(174),
-    stopEvent = _dereq_(65).stopEvent;
+var domEvent = _dereq_(190),
+    stopEvent = _dereq_(66).stopEvent;
 
 function trap(event) {
   stopEvent(event);
@@ -13608,7 +14035,7 @@ function install() {
 }
 
 module.exports.install = install;
-},{"174":174,"65":65}],62:[function(_dereq_,module,exports){
+},{"190":190,"66":66}],63:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -13700,10 +14127,10 @@ module.exports.indexOf = function(collection, element) {
   return collection.indexOf(element);
 };
 
-},{}],63:[function(_dereq_,module,exports){
+},{}],64:[function(_dereq_,module,exports){
 'use strict';
 
-var domClasses = _dereq_(170);
+var domClasses = _dereq_(186);
 
 var CURSOR_CLS_PATTERN = /^djs-cursor-.*$/;
 
@@ -13721,13 +14148,13 @@ module.exports.set = function(mode) {
 module.exports.unset = function() {
   this.set(null);
 };
-},{"170":170}],64:[function(_dereq_,module,exports){
+},{"186":186}],65:[function(_dereq_,module,exports){
 'use strict';
 
-var isArray = _dereq_(150),
-    isNumber = _dereq_(153),
-    groupBy = _dereq_(81),
-    forEach = _dereq_(80);
+var isArray = _dereq_(165),
+    isNumber = _dereq_(168),
+    groupBy = _dereq_(84),
+    forEach = _dereq_(83);
 
 /**
  * Adds an element to a collection and returns true if the
@@ -13987,7 +14414,7 @@ module.exports.getEnclosedElements = getEnclosedElements;
 
 module.exports.getClosure = getClosure;
 
-},{"150":150,"153":153,"80":80,"81":81}],65:[function(_dereq_,module,exports){
+},{"165":165,"168":168,"83":83,"84":84}],66:[function(_dereq_,module,exports){
 'use strict';
 
 function __preventDefault(event) {
@@ -14058,7 +14485,7 @@ function toPoint(event) {
 
 module.exports.toPoint = toPoint;
 
-},{}],66:[function(_dereq_,module,exports){
+},{}],67:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -14104,7 +14531,7 @@ function getBBox(gfx) {
 module.exports.getVisual = getVisual;
 module.exports.getChildren = getChildren;
 module.exports.getBBox = getBBox;
-},{}],67:[function(_dereq_,module,exports){
+},{}],68:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -14137,16 +14564,57 @@ IdGenerator.prototype.next = function() {
   return this._prefix + (++this._counter);
 };
 
-},{}],68:[function(_dereq_,module,exports){
+},{}],69:[function(_dereq_,module,exports){
 'use strict';
 
-var isObject = _dereq_(154),
-    assign = _dereq_(159),
-    forEach = _dereq_(80),
-    reduce = _dereq_(84),
-    merge = _dereq_(162);
+var getOriginalEvent = _dereq_(66).getOriginal;
 
-var Snap = _dereq_(71);
+
+function isPrimaryButton(event) {
+  // button === 0 -> left áka primary mouse button
+  return !(getOriginalEvent(event) || event).button;
+}
+
+function isMac() {
+    return (/mac/i).test(navigator.platform);
+}
+
+module.exports.isPrimaryButton = isPrimaryButton;
+
+module.exports.isMac = isMac;
+
+module.exports.hasPrimaryModifier = function(event) {
+  var originalEvent = getOriginalEvent(event) || event;
+
+  if (!isPrimaryButton(event)) {
+    return false;
+  }
+
+  // Use alt as primary modifier key for mac OS
+  if (isMac()) {
+    return originalEvent.altKey;
+  } else {
+    return originalEvent.ctrlKey;
+  }
+};
+
+
+module.exports.hasSecondaryModifier = function(event) {
+  var originalEvent = getOriginalEvent(event) || event;
+
+  return isPrimaryButton(event) && originalEvent.shiftKey;
+};
+
+},{"66":66}],70:[function(_dereq_,module,exports){
+'use strict';
+
+var isObject = _dereq_(169),
+    assign = _dereq_(174),
+    forEach = _dereq_(83),
+    reduce = _dereq_(87),
+    merge = _dereq_(177);
+
+var Snap = _dereq_(73);
 
 var DEFAULT_BOX_PADDING = 0;
 
@@ -14180,6 +14648,109 @@ function parsePadding(padding) {
   }
 }
 
+function getTextBBox(text, fakeText) {
+  fakeText.textContent = text;
+  return fakeText.getBBox();
+}
+
+
+/**
+ * Layout the next line and return the layouted element.
+ *
+ * Alters the lines passed.
+ *
+ * @param  {Array<String>} lines
+ * @return {Object} the line descriptor, an object { width, height, text }
+ */
+function layoutNext(lines, maxWidth, fakeText) {
+
+  var originalLine = lines.shift(),
+      fitLine = originalLine;
+
+  var textBBox;
+
+  while (true) {
+    textBBox = getTextBBox(fitLine, fakeText);
+
+    textBBox.width = fitLine ? textBBox.width : 0;
+
+    // try to fit
+    if (fitLine === ' ' || fitLine === '' || textBBox.width < Math.round(maxWidth) || fitLine.length < 4) {
+      return fit(lines, fitLine, originalLine, textBBox);
+    }
+
+
+    fitLine = shortenLine(fitLine, textBBox.width, maxWidth);
+  }
+}
+
+function fit(lines, fitLine, originalLine, textBBox) {
+  if (fitLine.length < originalLine.length) {
+    var nextLine = lines[0] || '',
+        remainder = originalLine.slice(fitLine.length).trim();
+
+    if (/-\s*$/.test(remainder)) {
+      nextLine = remainder.replace(/-\s*$/, '') + nextLine.replace(/^\s+/, '');
+    } else {
+      nextLine = remainder + ' ' + nextLine;
+    }
+
+    lines[0] = nextLine;
+  }
+  return { width: textBBox.width, height: textBBox.height, text: fitLine };
+}
+
+
+/**
+ * Shortens a line based on spacing and hyphens.
+ * Returns the shortened result on success.
+ *
+ * @param  {String} line
+ * @param  {Number} maxLength the maximum characters of the string
+ * @return {String} the shortened string
+ */
+function semanticShorten(line, maxLength) {
+  var parts = line.split(/(\s|-)/g),
+      part,
+      shortenedParts = [],
+      length = 0;
+
+  // try to shorten via spaces + hyphens
+  if (parts.length > 1) {
+    while ((part = parts.shift())) {
+      if (part.length + length < maxLength) {
+        shortenedParts.push(part);
+        length += part.length;
+      } else {
+        // remove previous part, too if hyphen does not fit anymore
+        if (part === '-') {
+          shortenedParts.pop();
+        }
+
+        break;
+      }
+    }
+  }
+
+  return shortenedParts.join('');
+}
+
+
+function shortenLine(line, width, maxWidth) {
+  var length = Math.max(line.length * (maxWidth / width), 1);
+
+  // try to shorten semantically (i.e. based on spaces and hyphens)
+  var shortenedLine = semanticShorten(line, length);
+
+  if (!shortenedLine) {
+
+    // force shorten by cutting the long word
+    shortenedLine = line.slice(0, Math.max(Math.round(length - 1), 1));
+  }
+
+  return shortenedLine;
+}
+
 
 /**
  * Creates a new label utility
@@ -14199,6 +14770,7 @@ function Text(config) {
     align: 'center-top'
   }, config || {});
 }
+
 
 /**
  * Create a label in the parent node.
@@ -14226,113 +14798,12 @@ Text.prototype.createText = function(parent, text, options) {
 
   var maxWidth = box.width - padding.left - padding.right;
 
-  var fakeText = parent.text(0, 0, '').attr(style).node;
   // FF regression: ensure text is shown during rendering
   // by attaching it directly to the body
-  fakeText.ownerSVGElement.appendChild(fakeText);
-
-  /**
-   * Layout the next line and return the layouted element.
-   *
-   * Alters the lines passed.
-   *
-   * @param  {Array<String>} lines
-   * @return {Object} the line descriptor, an object { width, height, text }
-   */
-  function layoutNext(lines) {
-
-    var originalLine = lines.shift(),
-        fitLine = originalLine;
-
-    var textBBox;
-
-    function fit() {
-      if (fitLine.length < originalLine.length) {
-        var nextLine = lines[0] || '',
-            remainder = originalLine.slice(fitLine.length);
-
-        if (/-\s*$/.test(remainder)) {
-          nextLine = remainder.replace(/-\s*$/, '') + nextLine.replace(/^\s+/, '');
-        } else {
-          nextLine = remainder + ' ' + nextLine;
-        }
-
-        lines[0] = nextLine;
-      }
-      return { width: textBBox.width, height: textBBox.height, text: fitLine };
-    }
-
-    function getTextBBox(text) {
-      fakeText.textContent = text;
-      return fakeText.getBBox();
-    }
-
-    /**
-     * Shortens a line based on spacing and hyphens.
-     * Returns the shortened result on success.
-     *
-     * @param  {String} line
-     * @param  {Number} maxLength the maximum characters of the string
-     * @return {String} the shortened string
-     */
-    function semanticShorten(line, maxLength) {
-      var parts = line.split(/(\s|-)/g),
-          part,
-          shortenedParts = [],
-          length = 0;
-
-      // try to shorten via spaces + hyphens
-      if (parts.length > 1) {
-        while ((part = parts.shift())) {
-
-          if (part.length + length < maxLength) {
-            shortenedParts.push(part);
-            length += part.length;
-          } else {
-            // remove previous part, too if hyphen does not fit anymore
-            if (part === '-') {
-              shortenedParts.pop();
-            }
-
-            break;
-          }
-        }
-      }
-
-      return shortenedParts.join('');
-    }
-
-    function shortenLine(line, width, maxWidth) {
-      var length = line.length * (maxWidth / width);
-
-      // try to shorten semantically (i.e. based on spaces and hyphens)
-      var shortenedLine = semanticShorten(line, length);
-
-      if (!shortenedLine) {
-
-        // force shorten by cutting the long word
-        shortenedLine = line.slice(0, Math.floor(length - 1));
-      }
-
-      return shortenedLine;
-    }
-
-
-    while (true) {
-
-      textBBox = getTextBBox(fitLine);
-
-      // try to fit
-      if (textBBox.width < maxWidth) {
-        return fit();
-      }
-
-      fitLine = shortenLine(fitLine, textBBox.width, maxWidth);
-    }
-  }
+  var fakeText = parent.paper.text(0, 0, '').attr(style).node;
 
   while (lines.length) {
-    layouted.push(layoutNext(lines));
+    layouted.push(layoutNext(lines, maxWidth, fakeText));
   }
 
   var totalHeight = reduce(layouted, function(sum, line, idx) {
@@ -14367,7 +14838,7 @@ Text.prototype.createText = function(parent, text, options) {
 
       default:
         // aka center
-        x = (maxWidth - line.width) / 2 + padding.left;
+        x = Math.max(((maxWidth - line.width) / 2 + padding.left), 0);
     }
 
 
@@ -14385,7 +14856,7 @@ Text.prototype.createText = function(parent, text, options) {
 
 
 module.exports = Text;
-},{"154":154,"159":159,"162":162,"71":71,"80":80,"84":84}],69:[function(_dereq_,module,exports){
+},{"169":169,"174":174,"177":177,"73":73,"83":83,"87":87}],71:[function(_dereq_,module,exports){
 // Copyright (c) 2013 Adobe Systems Incorporated. All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14790,7 +15261,7 @@ module.exports = Text;
     (typeof module != "undefined" && module.exports) ? (module.exports = eve) : (typeof define === "function" && define.amd ? (define("eve", [], function() { return eve; })) : (glob.eve = eve));
 })(this);
 
-},{}],70:[function(_dereq_,module,exports){
+},{}],72:[function(_dereq_,module,exports){
 // Snap.svg 0.3.0
 // 
 // Copyright (c) 2013 – 2014 Adobe Systems Incorporated. All rights reserved.
@@ -14818,7 +15289,7 @@ module.exports = Text;
         });
     } else if (typeof exports !== 'undefined') {
         // Next for Node.js or CommonJS
-        var eve = _dereq_(69);
+        var eve = _dereq_(71);
         module.exports = factory(glob, eve);
     } else {
         // Browser globals (glob is window)
@@ -21443,10 +21914,10 @@ Snap.plugin(function (Snap, Element, Paper, glob) {
 
 return Snap;
 }));
-},{"69":69}],71:[function(_dereq_,module,exports){
+},{"71":71}],73:[function(_dereq_,module,exports){
 'use strict';
 
-var snapsvg = module.exports = _dereq_(70);
+var snapsvg = module.exports = _dereq_(72);
 
 snapsvg.plugin(function(Snap, Element) {
 
@@ -21652,7 +22123,7 @@ snapsvg.plugin(function(Snap, Element, Paper, global) {
     return new Snap(svg);
   };
 });
-},{"70":70}],72:[function(_dereq_,module,exports){
+},{"72":72}],74:[function(_dereq_,module,exports){
 
 var isArray = function(obj) {
   return Object.prototype.toString.call(obj) === '[object Array]';
@@ -21702,18 +22173,18 @@ exports.annotate = annotate;
 exports.parse = parse;
 exports.isArray = isArray;
 
-},{}],73:[function(_dereq_,module,exports){
+},{}],75:[function(_dereq_,module,exports){
 module.exports = {
-  annotate: _dereq_(72).annotate,
-  Module: _dereq_(75),
-  Injector: _dereq_(74)
+  annotate: _dereq_(74).annotate,
+  Module: _dereq_(77),
+  Injector: _dereq_(76)
 };
 
-},{"72":72,"74":74,"75":75}],74:[function(_dereq_,module,exports){
-var Module = _dereq_(75);
-var autoAnnotate = _dereq_(72).parse;
-var annotate = _dereq_(72).annotate;
-var isArray = _dereq_(72).isArray;
+},{"74":74,"76":76,"77":77}],76:[function(_dereq_,module,exports){
+var Module = _dereq_(77);
+var autoAnnotate = _dereq_(74).parse;
+var annotate = _dereq_(74).annotate;
+var isArray = _dereq_(74).isArray;
 
 
 var Injector = function(modules, parent) {
@@ -21925,7 +22396,7 @@ var Injector = function(modules, parent) {
 
 module.exports = Injector;
 
-},{"72":72,"75":75}],75:[function(_dereq_,module,exports){
+},{"74":74,"77":77}],77:[function(_dereq_,module,exports){
 var Module = function() {
   var providers = [];
 
@@ -21951,81 +22422,62 @@ var Module = function() {
 
 module.exports = Module;
 
-},{}],76:[function(_dereq_,module,exports){
-var baseCallback = _dereq_(98);
+},{}],78:[function(_dereq_,module,exports){
+if (typeof Object.create === 'function') {
+  // implementation from standard node.js 'util' module
+  module.exports = function inherits(ctor, superCtor) {
+    ctor.super_ = superCtor
+    ctor.prototype = Object.create(superCtor.prototype, {
+      constructor: {
+        value: ctor,
+        enumerable: false,
+        writable: true,
+        configurable: true
+      }
+    });
+  };
+} else {
+  // old school shim for old browsers
+  module.exports = function inherits(ctor, superCtor) {
+    ctor.super_ = superCtor
+    var TempCtor = function () {}
+    TempCtor.prototype = superCtor.prototype
+    ctor.prototype = new TempCtor()
+    ctor.prototype.constructor = ctor
+  }
+}
 
+},{}],79:[function(_dereq_,module,exports){
 /**
- * This method is like `_.find` except that it returns the index of the first
- * element `predicate` returns truthy for, instead of the element itself.
- *
- * If a property name is provided for `predicate` the created `_.property`
- * style callback returns the property value of the given element.
- *
- * If a value is also provided for `thisArg` the created `_.matchesProperty`
- * style callback returns `true` for elements that have a matching property
- * value, else `false`.
- *
- * If an object is provided for `predicate` the created `_.matches` style
- * callback returns `true` for elements that have the properties of the given
- * object, else `false`.
+ * Gets the last element of `array`.
  *
  * @static
  * @memberOf _
  * @category Array
- * @param {Array} array The array to search.
- * @param {Function|Object|string} [predicate=_.identity] The function invoked
- *  per iteration.
- * @param {*} [thisArg] The `this` binding of `predicate`.
- * @returns {number} Returns the index of the found element, else `-1`.
+ * @param {Array} array The array to query.
+ * @returns {*} Returns the last element of `array`.
  * @example
  *
- * var users = [
- *   { 'user': 'barney',  'active': false },
- *   { 'user': 'fred',    'active': false },
- *   { 'user': 'pebbles', 'active': true }
- * ];
- *
- * _.findIndex(users, function(chr) {
- *   return chr.user == 'barney';
- * });
- * // => 0
- *
- * // using the `_.matches` callback shorthand
- * _.findIndex(users, { 'user': 'fred', 'active': false });
- * // => 1
- *
- * // using the `_.matchesProperty` callback shorthand
- * _.findIndex(users, 'active', false);
- * // => 0
- *
- * // using the `_.property` callback shorthand
- * _.findIndex(users, 'active');
- * // => 2
+ * _.last([1, 2, 3]);
+ * // => 3
  */
-function findIndex(array, predicate, thisArg) {
-  var index = -1,
-      length = array ? array.length : 0;
-
-  predicate = baseCallback(predicate, thisArg, 3);
-  while (++index < length) {
-    if (predicate(array[index], index, array)) {
-      return index;
-    }
-  }
-  return -1;
+function last(array) {
+  var length = array ? array.length : 0;
+  return length ? array[length - 1] : undefined;
 }
 
-module.exports = findIndex;
+module.exports = last;
 
-},{"98":98}],77:[function(_dereq_,module,exports){
-var arrayEvery = _dereq_(92),
-    baseCallback = _dereq_(98),
-    baseEvery = _dereq_(103),
-    isArray = _dereq_(150);
+},{}],80:[function(_dereq_,module,exports){
+var arrayEvery = _dereq_(96),
+    baseCallback = _dereq_(103),
+    baseEvery = _dereq_(108),
+    isArray = _dereq_(165),
+    isIterateeCall = _dereq_(153);
 
 /**
  * Checks if `predicate` returns truthy for **all** elements of `collection`.
- * The predicate is bound to `thisArg` and invoked with three arguments;
+ * The predicate is bound to `thisArg` and invoked with three arguments:
  * (value, index|key, collection).
  *
  * If a property name is provided for `predicate` the created `_.property`
@@ -22073,7 +22525,10 @@ var arrayEvery = _dereq_(92),
  */
 function every(collection, predicate, thisArg) {
   var func = isArray(collection) ? arrayEvery : baseEvery;
-  if (typeof predicate != 'function' || typeof thisArg != 'undefined') {
+  if (thisArg && isIterateeCall(collection, predicate, thisArg)) {
+    predicate = null;
+  }
+  if (typeof predicate != 'function' || thisArg !== undefined) {
     predicate = baseCallback(predicate, thisArg, 3);
   }
   return func(collection, predicate);
@@ -22081,16 +22536,16 @@ function every(collection, predicate, thisArg) {
 
 module.exports = every;
 
-},{"103":103,"150":150,"92":92,"98":98}],78:[function(_dereq_,module,exports){
-var arrayFilter = _dereq_(93),
-    baseCallback = _dereq_(98),
-    baseFilter = _dereq_(104),
-    isArray = _dereq_(150);
+},{"103":103,"108":108,"153":153,"165":165,"96":96}],81:[function(_dereq_,module,exports){
+var arrayFilter = _dereq_(97),
+    baseCallback = _dereq_(103),
+    baseFilter = _dereq_(109),
+    isArray = _dereq_(165);
 
 /**
  * Iterates over elements of `collection`, returning an array of all elements
  * `predicate` returns truthy for. The predicate is bound to `thisArg` and
- * invoked with three arguments; (value, index|key, collection).
+ * invoked with three arguments: (value, index|key, collection).
  *
  * If a property name is provided for `predicate` the created `_.property`
  * style callback returns the property value of the given element.
@@ -22144,17 +22599,14 @@ function filter(collection, predicate, thisArg) {
 
 module.exports = filter;
 
-},{"104":104,"150":150,"93":93,"98":98}],79:[function(_dereq_,module,exports){
-var baseCallback = _dereq_(98),
-    baseEach = _dereq_(102),
-    baseFind = _dereq_(105),
-    findIndex = _dereq_(76),
-    isArray = _dereq_(150);
+},{"103":103,"109":109,"165":165,"97":97}],82:[function(_dereq_,module,exports){
+var baseEach = _dereq_(107),
+    createFind = _dereq_(142);
 
 /**
  * Iterates over elements of `collection`, returning the first element
  * `predicate` returns truthy for. The predicate is bound to `thisArg` and
- * invoked with three arguments; (value, index|key, collection).
+ * invoked with three arguments: (value, index|key, collection).
  *
  * If a property name is provided for `predicate` the created `_.property`
  * style callback returns the property value of the given element.
@@ -22201,30 +22653,22 @@ var baseCallback = _dereq_(98),
  * _.result(_.find(users, 'active'), 'user');
  * // => 'barney'
  */
-function find(collection, predicate, thisArg) {
-  if (isArray(collection)) {
-    var index = findIndex(collection, predicate, thisArg);
-    return index > -1 ? collection[index] : undefined;
-  }
-  predicate = baseCallback(predicate, thisArg, 3);
-  return baseFind(collection, predicate, baseEach);
-}
+var find = createFind(baseEach);
 
 module.exports = find;
 
-},{"102":102,"105":105,"150":150,"76":76,"98":98}],80:[function(_dereq_,module,exports){
-var arrayEach = _dereq_(91),
-    baseEach = _dereq_(102),
-    bindCallback = _dereq_(127),
-    isArray = _dereq_(150);
+},{"107":107,"142":142}],83:[function(_dereq_,module,exports){
+var arrayEach = _dereq_(95),
+    baseEach = _dereq_(107),
+    createForEach = _dereq_(143);
 
 /**
  * Iterates over elements of `collection` invoking `iteratee` for each element.
- * The `iteratee` is bound to `thisArg` and invoked with three arguments;
- * (value, index|key, collection). Iterator functions may exit iteration early
+ * The `iteratee` is bound to `thisArg` and invoked with three arguments:
+ * (value, index|key, collection). Iteratee functions may exit iteration early
  * by explicitly returning `false`.
  *
- * **Note:** As with other "Collections" methods, objects with a `length` property
+ * **Note:** As with other "Collections" methods, objects with a "length" property
  * are iterated like arrays. To avoid this behavior `_.forIn` or `_.forOwn`
  * may be used for object iteration.
  *
@@ -22248,16 +22692,12 @@ var arrayEach = _dereq_(91),
  * });
  * // => logs each value-key pair and returns the object (iteration order is not guaranteed)
  */
-function forEach(collection, iteratee, thisArg) {
-  return (typeof iteratee == 'function' && typeof thisArg == 'undefined' && isArray(collection))
-    ? arrayEach(collection, iteratee)
-    : baseEach(collection, bindCallback(iteratee, thisArg, 3));
-}
+var forEach = createForEach(arrayEach, baseEach);
 
 module.exports = forEach;
 
-},{"102":102,"127":127,"150":150,"91":91}],81:[function(_dereq_,module,exports){
-var createAggregator = _dereq_(130);
+},{"107":107,"143":143,"95":95}],84:[function(_dereq_,module,exports){
+var createAggregator = _dereq_(137);
 
 /** Used for native method references. */
 var objectProto = Object.prototype;
@@ -22269,17 +22709,17 @@ var hasOwnProperty = objectProto.hasOwnProperty;
  * Creates an object composed of keys generated from the results of running
  * each element of `collection` through `iteratee`. The corresponding value
  * of each key is an array of the elements responsible for generating the key.
- * The `iteratee` is bound to `thisArg` and invoked with three arguments;
+ * The `iteratee` is bound to `thisArg` and invoked with three arguments:
  * (value, index|key, collection).
  *
- * If a property name is provided for `predicate` the created `_.property`
+ * If a property name is provided for `iteratee` the created `_.property`
  * style callback returns the property value of the given element.
  *
  * If a value is also provided for `thisArg` the created `_.matchesProperty`
  * style callback returns `true` for elements that have a matching property
  * value, else `false`.
  *
- * If an object is provided for `predicate` the created `_.matches` style
+ * If an object is provided for `iteratee` the created `_.matches` style
  * callback returns `true` for elements that have the properties of the given
  * object, else `false`.
  *
@@ -22317,25 +22757,23 @@ var groupBy = createAggregator(function(result, value, key) {
 
 module.exports = groupBy;
 
-},{"130":130}],82:[function(_dereq_,module,exports){
-var baseIndexOf = _dereq_(110),
-    isArray = _dereq_(150),
-    isLength = _dereq_(140),
-    isString = _dereq_(156),
-    values = _dereq_(165);
+},{"137":137}],85:[function(_dereq_,module,exports){
+var baseIndexOf = _dereq_(117),
+    getLength = _dereq_(148),
+    isArray = _dereq_(165),
+    isIterateeCall = _dereq_(153),
+    isLength = _dereq_(155),
+    isString = _dereq_(171),
+    values = _dereq_(180);
 
 /* Native method references for those with the same name as other `lodash` methods. */
 var nativeMax = Math.max;
 
 /**
- * Checks if `value` is in `collection` using `SameValueZero` for equality
- * comparisons. If `fromIndex` is negative, it is used as the offset from
- * the end of `collection`.
- *
- * **Note:** `SameValueZero` comparisons are like strict equality comparisons,
- * e.g. `===`, except that `NaN` matches `NaN`. See the
- * [ES spec](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-samevaluezero)
- * for more details.
+ * Checks if `value` is in `collection` using
+ * [`SameValueZero`](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-samevaluezero)
+ * for equality comparisons. If `fromIndex` is negative, it is used as the offset
+ * from the end of `collection`.
  *
  * @static
  * @memberOf _
@@ -22344,6 +22782,7 @@ var nativeMax = Math.max;
  * @param {Array|Object|string} collection The collection to search.
  * @param {*} target The value to search for.
  * @param {number} [fromIndex=0] The index to search from.
+ * @param- {Object} [guard] Enables use as a callback for functions like `_.reduce`.
  * @returns {boolean} Returns `true` if a matching element is found, else `false`.
  * @example
  *
@@ -22359,8 +22798,8 @@ var nativeMax = Math.max;
  * _.includes('pebbles', 'eb');
  * // => true
  */
-function includes(collection, target, fromIndex) {
-  var length = collection ? collection.length : 0;
+function includes(collection, target, fromIndex, guard) {
+  var length = collection ? getLength(collection) : 0;
   if (!isLength(length)) {
     collection = values(collection);
     length = collection.length;
@@ -22368,10 +22807,10 @@ function includes(collection, target, fromIndex) {
   if (!length) {
     return false;
   }
-  if (typeof fromIndex == 'number') {
-    fromIndex = fromIndex < 0 ? nativeMax(length + fromIndex, 0) : (fromIndex || 0);
-  } else {
+  if (typeof fromIndex != 'number' || (guard && isIterateeCall(target, fromIndex, guard))) {
     fromIndex = 0;
+  } else {
+    fromIndex = fromIndex < 0 ? nativeMax(length + fromIndex, 0) : (fromIndex || 0);
   }
   return (typeof collection == 'string' || !isArray(collection) && isString(collection))
     ? (fromIndex < length && collection.indexOf(target, fromIndex) > -1)
@@ -22380,25 +22819,25 @@ function includes(collection, target, fromIndex) {
 
 module.exports = includes;
 
-},{"110":110,"140":140,"150":150,"156":156,"165":165}],83:[function(_dereq_,module,exports){
-var arrayMap = _dereq_(94),
-    baseCallback = _dereq_(98),
-    baseMap = _dereq_(115),
-    isArray = _dereq_(150);
+},{"117":117,"148":148,"153":153,"155":155,"165":165,"171":171,"180":180}],86:[function(_dereq_,module,exports){
+var arrayMap = _dereq_(98),
+    baseCallback = _dereq_(103),
+    baseMap = _dereq_(122),
+    isArray = _dereq_(165);
 
 /**
  * Creates an array of values by running each element in `collection` through
  * `iteratee`. The `iteratee` is bound to `thisArg` and invoked with three
- * arguments; (value, index|key, collection).
+ * arguments: (value, index|key, collection).
  *
- * If a property name is provided for `predicate` the created `_.property`
+ * If a property name is provided for `iteratee` the created `_.property`
  * style callback returns the property value of the given element.
  *
  * If a value is also provided for `thisArg` the created `_.matchesProperty`
  * style callback returns `true` for elements that have a matching property
  * value, else `false`.
  *
- * If an object is provided for `predicate` the created `_.matches` style
+ * If an object is provided for `iteratee` the created `_.matches` style
  * callback returns `true` for elements that have the properties of the given
  * object, else `false`.
  *
@@ -22406,10 +22845,11 @@ var arrayMap = _dereq_(94),
  * `_.every`, `_.filter`, `_.map`, `_.mapValues`, `_.reject`, and `_.some`.
  *
  * The guarded methods are:
- * `ary`, `callback`, `chunk`, `clone`, `create`, `curry`, `curryRight`, `drop`,
- * `dropRight`, `fill`, `flatten`, `invert`, `max`, `min`, `parseInt`, `slice`,
- * `sortBy`, `take`, `takeRight`, `template`, `trim`, `trimLeft`, `trimRight`,
- * `trunc`, `random`, `range`, `sample`, `uniq`, and `words`
+ * `ary`, `callback`, `chunk`, `clone`, `create`, `curry`, `curryRight`,
+ * `drop`, `dropRight`, `every`, `fill`, `flatten`, `invert`, `max`, `min`,
+ * `parseInt`, `slice`, `sortBy`, `take`, `takeRight`, `template`, `trim`,
+ * `trimLeft`, `trimRight`, `trunc`, `random`, `range`, `sample`, `some`,
+ * `sum`, `uniq`, and `words`
  *
  * @static
  * @memberOf _
@@ -22418,7 +22858,6 @@ var arrayMap = _dereq_(94),
  * @param {Array|Object|string} collection The collection to iterate over.
  * @param {Function|Object|string} [iteratee=_.identity] The function invoked
  *  per iteration.
- *  create a `_.property` or `_.matches` style callback respectively.
  * @param {*} [thisArg] The `this` binding of `iteratee`.
  * @returns {Array} Returns the new mapped array.
  * @example
@@ -22450,26 +22889,24 @@ function map(collection, iteratee, thisArg) {
 
 module.exports = map;
 
-},{"115":115,"150":150,"94":94,"98":98}],84:[function(_dereq_,module,exports){
-var arrayReduce = _dereq_(95),
-    baseCallback = _dereq_(98),
-    baseEach = _dereq_(102),
-    baseReduce = _dereq_(121),
-    isArray = _dereq_(150);
+},{"103":103,"122":122,"165":165,"98":98}],87:[function(_dereq_,module,exports){
+var arrayReduce = _dereq_(99),
+    baseEach = _dereq_(107),
+    createReduce = _dereq_(144);
 
 /**
  * Reduces `collection` to a value which is the accumulated result of running
  * each element in `collection` through `iteratee`, where each successive
  * invocation is supplied the return value of the previous. If `accumulator`
  * is not provided the first element of `collection` is used as the initial
- * value. The `iteratee` is bound to `thisArg`and invoked with four arguments;
+ * value. The `iteratee` is bound to `thisArg` and invoked with four arguments:
  * (accumulator, value, index|key, collection).
  *
  * Many lodash methods are guarded to work as interatees for methods like
  * `_.reduce`, `_.reduceRight`, and `_.transform`.
  *
  * The guarded methods are:
- * `assign`, `defaults`, `merge`, and `sortAllBy`
+ * `assign`, `defaults`, `includes`, `merge`, `sortByAll`, and `sortByOrder`
  *
  * @static
  * @memberOf _
@@ -22482,8 +22919,8 @@ var arrayReduce = _dereq_(95),
  * @returns {*} Returns the accumulated value.
  * @example
  *
- * _.reduce([1, 2], function(sum, n) {
- *   return sum + n;
+ * _.reduce([1, 2], function(total, n) {
+ *   return total + n;
  * });
  * // => 3
  *
@@ -22493,24 +22930,22 @@ var arrayReduce = _dereq_(95),
  * }, {});
  * // => { 'a': 3, 'b': 6 } (iteration order is not guaranteed)
  */
-function reduce(collection, iteratee, accumulator, thisArg) {
-  var func = isArray(collection) ? arrayReduce : baseReduce;
-  return func(collection, baseCallback(iteratee, thisArg, 4), accumulator, arguments.length < 3, baseEach);
-}
+var reduce = createReduce(arrayReduce, baseEach);
 
 module.exports = reduce;
 
-},{"102":102,"121":121,"150":150,"95":95,"98":98}],85:[function(_dereq_,module,exports){
-var arraySome = _dereq_(96),
-    baseCallback = _dereq_(98),
-    baseSome = _dereq_(124),
-    isArray = _dereq_(150);
+},{"107":107,"144":144,"99":99}],88:[function(_dereq_,module,exports){
+var arraySome = _dereq_(100),
+    baseCallback = _dereq_(103),
+    baseSome = _dereq_(131),
+    isArray = _dereq_(165),
+    isIterateeCall = _dereq_(153);
 
 /**
  * Checks if `predicate` returns truthy for **any** element of `collection`.
  * The function returns as soon as it finds a passing value and does not iterate
  * over the entire collection. The predicate is bound to `thisArg` and invoked
- * with three arguments; (value, index|key, collection).
+ * with three arguments: (value, index|key, collection).
  *
  * If a property name is provided for `predicate` the created `_.property`
  * style callback returns the property value of the given element.
@@ -22557,7 +22992,10 @@ var arraySome = _dereq_(96),
  */
 function some(collection, predicate, thisArg) {
   var func = isArray(collection) ? arraySome : baseSome;
-  if (typeof predicate != 'function' || typeof thisArg != 'undefined') {
+  if (thisArg && isIterateeCall(collection, predicate, thisArg)) {
+    predicate = null;
+  }
+  if (typeof predicate != 'function' || thisArg !== undefined) {
     predicate = baseCallback(predicate, thisArg, 3);
   }
   return func(collection, predicate);
@@ -22565,8 +23003,8 @@ function some(collection, predicate, thisArg) {
 
 module.exports = some;
 
-},{"124":124,"150":150,"96":96,"98":98}],86:[function(_dereq_,module,exports){
-var isNative = _dereq_(152);
+},{"100":100,"103":103,"131":131,"153":153,"165":165}],89:[function(_dereq_,module,exports){
+var isNative = _dereq_(167);
 
 /* Native method references for those with the same name as other `lodash` methods. */
 var nativeNow = isNative(nativeNow = Date.now) && nativeNow;
@@ -22591,9 +23029,9 @@ var now = nativeNow || function() {
 
 module.exports = now;
 
-},{"152":152}],87:[function(_dereq_,module,exports){
-var isObject = _dereq_(154),
-    now = _dereq_(86);
+},{"167":167}],90:[function(_dereq_,module,exports){
+var isObject = _dereq_(169),
+    now = _dereq_(89);
 
 /** Used as the `TypeError` message for "Functions" methods. */
 var FUNC_ERROR_TEXT = 'Expected a function';
@@ -22779,8 +23217,9 @@ function debounce(func, wait, options) {
 
 module.exports = debounce;
 
-},{"154":154,"86":86}],88:[function(_dereq_,module,exports){
-var baseDelay = _dereq_(100);
+},{"169":169,"89":89}],91:[function(_dereq_,module,exports){
+var baseDelay = _dereq_(105),
+    restParam = _dereq_(92);
 
 /**
  * Defers invoking the `func` until the current call stack has cleared. Any
@@ -22799,16 +23238,76 @@ var baseDelay = _dereq_(100);
  * }, 'deferred');
  * // logs 'deferred' after one or more milliseconds
  */
-function defer(func) {
-  return baseDelay(func, 1, arguments, 1);
-}
+var defer = restParam(function(func, args) {
+  return baseDelay(func, 1, args);
+});
 
 module.exports = defer;
 
-},{"100":100}],89:[function(_dereq_,module,exports){
+},{"105":105,"92":92}],92:[function(_dereq_,module,exports){
+/** Used as the `TypeError` message for "Functions" methods. */
+var FUNC_ERROR_TEXT = 'Expected a function';
+
+/* Native method references for those with the same name as other `lodash` methods. */
+var nativeMax = Math.max;
+
+/**
+ * Creates a function that invokes `func` with the `this` binding of the
+ * created function and arguments from `start` and beyond provided as an array.
+ *
+ * **Note:** This method is based on the [rest parameter](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/rest_parameters).
+ *
+ * @static
+ * @memberOf _
+ * @category Function
+ * @param {Function} func The function to apply a rest parameter to.
+ * @param {number} [start=func.length-1] The start position of the rest parameter.
+ * @returns {Function} Returns the new function.
+ * @example
+ *
+ * var say = _.restParam(function(what, names) {
+ *   return what + ' ' + _.initial(names).join(', ') +
+ *     (_.size(names) > 1 ? ', & ' : '') + _.last(names);
+ * });
+ *
+ * say('hello', 'fred', 'barney', 'pebbles');
+ * // => 'hello fred, barney, & pebbles'
+ */
+function restParam(func, start) {
+  if (typeof func != 'function') {
+    throw new TypeError(FUNC_ERROR_TEXT);
+  }
+  start = nativeMax(start === undefined ? (func.length - 1) : (+start || 0), 0);
+  return function() {
+    var args = arguments,
+        index = -1,
+        length = nativeMax(args.length - start, 0),
+        rest = Array(length);
+
+    while (++index < length) {
+      rest[index] = args[start + index];
+    }
+    switch (start) {
+      case 0: return func.call(this, rest);
+      case 1: return func.call(this, args[0], rest);
+      case 2: return func.call(this, args[0], args[1], rest);
+    }
+    var otherArgs = Array(start + 1);
+    index = -1;
+    while (++index < start) {
+      otherArgs[index] = args[index];
+    }
+    otherArgs[start] = rest;
+    return func.apply(this, otherArgs);
+  };
+}
+
+module.exports = restParam;
+
+},{}],93:[function(_dereq_,module,exports){
 (function (global){
-var cachePush = _dereq_(129),
-    isNative = _dereq_(152);
+var cachePush = _dereq_(136),
+    isNative = _dereq_(167);
 
 /** Native method references. */
 var Set = isNative(Set = global.Set) && Set;
@@ -22839,7 +23338,7 @@ module.exports = SetCache;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"129":129,"152":152}],90:[function(_dereq_,module,exports){
+},{"136":136,"167":167}],94:[function(_dereq_,module,exports){
 /**
  * Copies the values of `source` to `array`.
  *
@@ -22861,10 +23360,10 @@ function arrayCopy(source, array) {
 
 module.exports = arrayCopy;
 
-},{}],91:[function(_dereq_,module,exports){
+},{}],95:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.forEach` for arrays without support for callback
- * shorthands or `this` binding.
+ * shorthands and `this` binding.
  *
  * @private
  * @param {Array} array The array to iterate over.
@@ -22885,10 +23384,10 @@ function arrayEach(array, iteratee) {
 
 module.exports = arrayEach;
 
-},{}],92:[function(_dereq_,module,exports){
+},{}],96:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.every` for arrays without support for callback
- * shorthands or `this` binding.
+ * shorthands and `this` binding.
  *
  * @private
  * @param {Array} array The array to iterate over.
@@ -22910,10 +23409,10 @@ function arrayEvery(array, predicate) {
 
 module.exports = arrayEvery;
 
-},{}],93:[function(_dereq_,module,exports){
+},{}],97:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.filter` for arrays without support for callback
- * shorthands or `this` binding.
+ * shorthands and `this` binding.
  *
  * @private
  * @param {Array} array The array to iterate over.
@@ -22937,10 +23436,10 @@ function arrayFilter(array, predicate) {
 
 module.exports = arrayFilter;
 
-},{}],94:[function(_dereq_,module,exports){
+},{}],98:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.map` for arrays without support for callback
- * shorthands or `this` binding.
+ * shorthands and `this` binding.
  *
  * @private
  * @param {Array} array The array to iterate over.
@@ -22960,10 +23459,10 @@ function arrayMap(array, iteratee) {
 
 module.exports = arrayMap;
 
-},{}],95:[function(_dereq_,module,exports){
+},{}],99:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.reduce` for arrays without support for callback
- * shorthands or `this` binding.
+ * shorthands and `this` binding.
  *
  * @private
  * @param {Array} array The array to iterate over.
@@ -22988,10 +23487,10 @@ function arrayReduce(array, iteratee, accumulator, initFromArray) {
 
 module.exports = arrayReduce;
 
-},{}],96:[function(_dereq_,module,exports){
+},{}],100:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.some` for arrays without support for callback
- * shorthands or `this` binding.
+ * shorthands and `this` binding.
  *
  * @private
  * @param {Array} array The array to iterate over.
@@ -23013,25 +23512,31 @@ function arraySome(array, predicate) {
 
 module.exports = arraySome;
 
-},{}],97:[function(_dereq_,module,exports){
-var baseCopy = _dereq_(99),
-    keys = _dereq_(160);
+},{}],101:[function(_dereq_,module,exports){
+var getSymbols = _dereq_(149),
+    keys = _dereq_(175);
+
+/** Used for native method references. */
+var arrayProto = Array.prototype;
+
+/** Native method references. */
+var push = arrayProto.push;
 
 /**
- * The base implementation of `_.assign` without support for argument juggling,
- * multiple sources, and `this` binding `customizer` functions.
+ * A specialized version of `_.assign` for customizing assigned values without
+ * support for argument juggling, multiple sources, and `this` binding `customizer`
+ * functions.
  *
  * @private
  * @param {Object} object The destination object.
  * @param {Object} source The source object.
- * @param {Function} [customizer] The function to customize assigning values.
- * @returns {Object} Returns the destination object.
+ * @param {Function} customizer The function to customize assigned values.
+ * @returns {Object} Returns `object`.
  */
-function baseAssign(object, source, customizer) {
+function assignWith(object, source, customizer) {
   var props = keys(source);
-  if (!customizer) {
-    return baseCopy(source, object, props);
-  }
+  push.apply(props, getSymbols(source));
+
   var index = -1,
       length = props.length;
 
@@ -23041,22 +23546,70 @@ function baseAssign(object, source, customizer) {
         result = customizer(value, source[key], key, object, source);
 
     if ((result === result ? (result !== value) : (value === value)) ||
-        (typeof value == 'undefined' && !(key in object))) {
+        (value === undefined && !(key in object))) {
       object[key] = result;
     }
   }
   return object;
 }
 
+module.exports = assignWith;
+
+},{"149":149,"175":175}],102:[function(_dereq_,module,exports){
+var baseCopy = _dereq_(104),
+    getSymbols = _dereq_(149),
+    isNative = _dereq_(167),
+    keys = _dereq_(175);
+
+/** Native method references. */
+var preventExtensions = isNative(preventExtensions = Object.preventExtensions) && preventExtensions;
+
+/** Used as `baseAssign`. */
+var nativeAssign = (function() {
+  // Avoid `Object.assign` in Firefox 34-37 which have an early implementation
+  // with a now defunct try/catch behavior. See https://bugzilla.mozilla.org/show_bug.cgi?id=1103344
+  // for more details.
+  //
+  // Use `Object.preventExtensions` on a plain object instead of simply using
+  // `Object('x')` because Chrome and IE fail to throw an error when attempting
+  // to assign values to readonly indexes of strings.
+  var func = preventExtensions && isNative(func = Object.assign) && func;
+  try {
+    if (func) {
+      var object = preventExtensions({ '1': 0 });
+      object[0] = 1;
+    }
+  } catch(e) {
+    // Only attempt in strict mode.
+    try { func(object, 'xo'); } catch(e) {}
+    return !object[1] && func;
+  }
+  return false;
+}());
+
+/**
+ * The base implementation of `_.assign` without support for argument juggling,
+ * multiple sources, and `customizer` functions.
+ *
+ * @private
+ * @param {Object} object The destination object.
+ * @param {Object} source The source object.
+ * @returns {Object} Returns `object`.
+ */
+var baseAssign = nativeAssign || function(object, source) {
+  return source == null
+    ? object
+    : baseCopy(source, getSymbols(source), baseCopy(source, keys(source), object));
+};
+
 module.exports = baseAssign;
 
-},{"160":160,"99":99}],98:[function(_dereq_,module,exports){
-var baseMatches = _dereq_(116),
-    baseMatchesProperty = _dereq_(117),
-    baseProperty = _dereq_(120),
-    bindCallback = _dereq_(127),
-    identity = _dereq_(169),
-    isBindable = _dereq_(137);
+},{"104":104,"149":149,"167":167,"175":175}],103:[function(_dereq_,module,exports){
+var baseMatches = _dereq_(123),
+    baseMatchesProperty = _dereq_(124),
+    bindCallback = _dereq_(134),
+    identity = _dereq_(184),
+    property = _dereq_(185);
 
 /**
  * The base implementation of `_.callback` which supports specifying the
@@ -23071,9 +23624,9 @@ var baseMatches = _dereq_(116),
 function baseCallback(func, thisArg, argCount) {
   var type = typeof func;
   if (type == 'function') {
-    return (typeof thisArg != 'undefined' && isBindable(func))
-      ? bindCallback(func, thisArg, argCount)
-      : func;
+    return thisArg === undefined
+      ? func
+      : bindCallback(func, thisArg, argCount);
   }
   if (func == null) {
     return identity;
@@ -23081,28 +23634,26 @@ function baseCallback(func, thisArg, argCount) {
   if (type == 'object') {
     return baseMatches(func);
   }
-  return typeof thisArg == 'undefined'
-    ? baseProperty(func + '')
-    : baseMatchesProperty(func + '', thisArg);
+  return thisArg === undefined
+    ? property(func)
+    : baseMatchesProperty(func, thisArg);
 }
 
 module.exports = baseCallback;
 
-},{"116":116,"117":117,"120":120,"127":127,"137":137,"169":169}],99:[function(_dereq_,module,exports){
+},{"123":123,"124":124,"134":134,"184":184,"185":185}],104:[function(_dereq_,module,exports){
 /**
- * Copies the properties of `source` to `object`.
+ * Copies properties of `source` to `object`.
  *
  * @private
  * @param {Object} source The object to copy properties from.
- * @param {Object} [object={}] The object to copy properties to.
  * @param {Array} props The property names to copy.
+ * @param {Object} [object={}] The object to copy properties to.
  * @returns {Object} Returns `object`.
  */
-function baseCopy(source, object, props) {
-  if (!props) {
-    props = object;
-    object = {};
-  }
+function baseCopy(source, props, object) {
+  object || (object = {});
+
   var index = -1,
       length = props.length;
 
@@ -23115,9 +23666,7 @@ function baseCopy(source, object, props) {
 
 module.exports = baseCopy;
 
-},{}],100:[function(_dereq_,module,exports){
-var baseSlice = _dereq_(123);
-
+},{}],105:[function(_dereq_,module,exports){
 /** Used as the `TypeError` message for "Functions" methods. */
 var FUNC_ERROR_TEXT = 'Expected a function';
 
@@ -23128,22 +23677,22 @@ var FUNC_ERROR_TEXT = 'Expected a function';
  * @private
  * @param {Function} func The function to delay.
  * @param {number} wait The number of milliseconds to delay invocation.
- * @param {Object} args The `arguments` object to slice and provide to `func`.
+ * @param {Object} args The arguments provide to `func`.
  * @returns {number} Returns the timer id.
  */
-function baseDelay(func, wait, args, fromIndex) {
+function baseDelay(func, wait, args) {
   if (typeof func != 'function') {
     throw new TypeError(FUNC_ERROR_TEXT);
   }
-  return setTimeout(function() { func.apply(undefined, baseSlice(args, fromIndex)); }, wait);
+  return setTimeout(function() { func.apply(undefined, args); }, wait);
 }
 
 module.exports = baseDelay;
 
-},{"123":123}],101:[function(_dereq_,module,exports){
-var baseIndexOf = _dereq_(110),
-    cacheIndexOf = _dereq_(128),
-    createCache = _dereq_(132);
+},{}],106:[function(_dereq_,module,exports){
+var baseIndexOf = _dereq_(117),
+    cacheIndexOf = _dereq_(135),
+    createCache = _dereq_(141);
 
 /**
  * The base implementation of `_.difference` which accepts a single array
@@ -23194,10 +23743,9 @@ function baseDifference(array, values) {
 
 module.exports = baseDifference;
 
-},{"110":110,"128":128,"132":132}],102:[function(_dereq_,module,exports){
-var baseForOwn = _dereq_(109),
-    isLength = _dereq_(140),
-    toObject = _dereq_(148);
+},{"117":117,"135":135,"141":141}],107:[function(_dereq_,module,exports){
+var baseForOwn = _dereq_(115),
+    createBaseEach = _dereq_(139);
 
 /**
  * The base implementation of `_.forEach` without support for callback
@@ -23208,30 +23756,16 @@ var baseForOwn = _dereq_(109),
  * @param {Function} iteratee The function invoked per iteration.
  * @returns {Array|Object|string} Returns `collection`.
  */
-function baseEach(collection, iteratee) {
-  var length = collection ? collection.length : 0;
-  if (!isLength(length)) {
-    return baseForOwn(collection, iteratee);
-  }
-  var index = -1,
-      iterable = toObject(collection);
-
-  while (++index < length) {
-    if (iteratee(iterable[index], index, iterable) === false) {
-      break;
-    }
-  }
-  return collection;
-}
+var baseEach = createBaseEach(baseForOwn);
 
 module.exports = baseEach;
 
-},{"109":109,"140":140,"148":148}],103:[function(_dereq_,module,exports){
-var baseEach = _dereq_(102);
+},{"115":115,"139":139}],108:[function(_dereq_,module,exports){
+var baseEach = _dereq_(107);
 
 /**
  * The base implementation of `_.every` without support for callback
- * shorthands or `this` binding.
+ * shorthands and `this` binding.
  *
  * @private
  * @param {Array|Object|string} collection The collection to iterate over.
@@ -23250,12 +23784,12 @@ function baseEvery(collection, predicate) {
 
 module.exports = baseEvery;
 
-},{"102":102}],104:[function(_dereq_,module,exports){
-var baseEach = _dereq_(102);
+},{"107":107}],109:[function(_dereq_,module,exports){
+var baseEach = _dereq_(107);
 
 /**
  * The base implementation of `_.filter` without support for callback
- * shorthands or `this` binding.
+ * shorthands and `this` binding.
  *
  * @private
  * @param {Array|Object|string} collection The collection to iterate over.
@@ -23274,7 +23808,7 @@ function baseFilter(collection, predicate) {
 
 module.exports = baseFilter;
 
-},{"102":102}],105:[function(_dereq_,module,exports){
+},{"107":107}],110:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.find`, `_.findLast`, `_.findKey`, and `_.findLastKey`,
  * without support for callback shorthands and `this` binding, which iterates
@@ -23301,11 +23835,36 @@ function baseFind(collection, predicate, eachFunc, retKey) {
 
 module.exports = baseFind;
 
-},{}],106:[function(_dereq_,module,exports){
-var isArguments = _dereq_(149),
-    isArray = _dereq_(150),
-    isLength = _dereq_(140),
-    isObjectLike = _dereq_(141);
+},{}],111:[function(_dereq_,module,exports){
+/**
+ * The base implementation of `_.findIndex` and `_.findLastIndex` without
+ * support for callback shorthands and `this` binding.
+ *
+ * @private
+ * @param {Array} array The array to search.
+ * @param {Function} predicate The function invoked per iteration.
+ * @param {boolean} [fromRight] Specify iterating from right to left.
+ * @returns {number} Returns the index of the matched value, else `-1`.
+ */
+function baseFindIndex(array, predicate, fromRight) {
+  var length = array.length,
+      index = fromRight ? length : -1;
+
+  while ((fromRight ? index-- : ++index < length)) {
+    if (predicate(array[index], index, array)) {
+      return index;
+    }
+  }
+  return -1;
+}
+
+module.exports = baseFindIndex;
+
+},{}],112:[function(_dereq_,module,exports){
+var isArguments = _dereq_(164),
+    isArray = _dereq_(165),
+    isArrayLike = _dereq_(151),
+    isObjectLike = _dereq_(156);
 
 /**
  * The base implementation of `_.flatten` with added support for restricting
@@ -23313,29 +23872,27 @@ var isArguments = _dereq_(149),
  *
  * @private
  * @param {Array} array The array to flatten.
- * @param {boolean} isDeep Specify a deep flatten.
- * @param {boolean} isStrict Restrict flattening to arrays and `arguments` objects.
- * @param {number} fromIndex The index to start from.
+ * @param {boolean} [isDeep] Specify a deep flatten.
+ * @param {boolean} [isStrict] Restrict flattening to arrays-like objects.
  * @returns {Array} Returns the new flattened array.
  */
-function baseFlatten(array, isDeep, isStrict, fromIndex) {
-  var index = fromIndex - 1,
+function baseFlatten(array, isDeep, isStrict) {
+  var index = -1,
       length = array.length,
       resIndex = -1,
       result = [];
 
   while (++index < length) {
     var value = array[index];
-
-    if (isObjectLike(value) && isLength(value.length) && (isArray(value) || isArguments(value))) {
+    if (isObjectLike(value) && isArrayLike(value) &&
+        (isStrict || isArray(value) || isArguments(value))) {
       if (isDeep) {
         // Recursively flatten arrays (susceptible to call stack limits).
-        value = baseFlatten(value, isDeep, isStrict, 0);
+        value = baseFlatten(value, isDeep, isStrict);
       }
       var valIndex = -1,
           valLength = value.length;
 
-      result.length += valLength;
       while (++valIndex < valLength) {
         result[++resIndex] = value[valIndex];
       }
@@ -23348,13 +23905,13 @@ function baseFlatten(array, isDeep, isStrict, fromIndex) {
 
 module.exports = baseFlatten;
 
-},{"140":140,"141":141,"149":149,"150":150}],107:[function(_dereq_,module,exports){
-var toObject = _dereq_(148);
+},{"151":151,"156":156,"164":164,"165":165}],113:[function(_dereq_,module,exports){
+var createBaseFor = _dereq_(140);
 
 /**
  * The base implementation of `baseForIn` and `baseForOwn` which iterates
  * over `object` properties returned by `keysFunc` invoking `iteratee` for
- * each property. Iterator functions may exit iteration early by explicitly
+ * each property. Iteratee functions may exit iteration early by explicitly
  * returning `false`.
  *
  * @private
@@ -23363,26 +23920,13 @@ var toObject = _dereq_(148);
  * @param {Function} keysFunc The function to get the keys of `object`.
  * @returns {Object} Returns `object`.
  */
-function baseFor(object, iteratee, keysFunc) {
-  var index = -1,
-      iterable = toObject(object),
-      props = keysFunc(object),
-      length = props.length;
-
-  while (++index < length) {
-    var key = props[index];
-    if (iteratee(iterable[key], key, iterable) === false) {
-      break;
-    }
-  }
-  return object;
-}
+var baseFor = createBaseFor();
 
 module.exports = baseFor;
 
-},{"148":148}],108:[function(_dereq_,module,exports){
-var baseFor = _dereq_(107),
-    keysIn = _dereq_(161);
+},{"140":140}],114:[function(_dereq_,module,exports){
+var baseFor = _dereq_(113),
+    keysIn = _dereq_(176);
 
 /**
  * The base implementation of `_.forIn` without support for callback
@@ -23399,9 +23943,9 @@ function baseForIn(object, iteratee) {
 
 module.exports = baseForIn;
 
-},{"107":107,"161":161}],109:[function(_dereq_,module,exports){
-var baseFor = _dereq_(107),
-    keys = _dereq_(160);
+},{"113":113,"176":176}],115:[function(_dereq_,module,exports){
+var baseFor = _dereq_(113),
+    keys = _dereq_(175);
 
 /**
  * The base implementation of `_.forOwn` without support for callback
@@ -23418,8 +23962,39 @@ function baseForOwn(object, iteratee) {
 
 module.exports = baseForOwn;
 
-},{"107":107,"160":160}],110:[function(_dereq_,module,exports){
-var indexOfNaN = _dereq_(136);
+},{"113":113,"175":175}],116:[function(_dereq_,module,exports){
+var toObject = _dereq_(162);
+
+/**
+ * The base implementation of `get` without support for string paths
+ * and default values.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @param {Array} path The path of the property to get.
+ * @param {string} [pathKey] The key representation of path.
+ * @returns {*} Returns the resolved value.
+ */
+function baseGet(object, path, pathKey) {
+  if (object == null) {
+    return;
+  }
+  if (pathKey !== undefined && pathKey in toObject(object)) {
+    path = [pathKey];
+  }
+  var index = -1,
+      length = path.length;
+
+  while (object != null && ++index < length) {
+    object = object[path[index]];
+  }
+  return (index && index == length) ? object : undefined;
+}
+
+module.exports = baseGet;
+
+},{"162":162}],117:[function(_dereq_,module,exports){
+var indexOfNaN = _dereq_(150);
 
 /**
  * The base implementation of `_.indexOf` without support for binary searches.
@@ -23447,8 +24022,8 @@ function baseIndexOf(array, value, fromIndex) {
 
 module.exports = baseIndexOf;
 
-},{"136":136}],111:[function(_dereq_,module,exports){
-var baseIsEqualDeep = _dereq_(112);
+},{"150":150}],118:[function(_dereq_,module,exports){
+var baseIsEqualDeep = _dereq_(119);
 
 /**
  * The base implementation of `_.isEqual` without support for `this` binding
@@ -23458,16 +24033,15 @@ var baseIsEqualDeep = _dereq_(112);
  * @param {*} value The value to compare.
  * @param {*} other The other value to compare.
  * @param {Function} [customizer] The function to customize comparing values.
- * @param {boolean} [isWhere] Specify performing partial comparisons.
+ * @param {boolean} [isLoose] Specify performing partial comparisons.
  * @param {Array} [stackA] Tracks traversed `value` objects.
  * @param {Array} [stackB] Tracks traversed `other` objects.
  * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
  */
-function baseIsEqual(value, other, customizer, isWhere, stackA, stackB) {
+function baseIsEqual(value, other, customizer, isLoose, stackA, stackB) {
   // Exit early for identical values.
   if (value === other) {
-    // Treat `+0` vs. `-0` as not equal.
-    return value !== 0 || (1 / value == 1 / other);
+    return true;
   }
   var valType = typeof value,
       othType = typeof other;
@@ -23478,17 +24052,17 @@ function baseIsEqual(value, other, customizer, isWhere, stackA, stackB) {
     // Return `false` unless both values are `NaN`.
     return value !== value && other !== other;
   }
-  return baseIsEqualDeep(value, other, baseIsEqual, customizer, isWhere, stackA, stackB);
+  return baseIsEqualDeep(value, other, baseIsEqual, customizer, isLoose, stackA, stackB);
 }
 
 module.exports = baseIsEqual;
 
-},{"112":112}],112:[function(_dereq_,module,exports){
-var equalArrays = _dereq_(133),
-    equalByTag = _dereq_(134),
-    equalObjects = _dereq_(135),
-    isArray = _dereq_(150),
-    isTypedArray = _dereq_(157);
+},{"119":119}],119:[function(_dereq_,module,exports){
+var equalArrays = _dereq_(145),
+    equalByTag = _dereq_(146),
+    equalObjects = _dereq_(147),
+    isArray = _dereq_(165),
+    isTypedArray = _dereq_(172);
 
 /** `Object#toString` result references. */
 var argsTag = '[object Arguments]',
@@ -23502,9 +24076,8 @@ var objectProto = Object.prototype;
 var hasOwnProperty = objectProto.hasOwnProperty;
 
 /**
- * Used to resolve the `toStringTag` of values.
- * See the [ES spec](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-object.prototype.tostring)
- * for more details.
+ * Used to resolve the [`toStringTag`](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-object.prototype.tostring)
+ * of values.
  */
 var objToString = objectProto.toString;
 
@@ -23518,12 +24091,12 @@ var objToString = objectProto.toString;
  * @param {Object} other The other object to compare.
  * @param {Function} equalFunc The function to determine equivalents of values.
  * @param {Function} [customizer] The function to customize comparing objects.
- * @param {boolean} [isWhere] Specify performing partial comparisons.
+ * @param {boolean} [isLoose] Specify performing partial comparisons.
  * @param {Array} [stackA=[]] Tracks traversed `value` objects.
  * @param {Array} [stackB=[]] Tracks traversed `other` objects.
  * @returns {boolean} Returns `true` if the objects are equivalent, else `false`.
  */
-function baseIsEqualDeep(object, other, equalFunc, customizer, isWhere, stackA, stackB) {
+function baseIsEqualDeep(object, other, equalFunc, customizer, isLoose, stackA, stackB) {
   var objIsArr = isArray(object),
       othIsArr = isArray(other),
       objTag = arrayTag,
@@ -23552,11 +24125,13 @@ function baseIsEqualDeep(object, other, equalFunc, customizer, isWhere, stackA, 
   if (isSameTag && !(objIsArr || objIsObj)) {
     return equalByTag(object, other, objTag);
   }
-  var valWrapped = objIsObj && hasOwnProperty.call(object, '__wrapped__'),
-      othWrapped = othIsObj && hasOwnProperty.call(other, '__wrapped__');
+  if (!isLoose) {
+    var valWrapped = objIsObj && hasOwnProperty.call(object, '__wrapped__'),
+        othWrapped = othIsObj && hasOwnProperty.call(other, '__wrapped__');
 
-  if (valWrapped || othWrapped) {
-    return equalFunc(valWrapped ? object.value() : object, othWrapped ? other.value() : other, customizer, isWhere, stackA, stackB);
+    if (valWrapped || othWrapped) {
+      return equalFunc(valWrapped ? object.value() : object, othWrapped ? other.value() : other, customizer, isLoose, stackA, stackB);
+    }
   }
   if (!isSameTag) {
     return false;
@@ -23576,7 +24151,7 @@ function baseIsEqualDeep(object, other, equalFunc, customizer, isWhere, stackA, 
   stackA.push(object);
   stackB.push(other);
 
-  var result = (objIsArr ? equalArrays : equalObjects)(object, other, equalFunc, customizer, isWhere, stackA, stackB);
+  var result = (objIsArr ? equalArrays : equalObjects)(object, other, equalFunc, customizer, isLoose, stackA, stackB);
 
   stackA.pop();
   stackB.pop();
@@ -23586,7 +24161,7 @@ function baseIsEqualDeep(object, other, equalFunc, customizer, isWhere, stackA, 
 
 module.exports = baseIsEqualDeep;
 
-},{"133":133,"134":134,"135":135,"150":150,"157":157}],113:[function(_dereq_,module,exports){
+},{"145":145,"146":146,"147":147,"165":165,"172":172}],120:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.isFunction` without support for environments
  * with incorrect `typeof` results.
@@ -23603,18 +24178,12 @@ function baseIsFunction(value) {
 
 module.exports = baseIsFunction;
 
-},{}],114:[function(_dereq_,module,exports){
-var baseIsEqual = _dereq_(111);
-
-/** Used for native method references. */
-var objectProto = Object.prototype;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
+},{}],121:[function(_dereq_,module,exports){
+var baseIsEqual = _dereq_(118);
 
 /**
  * The base implementation of `_.isMatch` without support for callback
- * shorthands or `this` binding.
+ * shorthands and `this` binding.
  *
  * @private
  * @param {Object} object The object to inspect.
@@ -23625,32 +24194,29 @@ var hasOwnProperty = objectProto.hasOwnProperty;
  * @returns {boolean} Returns `true` if `object` is a match, else `false`.
  */
 function baseIsMatch(object, props, values, strictCompareFlags, customizer) {
-  var length = props.length;
-  if (object == null) {
-    return !length;
-  }
   var index = -1,
+      length = props.length,
       noCustomizer = !customizer;
 
   while (++index < length) {
     if ((noCustomizer && strictCompareFlags[index])
           ? values[index] !== object[props[index]]
-          : !hasOwnProperty.call(object, props[index])
+          : !(props[index] in object)
         ) {
       return false;
     }
   }
   index = -1;
   while (++index < length) {
-    var key = props[index];
-    if (noCustomizer && strictCompareFlags[index]) {
-      var result = hasOwnProperty.call(object, key);
-    } else {
-      var objValue = object[key],
-          srcValue = values[index];
+    var key = props[index],
+        objValue = object[key],
+        srcValue = values[index];
 
+    if (noCustomizer && strictCompareFlags[index]) {
+      var result = objValue !== undefined || (key in object);
+    } else {
       result = customizer ? customizer(objValue, srcValue, key) : undefined;
-      if (typeof result == 'undefined') {
+      if (result === undefined) {
         result = baseIsEqual(srcValue, objValue, customizer, true);
       }
     }
@@ -23663,12 +24229,13 @@ function baseIsMatch(object, props, values, strictCompareFlags, customizer) {
 
 module.exports = baseIsMatch;
 
-},{"111":111}],115:[function(_dereq_,module,exports){
-var baseEach = _dereq_(102);
+},{"118":118}],122:[function(_dereq_,module,exports){
+var baseEach = _dereq_(107),
+    isArrayLike = _dereq_(151);
 
 /**
  * The base implementation of `_.map` without support for callback shorthands
- * or `this` binding.
+ * and `this` binding.
  *
  * @private
  * @param {Array|Object|string} collection The collection to iterate over.
@@ -23676,25 +24243,23 @@ var baseEach = _dereq_(102);
  * @returns {Array} Returns the new mapped array.
  */
 function baseMap(collection, iteratee) {
-  var result = [];
+  var index = -1,
+      result = isArrayLike(collection) ? Array(collection.length) : [];
+
   baseEach(collection, function(value, key, collection) {
-    result.push(iteratee(value, key, collection));
+    result[++index] = iteratee(value, key, collection);
   });
   return result;
 }
 
 module.exports = baseMap;
 
-},{"102":102}],116:[function(_dereq_,module,exports){
-var baseIsMatch = _dereq_(114),
-    isStrictComparable = _dereq_(142),
-    keys = _dereq_(160);
-
-/** Used for native method references. */
-var objectProto = Object.prototype;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
+},{"107":107,"151":151}],123:[function(_dereq_,module,exports){
+var baseIsMatch = _dereq_(121),
+    constant = _dereq_(183),
+    isStrictComparable = _dereq_(157),
+    keys = _dereq_(175),
+    toObject = _dereq_(162);
 
 /**
  * The base implementation of `_.matches` which does not clone `source`.
@@ -23707,13 +24272,19 @@ function baseMatches(source) {
   var props = keys(source),
       length = props.length;
 
+  if (!length) {
+    return constant(true);
+  }
   if (length == 1) {
     var key = props[0],
         value = source[key];
 
     if (isStrictComparable(value)) {
       return function(object) {
-        return object != null && object[key] === value && hasOwnProperty.call(object, key);
+        if (object == null) {
+          return false;
+        }
+        return object[key] === value && (value !== undefined || (key in toObject(object)));
       };
     }
   }
@@ -23726,47 +24297,76 @@ function baseMatches(source) {
     strictCompareFlags[length] = isStrictComparable(value);
   }
   return function(object) {
-    return baseIsMatch(object, props, values, strictCompareFlags);
+    return object != null && baseIsMatch(toObject(object), props, values, strictCompareFlags);
   };
 }
 
 module.exports = baseMatches;
 
-},{"114":114,"142":142,"160":160}],117:[function(_dereq_,module,exports){
-var baseIsEqual = _dereq_(111),
-    isStrictComparable = _dereq_(142);
+},{"121":121,"157":157,"162":162,"175":175,"183":183}],124:[function(_dereq_,module,exports){
+var baseGet = _dereq_(116),
+    baseIsEqual = _dereq_(118),
+    baseSlice = _dereq_(130),
+    isArray = _dereq_(165),
+    isKey = _dereq_(154),
+    isStrictComparable = _dereq_(157),
+    last = _dereq_(79),
+    toObject = _dereq_(162),
+    toPath = _dereq_(163);
 
 /**
- * The base implementation of `_.matchesProperty` which does not coerce `key`
- * to a string.
+ * The base implementation of `_.matchesProperty` which does not which does
+ * not clone `value`.
  *
  * @private
- * @param {string} key The key of the property to get.
+ * @param {string} path The path of the property to get.
  * @param {*} value The value to compare.
  * @returns {Function} Returns the new function.
  */
-function baseMatchesProperty(key, value) {
-  if (isStrictComparable(value)) {
-    return function(object) {
-      return object != null && object[key] === value;
-    };
-  }
+function baseMatchesProperty(path, value) {
+  var isArr = isArray(path),
+      isCommon = isKey(path) && isStrictComparable(value),
+      pathKey = (path + '');
+
+  path = toPath(path);
   return function(object) {
-    return object != null && baseIsEqual(value, object[key], null, true);
+    if (object == null) {
+      return false;
+    }
+    var key = pathKey;
+    object = toObject(object);
+    if ((isArr || !isCommon) && !(key in object)) {
+      object = path.length == 1 ? object : baseGet(object, baseSlice(path, 0, -1));
+      if (object == null) {
+        return false;
+      }
+      key = last(path);
+      object = toObject(object);
+    }
+    return object[key] === value
+      ? (value !== undefined || (key in object))
+      : baseIsEqual(value, object[key], null, true);
   };
 }
 
 module.exports = baseMatchesProperty;
 
-},{"111":111,"142":142}],118:[function(_dereq_,module,exports){
-var arrayEach = _dereq_(91),
-    baseForOwn = _dereq_(109),
-    baseMergeDeep = _dereq_(119),
-    isArray = _dereq_(150),
-    isLength = _dereq_(140),
-    isObject = _dereq_(154),
-    isObjectLike = _dereq_(141),
-    isTypedArray = _dereq_(157);
+},{"116":116,"118":118,"130":130,"154":154,"157":157,"162":162,"163":163,"165":165,"79":79}],125:[function(_dereq_,module,exports){
+var arrayEach = _dereq_(95),
+    baseMergeDeep = _dereq_(126),
+    getSymbols = _dereq_(149),
+    isArray = _dereq_(165),
+    isArrayLike = _dereq_(151),
+    isObject = _dereq_(169),
+    isObjectLike = _dereq_(156),
+    isTypedArray = _dereq_(172),
+    keys = _dereq_(175);
+
+/** Used for native method references. */
+var arrayProto = Array.prototype;
+
+/** Native method references. */
+var push = arrayProto.push;
 
 /**
  * The base implementation of `_.merge` without support for argument juggling,
@@ -23778,29 +24378,39 @@ var arrayEach = _dereq_(91),
  * @param {Function} [customizer] The function to customize merging properties.
  * @param {Array} [stackA=[]] Tracks traversed source objects.
  * @param {Array} [stackB=[]] Associates values with source counterparts.
- * @returns {Object} Returns the destination object.
+ * @returns {Object} Returns `object`.
  */
 function baseMerge(object, source, customizer, stackA, stackB) {
   if (!isObject(object)) {
     return object;
   }
-  var isSrcArr = isLength(source.length) && (isArray(source) || isTypedArray(source));
-  (isSrcArr ? arrayEach : baseForOwn)(source, function(srcValue, key, source) {
+  var isSrcArr = isArrayLike(source) && (isArray(source) || isTypedArray(source));
+  if (!isSrcArr) {
+    var props = keys(source);
+    push.apply(props, getSymbols(source));
+  }
+  arrayEach(props || source, function(srcValue, key) {
+    if (props) {
+      key = srcValue;
+      srcValue = source[key];
+    }
     if (isObjectLike(srcValue)) {
       stackA || (stackA = []);
       stackB || (stackB = []);
-      return baseMergeDeep(object, source, key, baseMerge, customizer, stackA, stackB);
+      baseMergeDeep(object, source, key, baseMerge, customizer, stackA, stackB);
     }
-    var value = object[key],
-        result = customizer ? customizer(value, srcValue, key, object, source) : undefined,
-        isCommon = typeof result == 'undefined';
+    else {
+      var value = object[key],
+          result = customizer ? customizer(value, srcValue, key, object, source) : undefined,
+          isCommon = result === undefined;
 
-    if (isCommon) {
-      result = srcValue;
-    }
-    if ((isSrcArr || typeof result != 'undefined') &&
-        (isCommon || (result === result ? (result !== value) : (value === value)))) {
-      object[key] = result;
+      if (isCommon) {
+        result = srcValue;
+      }
+      if ((isSrcArr || result !== undefined) &&
+          (isCommon || (result === result ? (result !== value) : (value === value)))) {
+        object[key] = result;
+      }
     }
   });
   return object;
@@ -23808,14 +24418,14 @@ function baseMerge(object, source, customizer, stackA, stackB) {
 
 module.exports = baseMerge;
 
-},{"109":109,"119":119,"140":140,"141":141,"150":150,"154":154,"157":157,"91":91}],119:[function(_dereq_,module,exports){
-var arrayCopy = _dereq_(90),
-    isArguments = _dereq_(149),
-    isArray = _dereq_(150),
-    isLength = _dereq_(140),
-    isPlainObject = _dereq_(155),
-    isTypedArray = _dereq_(157),
-    toPlainObject = _dereq_(158);
+},{"126":126,"149":149,"151":151,"156":156,"165":165,"169":169,"172":172,"175":175,"95":95}],126:[function(_dereq_,module,exports){
+var arrayCopy = _dereq_(94),
+    isArguments = _dereq_(164),
+    isArray = _dereq_(165),
+    isArrayLike = _dereq_(151),
+    isPlainObject = _dereq_(170),
+    isTypedArray = _dereq_(172),
+    toPlainObject = _dereq_(173);
 
 /**
  * A specialized version of `baseMerge` for arrays and objects which performs
@@ -23844,14 +24454,14 @@ function baseMergeDeep(object, source, key, mergeFunc, customizer, stackA, stack
   }
   var value = object[key],
       result = customizer ? customizer(value, srcValue, key, object, source) : undefined,
-      isCommon = typeof result == 'undefined';
+      isCommon = result === undefined;
 
   if (isCommon) {
     result = srcValue;
-    if (isLength(srcValue.length) && (isArray(srcValue) || isTypedArray(srcValue))) {
+    if (isArrayLike(srcValue) && (isArray(srcValue) || isTypedArray(srcValue))) {
       result = isArray(value)
         ? value
-        : (value ? arrayCopy(value) : []);
+        : (isArrayLike(value) ? arrayCopy(value) : []);
     }
     else if (isPlainObject(srcValue) || isArguments(srcValue)) {
       result = isArguments(value)
@@ -23877,9 +24487,9 @@ function baseMergeDeep(object, source, key, mergeFunc, customizer, stackA, stack
 
 module.exports = baseMergeDeep;
 
-},{"140":140,"149":149,"150":150,"155":155,"157":157,"158":158,"90":90}],120:[function(_dereq_,module,exports){
+},{"151":151,"164":164,"165":165,"170":170,"172":172,"173":173,"94":94}],127:[function(_dereq_,module,exports){
 /**
- * The base implementation of `_.property` which does not coerce `key` to a string.
+ * The base implementation of `_.property` without support for deep paths.
  *
  * @private
  * @param {string} key The key of the property to get.
@@ -23893,10 +24503,31 @@ function baseProperty(key) {
 
 module.exports = baseProperty;
 
-},{}],121:[function(_dereq_,module,exports){
+},{}],128:[function(_dereq_,module,exports){
+var baseGet = _dereq_(116),
+    toPath = _dereq_(163);
+
+/**
+ * A specialized version of `baseProperty` which supports deep paths.
+ *
+ * @private
+ * @param {Array|string} path The path of the property to get.
+ * @returns {Function} Returns the new function.
+ */
+function basePropertyDeep(path) {
+  var pathKey = (path + '');
+  path = toPath(path);
+  return function(object) {
+    return baseGet(object, path, pathKey);
+  };
+}
+
+module.exports = basePropertyDeep;
+
+},{"116":116,"163":163}],129:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.reduce` and `_.reduceRight` without support
- * for callback shorthands or `this` binding, which iterates over `collection`
+ * for callback shorthands and `this` binding, which iterates over `collection`
  * using the provided `eachFunc`.
  *
  * @private
@@ -23919,26 +24550,7 @@ function baseReduce(collection, iteratee, accumulator, initFromCollection, eachF
 
 module.exports = baseReduce;
 
-},{}],122:[function(_dereq_,module,exports){
-var identity = _dereq_(169),
-    metaMap = _dereq_(143);
-
-/**
- * The base implementation of `setData` without support for hot loop detection.
- *
- * @private
- * @param {Function} func The function to associate metadata with.
- * @param {*} data The metadata.
- * @returns {Function} Returns `func`.
- */
-var baseSetData = !metaMap ? identity : function(func, data) {
-  metaMap.set(func, data);
-  return func;
-};
-
-module.exports = baseSetData;
-
-},{"143":143,"169":169}],123:[function(_dereq_,module,exports){
+},{}],130:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.slice` without an iteratee call guard.
  *
@@ -23956,7 +24568,7 @@ function baseSlice(array, start, end) {
   if (start < 0) {
     start = -start > length ? 0 : (length + start);
   }
-  end = (typeof end == 'undefined' || end > length) ? length : (+end || 0);
+  end = (end === undefined || end > length) ? length : (+end || 0);
   if (end < 0) {
     end += length;
   }
@@ -23972,12 +24584,12 @@ function baseSlice(array, start, end) {
 
 module.exports = baseSlice;
 
-},{}],124:[function(_dereq_,module,exports){
-var baseEach = _dereq_(102);
+},{}],131:[function(_dereq_,module,exports){
+var baseEach = _dereq_(107);
 
 /**
  * The base implementation of `_.some` without support for callback shorthands
- * or `this` binding.
+ * and `this` binding.
  *
  * @private
  * @param {Array|Object|string} collection The collection to iterate over.
@@ -23997,7 +24609,7 @@ function baseSome(collection, predicate) {
 
 module.exports = baseSome;
 
-},{"102":102}],125:[function(_dereq_,module,exports){
+},{"107":107}],132:[function(_dereq_,module,exports){
 /**
  * Converts `value` to a string if it is not one. An empty string is returned
  * for `null` or `undefined` values.
@@ -24015,11 +24627,11 @@ function baseToString(value) {
 
 module.exports = baseToString;
 
-},{}],126:[function(_dereq_,module,exports){
+},{}],133:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.values` and `_.valuesIn` which creates an
  * array of `object` property values corresponding to the property names
- * returned by `keysFunc`.
+ * of `props`.
  *
  * @private
  * @param {Object} object The object to query.
@@ -24039,8 +24651,8 @@ function baseValues(object, props) {
 
 module.exports = baseValues;
 
-},{}],127:[function(_dereq_,module,exports){
-var identity = _dereq_(169);
+},{}],134:[function(_dereq_,module,exports){
+var identity = _dereq_(184);
 
 /**
  * A specialized version of `baseCallback` which only supports `this` binding
@@ -24056,7 +24668,7 @@ function bindCallback(func, thisArg, argCount) {
   if (typeof func != 'function') {
     return identity;
   }
-  if (typeof thisArg == 'undefined') {
+  if (thisArg === undefined) {
     return func;
   }
   switch (argCount) {
@@ -24080,8 +24692,8 @@ function bindCallback(func, thisArg, argCount) {
 
 module.exports = bindCallback;
 
-},{"169":169}],128:[function(_dereq_,module,exports){
-var isObject = _dereq_(154);
+},{"184":184}],135:[function(_dereq_,module,exports){
+var isObject = _dereq_(169);
 
 /**
  * Checks if `value` is in `cache` mimicking the return signature of
@@ -24101,8 +24713,8 @@ function cacheIndexOf(cache, value) {
 
 module.exports = cacheIndexOf;
 
-},{"154":154}],129:[function(_dereq_,module,exports){
-var isObject = _dereq_(154);
+},{"169":169}],136:[function(_dereq_,module,exports){
+var isObject = _dereq_(169);
 
 /**
  * Adds `value` to the cache.
@@ -24123,15 +24735,18 @@ function cachePush(value) {
 
 module.exports = cachePush;
 
-},{"154":154}],130:[function(_dereq_,module,exports){
-var baseCallback = _dereq_(98),
-    baseEach = _dereq_(102),
-    isArray = _dereq_(150);
+},{"169":169}],137:[function(_dereq_,module,exports){
+var baseCallback = _dereq_(103),
+    baseEach = _dereq_(107),
+    isArray = _dereq_(165);
 
 /**
  * Creates a function that aggregates a collection, creating an accumulator
  * object composed from the results of running each element in the collection
  * through an iteratee.
+ *
+ * **Note:** This function is used to create `_.countBy`, `_.groupBy`, `_.indexBy`,
+ * and `_.partition`.
  *
  * @private
  * @param {Function} setter The function to set keys and values of the accumulator object.
@@ -24162,60 +24777,119 @@ function createAggregator(setter, initializer) {
 
 module.exports = createAggregator;
 
-},{"102":102,"150":150,"98":98}],131:[function(_dereq_,module,exports){
-var bindCallback = _dereq_(127),
-    isIterateeCall = _dereq_(139);
+},{"103":103,"107":107,"165":165}],138:[function(_dereq_,module,exports){
+var bindCallback = _dereq_(134),
+    isIterateeCall = _dereq_(153),
+    restParam = _dereq_(92);
 
 /**
  * Creates a function that assigns properties of source object(s) to a given
  * destination object.
+ *
+ * **Note:** This function is used to create `_.assign`, `_.defaults`, and `_.merge`.
  *
  * @private
  * @param {Function} assigner The function to assign values.
  * @returns {Function} Returns the new assigner function.
  */
 function createAssigner(assigner) {
-  return function() {
-    var args = arguments,
-        length = args.length,
-        object = args[0];
+  return restParam(function(object, sources) {
+    var index = -1,
+        length = object == null ? 0 : sources.length,
+        customizer = length > 2 && sources[length - 2],
+        guard = length > 2 && sources[2],
+        thisArg = length > 1 && sources[length - 1];
 
-    if (length < 2 || object == null) {
-      return object;
-    }
-    var customizer = args[length - 2],
-        thisArg = args[length - 1],
-        guard = args[3];
-
-    if (length > 3 && typeof customizer == 'function') {
+    if (typeof customizer == 'function') {
       customizer = bindCallback(customizer, thisArg, 5);
       length -= 2;
     } else {
-      customizer = (length > 2 && typeof thisArg == 'function') ? thisArg : null;
+      customizer = typeof thisArg == 'function' ? thisArg : null;
       length -= (customizer ? 1 : 0);
     }
-    if (guard && isIterateeCall(args[1], args[2], guard)) {
-      customizer = length == 3 ? null : customizer;
-      length = 2;
+    if (guard && isIterateeCall(sources[0], sources[1], guard)) {
+      customizer = length < 3 ? null : customizer;
+      length = 1;
     }
-    var index = 0;
     while (++index < length) {
-      var source = args[index];
+      var source = sources[index];
       if (source) {
         assigner(object, source, customizer);
+      }
+    }
+    return object;
+  });
+}
+
+module.exports = createAssigner;
+
+},{"134":134,"153":153,"92":92}],139:[function(_dereq_,module,exports){
+var getLength = _dereq_(148),
+    isLength = _dereq_(155),
+    toObject = _dereq_(162);
+
+/**
+ * Creates a `baseEach` or `baseEachRight` function.
+ *
+ * @private
+ * @param {Function} eachFunc The function to iterate over a collection.
+ * @param {boolean} [fromRight] Specify iterating from right to left.
+ * @returns {Function} Returns the new base function.
+ */
+function createBaseEach(eachFunc, fromRight) {
+  return function(collection, iteratee) {
+    var length = collection ? getLength(collection) : 0;
+    if (!isLength(length)) {
+      return eachFunc(collection, iteratee);
+    }
+    var index = fromRight ? length : -1,
+        iterable = toObject(collection);
+
+    while ((fromRight ? index-- : ++index < length)) {
+      if (iteratee(iterable[index], index, iterable) === false) {
+        break;
+      }
+    }
+    return collection;
+  };
+}
+
+module.exports = createBaseEach;
+
+},{"148":148,"155":155,"162":162}],140:[function(_dereq_,module,exports){
+var toObject = _dereq_(162);
+
+/**
+ * Creates a base function for `_.forIn` or `_.forInRight`.
+ *
+ * @private
+ * @param {boolean} [fromRight] Specify iterating from right to left.
+ * @returns {Function} Returns the new base function.
+ */
+function createBaseFor(fromRight) {
+  return function(object, iteratee, keysFunc) {
+    var iterable = toObject(object),
+        props = keysFunc(object),
+        length = props.length,
+        index = fromRight ? length : -1;
+
+    while ((fromRight ? index-- : ++index < length)) {
+      var key = props[index];
+      if (iteratee(iterable[key], key, iterable) === false) {
+        break;
       }
     }
     return object;
   };
 }
 
-module.exports = createAssigner;
+module.exports = createBaseFor;
 
-},{"127":127,"139":139}],132:[function(_dereq_,module,exports){
+},{"162":162}],141:[function(_dereq_,module,exports){
 (function (global){
-var SetCache = _dereq_(89),
-    constant = _dereq_(168),
-    isNative = _dereq_(152);
+var SetCache = _dereq_(93),
+    constant = _dereq_(183),
+    isNative = _dereq_(167);
 
 /** Native method references. */
 var Set = isNative(Set = global.Set) && Set;
@@ -24238,7 +24912,80 @@ module.exports = createCache;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"152":152,"168":168,"89":89}],133:[function(_dereq_,module,exports){
+},{"167":167,"183":183,"93":93}],142:[function(_dereq_,module,exports){
+var baseCallback = _dereq_(103),
+    baseFind = _dereq_(110),
+    baseFindIndex = _dereq_(111),
+    isArray = _dereq_(165);
+
+/**
+ * Creates a `_.find` or `_.findLast` function.
+ *
+ * @private
+ * @param {Function} eachFunc The function to iterate over a collection.
+ * @param {boolean} [fromRight] Specify iterating from right to left.
+ * @returns {Function} Returns the new find function.
+ */
+function createFind(eachFunc, fromRight) {
+  return function(collection, predicate, thisArg) {
+    predicate = baseCallback(predicate, thisArg, 3);
+    if (isArray(collection)) {
+      var index = baseFindIndex(collection, predicate, fromRight);
+      return index > -1 ? collection[index] : undefined;
+    }
+    return baseFind(collection, predicate, eachFunc);
+  };
+}
+
+module.exports = createFind;
+
+},{"103":103,"110":110,"111":111,"165":165}],143:[function(_dereq_,module,exports){
+var bindCallback = _dereq_(134),
+    isArray = _dereq_(165);
+
+/**
+ * Creates a function for `_.forEach` or `_.forEachRight`.
+ *
+ * @private
+ * @param {Function} arrayFunc The function to iterate over an array.
+ * @param {Function} eachFunc The function to iterate over a collection.
+ * @returns {Function} Returns the new each function.
+ */
+function createForEach(arrayFunc, eachFunc) {
+  return function(collection, iteratee, thisArg) {
+    return (typeof iteratee == 'function' && thisArg === undefined && isArray(collection))
+      ? arrayFunc(collection, iteratee)
+      : eachFunc(collection, bindCallback(iteratee, thisArg, 3));
+  };
+}
+
+module.exports = createForEach;
+
+},{"134":134,"165":165}],144:[function(_dereq_,module,exports){
+var baseCallback = _dereq_(103),
+    baseReduce = _dereq_(129),
+    isArray = _dereq_(165);
+
+/**
+ * Creates a function for `_.reduce` or `_.reduceRight`.
+ *
+ * @private
+ * @param {Function} arrayFunc The function to iterate over an array.
+ * @param {Function} eachFunc The function to iterate over a collection.
+ * @returns {Function} Returns the new each function.
+ */
+function createReduce(arrayFunc, eachFunc) {
+  return function(collection, iteratee, accumulator, thisArg) {
+    var initFromArray = arguments.length < 3;
+    return (typeof iteratee == 'function' && thisArg === undefined && isArray(collection))
+      ? arrayFunc(collection, iteratee, accumulator, initFromArray)
+      : baseReduce(collection, baseCallback(iteratee, thisArg, 4), accumulator, initFromArray, eachFunc);
+  };
+}
+
+module.exports = createReduce;
+
+},{"103":103,"129":129,"165":165}],145:[function(_dereq_,module,exports){
 /**
  * A specialized version of `baseIsEqualDeep` for arrays with support for
  * partial deep comparisons.
@@ -24248,18 +24995,18 @@ module.exports = createCache;
  * @param {Array} other The other array to compare.
  * @param {Function} equalFunc The function to determine equivalents of values.
  * @param {Function} [customizer] The function to customize comparing arrays.
- * @param {boolean} [isWhere] Specify performing partial comparisons.
+ * @param {boolean} [isLoose] Specify performing partial comparisons.
  * @param {Array} [stackA] Tracks traversed `value` objects.
  * @param {Array} [stackB] Tracks traversed `other` objects.
  * @returns {boolean} Returns `true` if the arrays are equivalent, else `false`.
  */
-function equalArrays(array, other, equalFunc, customizer, isWhere, stackA, stackB) {
+function equalArrays(array, other, equalFunc, customizer, isLoose, stackA, stackB) {
   var index = -1,
       arrLength = array.length,
       othLength = other.length,
       result = true;
 
-  if (arrLength != othLength && !(isWhere && othLength > arrLength)) {
+  if (arrLength != othLength && !(isLoose && othLength > arrLength)) {
     return false;
   }
   // Deep compare the contents, ignoring non-numeric properties.
@@ -24269,23 +25016,23 @@ function equalArrays(array, other, equalFunc, customizer, isWhere, stackA, stack
 
     result = undefined;
     if (customizer) {
-      result = isWhere
+      result = isLoose
         ? customizer(othValue, arrValue, index)
         : customizer(arrValue, othValue, index);
     }
-    if (typeof result == 'undefined') {
+    if (result === undefined) {
       // Recursively compare arrays (susceptible to call stack limits).
-      if (isWhere) {
+      if (isLoose) {
         var othIndex = othLength;
         while (othIndex--) {
           othValue = other[othIndex];
-          result = (arrValue && arrValue === othValue) || equalFunc(arrValue, othValue, customizer, isWhere, stackA, stackB);
+          result = (arrValue && arrValue === othValue) || equalFunc(arrValue, othValue, customizer, isLoose, stackA, stackB);
           if (result) {
             break;
           }
         }
       } else {
-        result = (arrValue && arrValue === othValue) || equalFunc(arrValue, othValue, customizer, isWhere, stackA, stackB);
+        result = (arrValue && arrValue === othValue) || equalFunc(arrValue, othValue, customizer, isLoose, stackA, stackB);
       }
     }
   }
@@ -24294,7 +25041,7 @@ function equalArrays(array, other, equalFunc, customizer, isWhere, stackA, stack
 
 module.exports = equalArrays;
 
-},{}],134:[function(_dereq_,module,exports){
+},{}],146:[function(_dereq_,module,exports){
 /** `Object#toString` result references. */
 var boolTag = '[object Boolean]',
     dateTag = '[object Date]',
@@ -24331,8 +25078,7 @@ function equalByTag(object, other, tag) {
       // Treat `NaN` vs. `NaN` as equal.
       return (object != +object)
         ? other != +other
-        // But, treat `-0` vs. `+0` as not equal.
-        : (object == 0 ? ((1 / object) == (1 / other)) : object == +other);
+        : object == +other;
 
     case regexpTag:
     case stringTag:
@@ -24345,8 +25091,8 @@ function equalByTag(object, other, tag) {
 
 module.exports = equalByTag;
 
-},{}],135:[function(_dereq_,module,exports){
-var keys = _dereq_(160);
+},{}],147:[function(_dereq_,module,exports){
+var keys = _dereq_(175);
 
 /** Used for native method references. */
 var objectProto = Object.prototype;
@@ -24363,26 +25109,26 @@ var hasOwnProperty = objectProto.hasOwnProperty;
  * @param {Object} other The other object to compare.
  * @param {Function} equalFunc The function to determine equivalents of values.
  * @param {Function} [customizer] The function to customize comparing values.
- * @param {boolean} [isWhere] Specify performing partial comparisons.
+ * @param {boolean} [isLoose] Specify performing partial comparisons.
  * @param {Array} [stackA] Tracks traversed `value` objects.
  * @param {Array} [stackB] Tracks traversed `other` objects.
  * @returns {boolean} Returns `true` if the objects are equivalent, else `false`.
  */
-function equalObjects(object, other, equalFunc, customizer, isWhere, stackA, stackB) {
+function equalObjects(object, other, equalFunc, customizer, isLoose, stackA, stackB) {
   var objProps = keys(object),
       objLength = objProps.length,
       othProps = keys(other),
       othLength = othProps.length;
 
-  if (objLength != othLength && !isWhere) {
+  if (objLength != othLength && !isLoose) {
     return false;
   }
-  var hasCtor,
+  var skipCtor = isLoose,
       index = -1;
 
   while (++index < objLength) {
     var key = objProps[index],
-        result = hasOwnProperty.call(other, key);
+        result = isLoose ? key in other : hasOwnProperty.call(other, key);
 
     if (result) {
       var objValue = object[key],
@@ -24390,21 +25136,21 @@ function equalObjects(object, other, equalFunc, customizer, isWhere, stackA, sta
 
       result = undefined;
       if (customizer) {
-        result = isWhere
+        result = isLoose
           ? customizer(othValue, objValue, key)
           : customizer(objValue, othValue, key);
       }
-      if (typeof result == 'undefined') {
+      if (result === undefined) {
         // Recursively compare objects (susceptible to call stack limits).
-        result = (objValue && objValue === othValue) || equalFunc(objValue, othValue, customizer, isWhere, stackA, stackB);
+        result = (objValue && objValue === othValue) || equalFunc(objValue, othValue, customizer, isLoose, stackA, stackB);
       }
     }
     if (!result) {
       return false;
     }
-    hasCtor || (hasCtor = key == 'constructor');
+    skipCtor || (skipCtor = key == 'constructor');
   }
-  if (!hasCtor) {
+  if (!skipCtor) {
     var objCtor = object.constructor,
         othCtor = other.constructor;
 
@@ -24421,10 +25167,47 @@ function equalObjects(object, other, equalFunc, customizer, isWhere, stackA, sta
 
 module.exports = equalObjects;
 
-},{"160":160}],136:[function(_dereq_,module,exports){
+},{"175":175}],148:[function(_dereq_,module,exports){
+var baseProperty = _dereq_(127);
+
+/**
+ * Gets the "length" property value of `object`.
+ *
+ * **Note:** This function is used to avoid a [JIT bug](https://bugs.webkit.org/show_bug.cgi?id=142792)
+ * that affects Safari on at least iOS 8.1-8.3 ARM64.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @returns {*} Returns the "length" value.
+ */
+var getLength = baseProperty('length');
+
+module.exports = getLength;
+
+},{"127":127}],149:[function(_dereq_,module,exports){
+var constant = _dereq_(183),
+    isNative = _dereq_(167),
+    toObject = _dereq_(162);
+
+/** Native method references. */
+var getOwnPropertySymbols = isNative(getOwnPropertySymbols = Object.getOwnPropertySymbols) && getOwnPropertySymbols;
+
+/**
+ * Creates an array of the own symbols of `object`.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @returns {Array} Returns the array of symbols.
+ */
+var getSymbols = !getOwnPropertySymbols ? constant([]) : function(object) {
+  return getOwnPropertySymbols(toObject(object));
+};
+
+module.exports = getSymbols;
+
+},{"162":162,"167":167,"183":183}],150:[function(_dereq_,module,exports){
 /**
  * Gets the index at which the first occurrence of `NaN` is found in `array`.
- * If `fromRight` is provided elements of `array` are iterated from right to left.
  *
  * @private
  * @param {Array} array The array to search.
@@ -24447,51 +25230,27 @@ function indexOfNaN(array, fromIndex, fromRight) {
 
 module.exports = indexOfNaN;
 
-},{}],137:[function(_dereq_,module,exports){
-var baseSetData = _dereq_(122),
-    isNative = _dereq_(152),
-    support = _dereq_(167);
-
-/** Used to detect named functions. */
-var reFuncName = /^\s*function[ \n\r\t]+\w/;
-
-/** Used to detect functions containing a `this` reference. */
-var reThis = /\bthis\b/;
-
-/** Used to resolve the decompiled source of functions. */
-var fnToString = Function.prototype.toString;
+},{}],151:[function(_dereq_,module,exports){
+var getLength = _dereq_(148),
+    isLength = _dereq_(155);
 
 /**
- * Checks if `func` is eligible for `this` binding.
+ * Checks if `value` is array-like.
  *
  * @private
- * @param {Function} func The function to check.
- * @returns {boolean} Returns `true` if `func` is eligible, else `false`.
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is array-like, else `false`.
  */
-function isBindable(func) {
-  var result = !(support.funcNames ? func.name : support.funcDecomp);
-
-  if (!result) {
-    var source = fnToString.call(func);
-    if (!support.funcNames) {
-      result = !reFuncName.test(source);
-    }
-    if (!result) {
-      // Check if `func` references the `this` keyword and store the result.
-      result = reThis.test(source) || isNative(func);
-      baseSetData(func, result);
-    }
-  }
-  return result;
+function isArrayLike(value) {
+  return value != null && isLength(getLength(value));
 }
 
-module.exports = isBindable;
+module.exports = isArrayLike;
 
-},{"122":122,"152":152,"167":167}],138:[function(_dereq_,module,exports){
+},{"148":148,"155":155}],152:[function(_dereq_,module,exports){
 /**
- * Used as the maximum length of an array-like value.
- * See the [ES spec](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-number.max_safe_integer)
- * for more details.
+ * Used as the [maximum length](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-number.max_safe_integer)
+ * of an array-like value.
  */
 var MAX_SAFE_INTEGER = Math.pow(2, 53) - 1;
 
@@ -24511,10 +25270,10 @@ function isIndex(value, length) {
 
 module.exports = isIndex;
 
-},{}],139:[function(_dereq_,module,exports){
-var isIndex = _dereq_(138),
-    isLength = _dereq_(140),
-    isObject = _dereq_(154);
+},{}],153:[function(_dereq_,module,exports){
+var isArrayLike = _dereq_(151),
+    isIndex = _dereq_(152),
+    isObject = _dereq_(169);
 
 /**
  * Checks if the provided arguments are from an iteratee call.
@@ -24530,13 +25289,9 @@ function isIterateeCall(value, index, object) {
     return false;
   }
   var type = typeof index;
-  if (type == 'number') {
-    var length = object.length,
-        prereq = isLength(length) && isIndex(index, length);
-  } else {
-    prereq = type == 'string' && index in object;
-  }
-  if (prereq) {
+  if (type == 'number'
+      ? (isArrayLike(object) && isIndex(index, object.length))
+      : (type == 'string' && index in object)) {
     var other = object[index];
     return value === value ? (value === other) : (other !== other);
   }
@@ -24545,20 +25300,47 @@ function isIterateeCall(value, index, object) {
 
 module.exports = isIterateeCall;
 
-},{"138":138,"140":140,"154":154}],140:[function(_dereq_,module,exports){
+},{"151":151,"152":152,"169":169}],154:[function(_dereq_,module,exports){
+var isArray = _dereq_(165),
+    toObject = _dereq_(162);
+
+/** Used to match property names within property paths. */
+var reIsDeepProp = /\.|\[(?:[^[\]]*|(["'])(?:(?!\1)[^\n\\]|\\.)*?\1)\]/,
+    reIsPlainProp = /^\w*$/;
+
 /**
- * Used as the maximum length of an array-like value.
- * See the [ES spec](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-number.max_safe_integer)
- * for more details.
+ * Checks if `value` is a property name and not a property path.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @param {Object} [object] The object to query keys on.
+ * @returns {boolean} Returns `true` if `value` is a property name, else `false`.
+ */
+function isKey(value, object) {
+  var type = typeof value;
+  if ((type == 'string' && reIsPlainProp.test(value)) || type == 'number') {
+    return true;
+  }
+  if (isArray(value)) {
+    return false;
+  }
+  var result = !reIsDeepProp.test(value);
+  return result || (object != null && value in toObject(object));
+}
+
+module.exports = isKey;
+
+},{"162":162,"165":165}],155:[function(_dereq_,module,exports){
+/**
+ * Used as the [maximum length](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-number.max_safe_integer)
+ * of an array-like value.
  */
 var MAX_SAFE_INTEGER = Math.pow(2, 53) - 1;
 
 /**
  * Checks if `value` is a valid array-like length.
  *
- * **Note:** This function is based on ES `ToLength`. See the
- * [ES spec](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-tolength)
- * for more details.
+ * **Note:** This function is based on [`ToLength`](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-tolength).
  *
  * @private
  * @param {*} value The value to check.
@@ -24570,7 +25352,7 @@ function isLength(value) {
 
 module.exports = isLength;
 
-},{}],141:[function(_dereq_,module,exports){
+},{}],156:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is object-like.
  *
@@ -24579,13 +25361,13 @@ module.exports = isLength;
  * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
  */
 function isObjectLike(value) {
-  return (value && typeof value == 'object') || false;
+  return !!value && typeof value == 'object';
 }
 
 module.exports = isObjectLike;
 
-},{}],142:[function(_dereq_,module,exports){
-var isObject = _dereq_(154);
+},{}],157:[function(_dereq_,module,exports){
+var isObject = _dereq_(169);
 
 /**
  * Checks if `value` is suitable for strict equality comparisons, i.e. `===`.
@@ -24596,31 +25378,17 @@ var isObject = _dereq_(154);
  *  equality comparisons, else `false`.
  */
 function isStrictComparable(value) {
-  return value === value && (value === 0 ? ((1 / value) > 0) : !isObject(value));
+  return value === value && !isObject(value);
 }
 
 module.exports = isStrictComparable;
 
-},{"154":154}],143:[function(_dereq_,module,exports){
-(function (global){
-var isNative = _dereq_(152);
-
-/** Native method references. */
-var WeakMap = isNative(WeakMap = global.WeakMap) && WeakMap;
-
-/** Used to store function metadata. */
-var metaMap = WeakMap && new WeakMap;
-
-module.exports = metaMap;
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-
-},{"152":152}],144:[function(_dereq_,module,exports){
-var toObject = _dereq_(148);
+},{"169":169}],158:[function(_dereq_,module,exports){
+var toObject = _dereq_(162);
 
 /**
- * A specialized version of `_.pick` that picks `object` properties specified
- * by the `props` array.
+ * A specialized version of `_.pick` which picks `object` properties specified
+ * by `props`.
  *
  * @private
  * @param {Object} object The source object.
@@ -24645,11 +25413,11 @@ function pickByArray(object, props) {
 
 module.exports = pickByArray;
 
-},{"148":148}],145:[function(_dereq_,module,exports){
-var baseForIn = _dereq_(108);
+},{"162":162}],159:[function(_dereq_,module,exports){
+var baseForIn = _dereq_(114);
 
 /**
- * A specialized version of `_.pick` that picks `object` properties `predicate`
+ * A specialized version of `_.pick` which picks `object` properties `predicate`
  * returns truthy for.
  *
  * @private
@@ -24669,9 +25437,9 @@ function pickByCallback(object, predicate) {
 
 module.exports = pickByCallback;
 
-},{"108":108}],146:[function(_dereq_,module,exports){
-var baseForIn = _dereq_(108),
-    isObjectLike = _dereq_(141);
+},{"114":114}],160:[function(_dereq_,module,exports){
+var baseForIn = _dereq_(114),
+    isObjectLike = _dereq_(156);
 
 /** `Object#toString` result references. */
 var objectTag = '[object Object]';
@@ -24683,9 +25451,8 @@ var objectProto = Object.prototype;
 var hasOwnProperty = objectProto.hasOwnProperty;
 
 /**
- * Used to resolve the `toStringTag` of values.
- * See the [ES spec](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-object.prototype.tostring)
- * for more details.
+ * Used to resolve the [`toStringTag`](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-object.prototype.tostring)
+ * of values.
  */
 var objToString = objectProto.toString;
 
@@ -24717,18 +25484,18 @@ function shimIsPlainObject(value) {
   baseForIn(value, function(subValue, key) {
     result = key;
   });
-  return typeof result == 'undefined' || hasOwnProperty.call(value, result);
+  return result === undefined || hasOwnProperty.call(value, result);
 }
 
 module.exports = shimIsPlainObject;
 
-},{"108":108,"141":141}],147:[function(_dereq_,module,exports){
-var isArguments = _dereq_(149),
-    isArray = _dereq_(150),
-    isIndex = _dereq_(138),
-    isLength = _dereq_(140),
-    keysIn = _dereq_(161),
-    support = _dereq_(167);
+},{"114":114,"156":156}],161:[function(_dereq_,module,exports){
+var isArguments = _dereq_(164),
+    isArray = _dereq_(165),
+    isIndex = _dereq_(152),
+    isLength = _dereq_(155),
+    keysIn = _dereq_(176),
+    support = _dereq_(182);
 
 /** Used for native method references. */
 var objectProto = Object.prototype;
@@ -24741,7 +25508,7 @@ var hasOwnProperty = objectProto.hasOwnProperty;
  * own enumerable property names of `object`.
  *
  * @private
- * @param {Object} object The object to inspect.
+ * @param {Object} object The object to query.
  * @returns {Array} Returns the array of property names.
  */
 function shimKeys(object) {
@@ -24766,8 +25533,8 @@ function shimKeys(object) {
 
 module.exports = shimKeys;
 
-},{"138":138,"140":140,"149":149,"150":150,"161":161,"167":167}],148:[function(_dereq_,module,exports){
-var isObject = _dereq_(154);
+},{"152":152,"155":155,"164":164,"165":165,"176":176,"182":182}],162:[function(_dereq_,module,exports){
+var isObject = _dereq_(169);
 
 /**
  * Converts `value` to an object if it is not one.
@@ -24782,9 +25549,39 @@ function toObject(value) {
 
 module.exports = toObject;
 
-},{"154":154}],149:[function(_dereq_,module,exports){
-var isLength = _dereq_(140),
-    isObjectLike = _dereq_(141);
+},{"169":169}],163:[function(_dereq_,module,exports){
+var baseToString = _dereq_(132),
+    isArray = _dereq_(165);
+
+/** Used to match property names within property paths. */
+var rePropName = /[^.[\]]+|\[(?:(-?\d+(?:\.\d+)?)|(["'])((?:(?!\2)[^\n\\]|\\.)*?)\2)\]/g;
+
+/** Used to match backslashes in property paths. */
+var reEscapeChar = /\\(\\)?/g;
+
+/**
+ * Converts `value` to property path array if it is not one.
+ *
+ * @private
+ * @param {*} value The value to process.
+ * @returns {Array} Returns the property path array.
+ */
+function toPath(value) {
+  if (isArray(value)) {
+    return value;
+  }
+  var result = [];
+  baseToString(value).replace(rePropName, function(match, number, quote, string) {
+    result.push(quote ? string.replace(reEscapeChar, '$1') : (number || match));
+  });
+  return result;
+}
+
+module.exports = toPath;
+
+},{"132":132,"165":165}],164:[function(_dereq_,module,exports){
+var isArrayLike = _dereq_(151),
+    isObjectLike = _dereq_(156);
 
 /** `Object#toString` result references. */
 var argsTag = '[object Arguments]';
@@ -24793,9 +25590,8 @@ var argsTag = '[object Arguments]';
 var objectProto = Object.prototype;
 
 /**
- * Used to resolve the `toStringTag` of values.
- * See the [ES spec](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-object.prototype.tostring)
- * for more details.
+ * Used to resolve the [`toStringTag`](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-object.prototype.tostring)
+ * of values.
  */
 var objToString = objectProto.toString;
 
@@ -24816,16 +25612,15 @@ var objToString = objectProto.toString;
  * // => false
  */
 function isArguments(value) {
-  var length = isObjectLike(value) ? value.length : undefined;
-  return (isLength(length) && objToString.call(value) == argsTag) || false;
+  return isObjectLike(value) && isArrayLike(value) && objToString.call(value) == argsTag;
 }
 
 module.exports = isArguments;
 
-},{"140":140,"141":141}],150:[function(_dereq_,module,exports){
-var isLength = _dereq_(140),
-    isNative = _dereq_(152),
-    isObjectLike = _dereq_(141);
+},{"151":151,"156":156}],165:[function(_dereq_,module,exports){
+var isLength = _dereq_(155),
+    isNative = _dereq_(167),
+    isObjectLike = _dereq_(156);
 
 /** `Object#toString` result references. */
 var arrayTag = '[object Array]';
@@ -24834,9 +25629,8 @@ var arrayTag = '[object Array]';
 var objectProto = Object.prototype;
 
 /**
- * Used to resolve the `toStringTag` of values.
- * See the [ES spec](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-object.prototype.tostring)
- * for more details.
+ * Used to resolve the [`toStringTag`](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-object.prototype.tostring)
+ * of values.
  */
 var objToString = objectProto.toString;
 
@@ -24860,15 +25654,15 @@ var nativeIsArray = isNative(nativeIsArray = Array.isArray) && nativeIsArray;
  * // => false
  */
 var isArray = nativeIsArray || function(value) {
-  return (isObjectLike(value) && isLength(value.length) && objToString.call(value) == arrayTag) || false;
+  return isObjectLike(value) && isLength(value.length) && objToString.call(value) == arrayTag;
 };
 
 module.exports = isArray;
 
-},{"140":140,"141":141,"152":152}],151:[function(_dereq_,module,exports){
+},{"155":155,"156":156,"167":167}],166:[function(_dereq_,module,exports){
 (function (global){
-var baseIsFunction = _dereq_(113),
-    isNative = _dereq_(152);
+var baseIsFunction = _dereq_(120),
+    isNative = _dereq_(167);
 
 /** `Object#toString` result references. */
 var funcTag = '[object Function]';
@@ -24877,9 +25671,8 @@ var funcTag = '[object Function]';
 var objectProto = Object.prototype;
 
 /**
- * Used to resolve the `toStringTag` of values.
- * See the [ES spec](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-object.prototype.tostring)
- * for more details.
+ * Used to resolve the [`toStringTag`](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-object.prototype.tostring)
+ * of values.
  */
 var objToString = objectProto.toString;
 
@@ -24913,15 +25706,15 @@ module.exports = isFunction;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"113":113,"152":152}],152:[function(_dereq_,module,exports){
-var escapeRegExp = _dereq_(166),
-    isObjectLike = _dereq_(141);
+},{"120":120,"167":167}],167:[function(_dereq_,module,exports){
+var escapeRegExp = _dereq_(181),
+    isObjectLike = _dereq_(156);
 
 /** `Object#toString` result references. */
 var funcTag = '[object Function]';
 
 /** Used to detect host constructors (Safari > 5). */
-var reHostCtor = /^\[object .+?Constructor\]$/;
+var reIsHostCtor = /^\[object .+?Constructor\]$/;
 
 /** Used for native method references. */
 var objectProto = Object.prototype;
@@ -24930,14 +25723,13 @@ var objectProto = Object.prototype;
 var fnToString = Function.prototype.toString;
 
 /**
- * Used to resolve the `toStringTag` of values.
- * See the [ES spec](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-object.prototype.tostring)
- * for more details.
+ * Used to resolve the [`toStringTag`](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-object.prototype.tostring)
+ * of values.
  */
 var objToString = objectProto.toString;
 
 /** Used to detect if a method is native. */
-var reNative = RegExp('^' +
+var reIsNative = RegExp('^' +
   escapeRegExp(objToString)
   .replace(/toString|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
 );
@@ -24963,15 +25755,15 @@ function isNative(value) {
     return false;
   }
   if (objToString.call(value) == funcTag) {
-    return reNative.test(fnToString.call(value));
+    return reIsNative.test(fnToString.call(value));
   }
-  return (isObjectLike(value) && reHostCtor.test(value)) || false;
+  return isObjectLike(value) && reIsHostCtor.test(value);
 }
 
 module.exports = isNative;
 
-},{"141":141,"166":166}],153:[function(_dereq_,module,exports){
-var isObjectLike = _dereq_(141);
+},{"156":156,"181":181}],168:[function(_dereq_,module,exports){
+var isObjectLike = _dereq_(156);
 
 /** `Object#toString` result references. */
 var numberTag = '[object Number]';
@@ -24980,9 +25772,8 @@ var numberTag = '[object Number]';
 var objectProto = Object.prototype;
 
 /**
- * Used to resolve the `toStringTag` of values.
- * See the [ES spec](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-object.prototype.tostring)
- * for more details.
+ * Used to resolve the [`toStringTag`](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-object.prototype.tostring)
+ * of values.
  */
 var objToString = objectProto.toString;
 
@@ -25009,17 +25800,15 @@ var objToString = objectProto.toString;
  * // => false
  */
 function isNumber(value) {
-  return typeof value == 'number' || (isObjectLike(value) && objToString.call(value) == numberTag) || false;
+  return typeof value == 'number' || (isObjectLike(value) && objToString.call(value) == numberTag);
 }
 
 module.exports = isNumber;
 
-},{"141":141}],154:[function(_dereq_,module,exports){
+},{"156":156}],169:[function(_dereq_,module,exports){
 /**
- * Checks if `value` is the language type of `Object`.
+ * Checks if `value` is the [language type](https://es5.github.io/#x8) of `Object`.
  * (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
- *
- * **Note:** See the [ES5 spec](https://es5.github.io/#x8) for more details.
  *
  * @static
  * @memberOf _
@@ -25041,14 +25830,14 @@ function isObject(value) {
   // Avoid a V8 JIT bug in Chrome 19-20.
   // See https://code.google.com/p/v8/issues/detail?id=2291 for more details.
   var type = typeof value;
-  return type == 'function' || (value && type == 'object') || false;
+  return type == 'function' || (!!value && type == 'object');
 }
 
 module.exports = isObject;
 
-},{}],155:[function(_dereq_,module,exports){
-var isNative = _dereq_(152),
-    shimIsPlainObject = _dereq_(146);
+},{}],170:[function(_dereq_,module,exports){
+var isNative = _dereq_(167),
+    shimIsPlainObject = _dereq_(160);
 
 /** `Object#toString` result references. */
 var objectTag = '[object Object]';
@@ -25057,9 +25846,8 @@ var objectTag = '[object Object]';
 var objectProto = Object.prototype;
 
 /**
- * Used to resolve the `toStringTag` of values.
- * See the [ES spec](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-object.prototype.tostring)
- * for more details.
+ * Used to resolve the [`toStringTag`](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-object.prototype.tostring)
+ * of values.
  */
 var objToString = objectProto.toString;
 
@@ -25110,8 +25898,8 @@ var isPlainObject = !getPrototypeOf ? shimIsPlainObject : function(value) {
 
 module.exports = isPlainObject;
 
-},{"146":146,"152":152}],156:[function(_dereq_,module,exports){
-var isObjectLike = _dereq_(141);
+},{"160":160,"167":167}],171:[function(_dereq_,module,exports){
+var isObjectLike = _dereq_(156);
 
 /** `Object#toString` result references. */
 var stringTag = '[object String]';
@@ -25120,9 +25908,8 @@ var stringTag = '[object String]';
 var objectProto = Object.prototype;
 
 /**
- * Used to resolve the `toStringTag` of values.
- * See the [ES spec](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-object.prototype.tostring)
- * for more details.
+ * Used to resolve the [`toStringTag`](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-object.prototype.tostring)
+ * of values.
  */
 var objToString = objectProto.toString;
 
@@ -25143,14 +25930,14 @@ var objToString = objectProto.toString;
  * // => false
  */
 function isString(value) {
-  return typeof value == 'string' || (isObjectLike(value) && objToString.call(value) == stringTag) || false;
+  return typeof value == 'string' || (isObjectLike(value) && objToString.call(value) == stringTag);
 }
 
 module.exports = isString;
 
-},{"141":141}],157:[function(_dereq_,module,exports){
-var isLength = _dereq_(140),
-    isObjectLike = _dereq_(141);
+},{"156":156}],172:[function(_dereq_,module,exports){
+var isLength = _dereq_(155),
+    isObjectLike = _dereq_(156);
 
 /** `Object#toString` result references. */
 var argsTag = '[object Arguments]',
@@ -25197,9 +25984,8 @@ typedArrayTags[stringTag] = typedArrayTags[weakMapTag] = false;
 var objectProto = Object.prototype;
 
 /**
- * Used to resolve the `toStringTag` of values.
- * See the [ES spec](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-object.prototype.tostring)
- * for more details.
+ * Used to resolve the [`toStringTag`](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-object.prototype.tostring)
+ * of values.
  */
 var objToString = objectProto.toString;
 
@@ -25220,14 +26006,14 @@ var objToString = objectProto.toString;
  * // => false
  */
 function isTypedArray(value) {
-  return (isObjectLike(value) && isLength(value.length) && typedArrayTags[objToString.call(value)]) || false;
+  return isObjectLike(value) && isLength(value.length) && !!typedArrayTags[objToString.call(value)];
 }
 
 module.exports = isTypedArray;
 
-},{"140":140,"141":141}],158:[function(_dereq_,module,exports){
-var baseCopy = _dereq_(99),
-    keysIn = _dereq_(161);
+},{"155":155,"156":156}],173:[function(_dereq_,module,exports){
+var baseCopy = _dereq_(104),
+    keysIn = _dereq_(176);
 
 /**
  * Converts `value` to a plain object flattening inherited enumerable
@@ -25258,16 +26044,20 @@ function toPlainObject(value) {
 
 module.exports = toPlainObject;
 
-},{"161":161,"99":99}],159:[function(_dereq_,module,exports){
-var baseAssign = _dereq_(97),
-    createAssigner = _dereq_(131);
+},{"104":104,"176":176}],174:[function(_dereq_,module,exports){
+var assignWith = _dereq_(101),
+    baseAssign = _dereq_(102),
+    createAssigner = _dereq_(138);
 
 /**
  * Assigns own enumerable properties of source object(s) to the destination
  * object. Subsequent sources overwrite property assignments of previous sources.
  * If `customizer` is provided it is invoked to produce the assigned values.
- * The `customizer` is bound to `thisArg` and invoked with five arguments;
+ * The `customizer` is bound to `thisArg` and invoked with five arguments:
  * (objectValue, sourceValue, key, object, source).
+ *
+ * **Note:** This method mutates `object` and is based on
+ * [`Object.assign`](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-object.assign).
  *
  * @static
  * @memberOf _
@@ -25275,7 +26065,7 @@ var baseAssign = _dereq_(97),
  * @category Object
  * @param {Object} object The destination object.
  * @param {...Object} [sources] The source objects.
- * @param {Function} [customizer] The function to customize assigning values.
+ * @param {Function} [customizer] The function to customize assigned values.
  * @param {*} [thisArg] The `this` binding of `customizer`.
  * @returns {Object} Returns `object`.
  * @example
@@ -25285,21 +26075,25 @@ var baseAssign = _dereq_(97),
  *
  * // using a customizer callback
  * var defaults = _.partialRight(_.assign, function(value, other) {
- *   return typeof value == 'undefined' ? other : value;
+ *   return _.isUndefined(value) ? other : value;
  * });
  *
  * defaults({ 'user': 'barney' }, { 'age': 36 }, { 'user': 'fred' });
  * // => { 'user': 'barney', 'age': 36 }
  */
-var assign = createAssigner(baseAssign);
+var assign = createAssigner(function(object, source, customizer) {
+  return customizer
+    ? assignWith(object, source, customizer)
+    : baseAssign(object, source);
+});
 
 module.exports = assign;
 
-},{"131":131,"97":97}],160:[function(_dereq_,module,exports){
-var isLength = _dereq_(140),
-    isNative = _dereq_(152),
-    isObject = _dereq_(154),
-    shimKeys = _dereq_(147);
+},{"101":101,"102":102,"138":138}],175:[function(_dereq_,module,exports){
+var isArrayLike = _dereq_(151),
+    isNative = _dereq_(167),
+    isObject = _dereq_(169),
+    shimKeys = _dereq_(161);
 
 /* Native method references for those with the same name as other `lodash` methods. */
 var nativeKeys = isNative(nativeKeys = Object.keys) && nativeKeys;
@@ -25314,7 +26108,7 @@ var nativeKeys = isNative(nativeKeys = Object.keys) && nativeKeys;
  * @static
  * @memberOf _
  * @category Object
- * @param {Object} object The object to inspect.
+ * @param {Object} object The object to query.
  * @returns {Array} Returns the array of property names.
  * @example
  *
@@ -25332,12 +26126,9 @@ var nativeKeys = isNative(nativeKeys = Object.keys) && nativeKeys;
  * // => ['0', '1']
  */
 var keys = !nativeKeys ? shimKeys : function(object) {
-  if (object) {
-    var Ctor = object.constructor,
-        length = object.length;
-  }
+  var Ctor = object != null && object.constructor;
   if ((typeof Ctor == 'function' && Ctor.prototype === object) ||
-      (typeof object != 'function' && (length && isLength(length)))) {
+      (typeof object != 'function' && isArrayLike(object))) {
     return shimKeys(object);
   }
   return isObject(object) ? nativeKeys(object) : [];
@@ -25345,13 +26136,13 @@ var keys = !nativeKeys ? shimKeys : function(object) {
 
 module.exports = keys;
 
-},{"140":140,"147":147,"152":152,"154":154}],161:[function(_dereq_,module,exports){
-var isArguments = _dereq_(149),
-    isArray = _dereq_(150),
-    isIndex = _dereq_(138),
-    isLength = _dereq_(140),
-    isObject = _dereq_(154),
-    support = _dereq_(167);
+},{"151":151,"161":161,"167":167,"169":169}],176:[function(_dereq_,module,exports){
+var isArguments = _dereq_(164),
+    isArray = _dereq_(165),
+    isIndex = _dereq_(152),
+    isLength = _dereq_(155),
+    isObject = _dereq_(169),
+    support = _dereq_(182);
 
 /** Used for native method references. */
 var objectProto = Object.prototype;
@@ -25367,7 +26158,7 @@ var hasOwnProperty = objectProto.hasOwnProperty;
  * @static
  * @memberOf _
  * @category Object
- * @param {Object} object The object to inspect.
+ * @param {Object} object The object to query.
  * @returns {Array} Returns the array of property names.
  * @example
  *
@@ -25412,9 +26203,9 @@ function keysIn(object) {
 
 module.exports = keysIn;
 
-},{"138":138,"140":140,"149":149,"150":150,"154":154,"167":167}],162:[function(_dereq_,module,exports){
-var baseMerge = _dereq_(118),
-    createAssigner = _dereq_(131);
+},{"152":152,"155":155,"164":164,"165":165,"169":169,"182":182}],177:[function(_dereq_,module,exports){
+var baseMerge = _dereq_(125),
+    createAssigner = _dereq_(138);
 
 /**
  * Recursively merges own enumerable properties of the source object(s), that
@@ -25423,14 +26214,14 @@ var baseMerge = _dereq_(118),
  * provided it is invoked to produce the merged values of the destination and
  * source properties. If `customizer` returns `undefined` merging is handled
  * by the method instead. The `customizer` is bound to `thisArg` and invoked
- * with five arguments; (objectValue, sourceValue, key, object, source).
+ * with five arguments: (objectValue, sourceValue, key, object, source).
  *
  * @static
  * @memberOf _
  * @category Object
  * @param {Object} object The destination object.
  * @param {...Object} [sources] The source objects.
- * @param {Function} [customizer] The function to customize merging properties.
+ * @param {Function} [customizer] The function to customize assigned values.
  * @param {*} [thisArg] The `this` binding of `customizer`.
  * @returns {Object} Returns `object`.
  * @example
@@ -25468,23 +26259,19 @@ var merge = createAssigner(baseMerge);
 
 module.exports = merge;
 
-},{"118":118,"131":131}],163:[function(_dereq_,module,exports){
-var arrayMap = _dereq_(94),
-    baseDifference = _dereq_(101),
-    baseFlatten = _dereq_(106),
-    bindCallback = _dereq_(127),
-    keysIn = _dereq_(161),
-    pickByArray = _dereq_(144),
-    pickByCallback = _dereq_(145);
+},{"125":125,"138":138}],178:[function(_dereq_,module,exports){
+var arrayMap = _dereq_(98),
+    baseDifference = _dereq_(106),
+    baseFlatten = _dereq_(112),
+    bindCallback = _dereq_(134),
+    keysIn = _dereq_(176),
+    pickByArray = _dereq_(158),
+    pickByCallback = _dereq_(159),
+    restParam = _dereq_(92);
 
 /**
  * The opposite of `_.pick`; this method creates an object composed of the
  * own and inherited enumerable properties of `object` that are not omitted.
- * Property names may be specified as individual arguments or as arrays of
- * property names. If `predicate` is provided it is invoked for each property
- * of `object` omitting the properties `predicate` returns truthy for. The
- * predicate is bound to `thisArg` and invoked with three arguments;
- * (value, key, object).
  *
  * @static
  * @memberOf _
@@ -25505,34 +26292,35 @@ var arrayMap = _dereq_(94),
  * _.omit(object, _.isNumber);
  * // => { 'user': 'fred' }
  */
-function omit(object, predicate, thisArg) {
+var omit = restParam(function(object, props) {
   if (object == null) {
     return {};
   }
-  if (typeof predicate != 'function') {
-    var props = arrayMap(baseFlatten(arguments, false, false, 1), String);
+  if (typeof props[0] != 'function') {
+    var props = arrayMap(baseFlatten(props), String);
     return pickByArray(object, baseDifference(keysIn(object), props));
   }
-  predicate = bindCallback(predicate, thisArg, 3);
+  var predicate = bindCallback(props[0], props[1], 3);
   return pickByCallback(object, function(value, key, object) {
     return !predicate(value, key, object);
   });
-}
+});
 
 module.exports = omit;
 
-},{"101":101,"106":106,"127":127,"144":144,"145":145,"161":161,"94":94}],164:[function(_dereq_,module,exports){
-var baseFlatten = _dereq_(106),
-    bindCallback = _dereq_(127),
-    pickByArray = _dereq_(144),
-    pickByCallback = _dereq_(145);
+},{"106":106,"112":112,"134":134,"158":158,"159":159,"176":176,"92":92,"98":98}],179:[function(_dereq_,module,exports){
+var baseFlatten = _dereq_(112),
+    bindCallback = _dereq_(134),
+    pickByArray = _dereq_(158),
+    pickByCallback = _dereq_(159),
+    restParam = _dereq_(92);
 
 /**
  * Creates an object composed of the picked `object` properties. Property
  * names may be specified as individual arguments or as arrays of property
  * names. If `predicate` is provided it is invoked for each property of `object`
  * picking the properties `predicate` returns truthy for. The predicate is
- * bound to `thisArg` and invoked with three arguments; (value, key, object).
+ * bound to `thisArg` and invoked with three arguments: (value, key, object).
  *
  * @static
  * @memberOf _
@@ -25553,20 +26341,20 @@ var baseFlatten = _dereq_(106),
  * _.pick(object, _.isString);
  * // => { 'user': 'fred' }
  */
-function pick(object, predicate, thisArg) {
+var pick = restParam(function(object, props) {
   if (object == null) {
     return {};
   }
-  return typeof predicate == 'function'
-    ? pickByCallback(object, bindCallback(predicate, thisArg, 3))
-    : pickByArray(object, baseFlatten(arguments, false, false, 1));
-}
+  return typeof props[0] == 'function'
+    ? pickByCallback(object, bindCallback(props[0], props[1], 3))
+    : pickByArray(object, baseFlatten(props));
+});
 
 module.exports = pick;
 
-},{"106":106,"127":127,"144":144,"145":145}],165:[function(_dereq_,module,exports){
-var baseValues = _dereq_(126),
-    keys = _dereq_(160);
+},{"112":112,"134":134,"158":158,"159":159,"92":92}],180:[function(_dereq_,module,exports){
+var baseValues = _dereq_(133),
+    keys = _dereq_(175);
 
 /**
  * Creates an array of the own enumerable property values of `object`.
@@ -25599,20 +26387,20 @@ function values(object) {
 
 module.exports = values;
 
-},{"126":126,"160":160}],166:[function(_dereq_,module,exports){
-var baseToString = _dereq_(125);
+},{"133":133,"175":175}],181:[function(_dereq_,module,exports){
+var baseToString = _dereq_(132);
 
 /**
- * Used to match `RegExp` special characters.
- * See this [article on `RegExp` characters](http://www.regular-expressions.info/characters.html#special)
- * for more details.
+ * Used to match `RegExp` [special characters](http://www.regular-expressions.info/characters.html#special).
+ * In addition to special characters the forward slash is escaped to allow for
+ * easier `eval` use and `Function` compilation.
  */
 var reRegExpChars = /[.*+?^${}()|[\]\/\\]/g,
     reHasRegExpChars = RegExp(reRegExpChars.source);
 
 /**
- * Escapes the `RegExp` special characters "\", "^", "$", ".", "|", "?", "*",
- * "+", "(", ")", "[", "]", "{" and "}" in `string`.
+ * Escapes the `RegExp` special characters "\", "/", "^", "$", ".", "|", "?",
+ * "*", "+", "(", ")", "[", "]", "{" and "}" in `string`.
  *
  * @static
  * @memberOf _
@@ -25622,7 +26410,7 @@ var reRegExpChars = /[.*+?^${}()|[\]\/\\]/g,
  * @example
  *
  * _.escapeRegExp('[lodash](https://lodash.com/)');
- * // => '\[lodash\]\(https://lodash\.com/\)'
+ * // => '\[lodash\]\(https:\/\/lodash\.com\/\)'
  */
 function escapeRegExp(string) {
   string = baseToString(string);
@@ -25633,13 +26421,8 @@ function escapeRegExp(string) {
 
 module.exports = escapeRegExp;
 
-},{"125":125}],167:[function(_dereq_,module,exports){
+},{"132":132}],182:[function(_dereq_,module,exports){
 (function (global){
-var isNative = _dereq_(152);
-
-/** Used to detect functions containing a `this` reference. */
-var reThis = /\bthis\b/;
-
 /** Used for native method references. */
 var objectProto = Object.prototype;
 
@@ -25659,6 +26442,13 @@ var propertyIsEnumerable = objectProto.propertyIsEnumerable;
 var support = {};
 
 (function(x) {
+  var Ctor = function() { this.x = x; },
+      args = arguments,
+      object = { '0': x, 'length': x },
+      props = [];
+
+  Ctor.prototype = { 'valueOf': x, 'y': x };
+  for (var key in new Ctor) { props.push(key); }
 
   /**
    * Detect if functions can be decompiled by `Function#toString`
@@ -25668,7 +26458,7 @@ var support = {};
    * @memberOf _.support
    * @type boolean
    */
-  support.funcDecomp = !isNative(global.WinRTError) && reThis.test(function() { return this; });
+  support.funcDecomp = /\bthis\b/.test(function() { return this; });
 
   /**
    * Detect if `Function#name` is supported (all but IE).
@@ -25696,24 +26486,24 @@ var support = {};
    * In Firefox < 4, IE < 9, PhantomJS, and Safari < 5.1 `arguments` object
    * indexes are non-enumerable. Chrome < 25 and Node.js < 0.11.0 treat
    * `arguments` object indexes as non-enumerable and fail `hasOwnProperty`
-   * checks for indexes that exceed their function's formal parameters with
-   * associated values of `0`.
+   * checks for indexes that exceed the number of function parameters and
+   * whose associated argument values are `0`.
    *
    * @memberOf _.support
    * @type boolean
    */
   try {
-    support.nonEnumArgs = !propertyIsEnumerable.call(arguments, 1);
+    support.nonEnumArgs = !propertyIsEnumerable.call(args, 1);
   } catch(e) {
     support.nonEnumArgs = true;
   }
-}(0, 0));
+}(1, 0));
 
 module.exports = support;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"152":152}],168:[function(_dereq_,module,exports){
+},{}],183:[function(_dereq_,module,exports){
 /**
  * Creates a function that returns `value`.
  *
@@ -25738,7 +26528,7 @@ function constant(value) {
 
 module.exports = constant;
 
-},{}],169:[function(_dereq_,module,exports){
+},{}],184:[function(_dereq_,module,exports){
 /**
  * This method returns the first argument provided to it.
  *
@@ -25760,9 +26550,42 @@ function identity(value) {
 
 module.exports = identity;
 
-},{}],170:[function(_dereq_,module,exports){
-module.exports = _dereq_(177);
-},{"177":177}],171:[function(_dereq_,module,exports){
+},{}],185:[function(_dereq_,module,exports){
+var baseProperty = _dereq_(127),
+    basePropertyDeep = _dereq_(128),
+    isKey = _dereq_(154);
+
+/**
+ * Creates a function which returns the property value at `path` on a
+ * given object.
+ *
+ * @static
+ * @memberOf _
+ * @category Utility
+ * @param {Array|string} path The path of the property to get.
+ * @returns {Function} Returns the new function.
+ * @example
+ *
+ * var objects = [
+ *   { 'a': { 'b': { 'c': 2 } } },
+ *   { 'a': { 'b': { 'c': 1 } } }
+ * ];
+ *
+ * _.map(objects, _.property('a.b.c'));
+ * // => [2, 1]
+ *
+ * _.pluck(_.sortBy(objects, _.property(['a', 'b', 'c'])), 'a.b.c');
+ * // => [1, 2]
+ */
+function property(path) {
+  return isKey(path) ? baseProperty(path) : basePropertyDeep(path);
+}
+
+module.exports = property;
+
+},{"127":127,"128":128,"154":154}],186:[function(_dereq_,module,exports){
+module.exports = _dereq_(193);
+},{"193":193}],187:[function(_dereq_,module,exports){
 module.exports = function(el) {
 
   var c;
@@ -25774,24 +26597,24 @@ module.exports = function(el) {
 
   return el;
 };
-},{}],172:[function(_dereq_,module,exports){
-module.exports = _dereq_(180);
-},{"180":180}],173:[function(_dereq_,module,exports){
-module.exports = _dereq_(184);
-},{"184":184}],174:[function(_dereq_,module,exports){
-module.exports = _dereq_(181);
-},{"181":181}],175:[function(_dereq_,module,exports){
-module.exports = _dereq_(183);
-},{"183":183}],176:[function(_dereq_,module,exports){
+},{}],188:[function(_dereq_,module,exports){
+module.exports = _dereq_(196);
+},{"196":196}],189:[function(_dereq_,module,exports){
+module.exports = _dereq_(200);
+},{"200":200}],190:[function(_dereq_,module,exports){
+module.exports = _dereq_(197);
+},{"197":197}],191:[function(_dereq_,module,exports){
+module.exports = _dereq_(199);
+},{"199":199}],192:[function(_dereq_,module,exports){
 module.exports = function(el) {
   el.parentNode && el.parentNode.removeChild(el);
 };
-},{}],177:[function(_dereq_,module,exports){
+},{}],193:[function(_dereq_,module,exports){
 /**
  * Module dependencies.
  */
 
-var index = _dereq_(178);
+var index = _dereq_(194);
 
 /**
  * Whitespace regexp.
@@ -25975,7 +26798,7 @@ ClassList.prototype.contains = function(name){
     : !! ~index(this.array(), name);
 };
 
-},{"178":178}],178:[function(_dereq_,module,exports){
+},{"194":194}],194:[function(_dereq_,module,exports){
 module.exports = function(arr, obj){
   if (arr.indexOf) return arr.indexOf(obj);
   for (var i = 0; i < arr.length; ++i) {
@@ -25983,8 +26806,8 @@ module.exports = function(arr, obj){
   }
   return -1;
 };
-},{}],179:[function(_dereq_,module,exports){
-var matches = _dereq_(182)
+},{}],195:[function(_dereq_,module,exports){
+var matches = _dereq_(198)
 
 module.exports = function (element, selector, checkYoSelf, root) {
   element = checkYoSelf ? {parentNode: element} : element
@@ -26004,13 +26827,13 @@ module.exports = function (element, selector, checkYoSelf, root) {
   }
 }
 
-},{"182":182}],180:[function(_dereq_,module,exports){
+},{"198":198}],196:[function(_dereq_,module,exports){
 /**
  * Module dependencies.
  */
 
-var closest = _dereq_(179)
-  , event = _dereq_(181);
+var closest = _dereq_(195)
+  , event = _dereq_(197);
 
 /**
  * Delegate event `type` to `selector`
@@ -26048,7 +26871,7 @@ exports.unbind = function(el, type, fn, capture){
   event.unbind(el, type, fn, capture);
 };
 
-},{"179":179,"181":181}],181:[function(_dereq_,module,exports){
+},{"195":195,"197":197}],197:[function(_dereq_,module,exports){
 var bind = window.addEventListener ? 'addEventListener' : 'attachEvent',
     unbind = window.removeEventListener ? 'removeEventListener' : 'detachEvent',
     prefix = bind !== 'addEventListener' ? 'on' : '';
@@ -26084,12 +26907,12 @@ exports.unbind = function(el, type, fn, capture){
   el[unbind](prefix + type, fn, capture || false);
   return fn;
 };
-},{}],182:[function(_dereq_,module,exports){
+},{}],198:[function(_dereq_,module,exports){
 /**
  * Module dependencies.
  */
 
-var query = _dereq_(183);
+var query = _dereq_(199);
 
 /**
  * Element prototype.
@@ -26132,7 +26955,7 @@ function match(el, selector) {
   return false;
 }
 
-},{"183":183}],183:[function(_dereq_,module,exports){
+},{"199":199}],199:[function(_dereq_,module,exports){
 function one(selector, el) {
   return el.querySelector(selector);
 }
@@ -26155,7 +26978,7 @@ exports.engine = function(obj){
   return exports;
 };
 
-},{}],184:[function(_dereq_,module,exports){
+},{}],200:[function(_dereq_,module,exports){
 
 /**
  * Expose `parse`.
@@ -26265,11 +27088,11 @@ function parse(html, doc) {
   return fragment;
 }
 
-},{}],185:[function(_dereq_,module,exports){
-module.exports = _dereq_(187);
+},{}],201:[function(_dereq_,module,exports){
+module.exports = _dereq_(203);
 
-module.exports.Collection = _dereq_(186);
-},{"186":186,"187":187}],186:[function(_dereq_,module,exports){
+module.exports.Collection = _dereq_(202);
+},{"202":202,"203":203}],202:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -26351,10 +27174,10 @@ function extend(collection, refs, property, target) {
 
 
 module.exports.extend = extend;
-},{}],187:[function(_dereq_,module,exports){
+},{}],203:[function(_dereq_,module,exports){
 'use strict';
 
-var Collection = _dereq_(186);
+var Collection = _dereq_(202);
 
 function hasOwnProperty(e, property) {
   return Object.prototype.hasOwnProperty.call(e, property.name || property);
@@ -26533,6 +27356,6 @@ module.exports = Refs;
  * @property {boolean} [collection=false]
  * @property {boolean} [enumerable=false]
  */
-},{"186":186}]},{},[1])(1)
+},{"202":202}]},{},[1])(1)
 });
 //# sourceMappingURL=bpmn-navigated-viewer.js.map
