@@ -1,4 +1,4 @@
-# bpmn-js Bower Package
+# bpmn-js (pre-packaged version)
 
 This is a packaged version of [bpmn-js](https://github.com/bpmn-io/bpmn-js) for standalone usage or via [bower](http://bower.io).
 
