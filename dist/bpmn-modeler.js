@@ -1,5 +1,5 @@
 /*!
- * bpmn-js - bpmn-modeler v0.13.0
+ * bpmn-js - bpmn-modeler v0.13.1
 
  * Copyright 2014, 2015 camunda Services GmbH and other contributors
  *
@@ -8,7 +8,7 @@
  *
  * Source Code: https://github.com/bpmn-io/bpmn-js
  *
- * Date: 2016-01-28
+ * Date: 2016-01-29
  */
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.BpmnJS = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 'use strict';
@@ -24133,6 +24133,8 @@ var domClosest = _dereq_(391);
 
 var Snap = _dereq_(239);
 
+var Event = _dereq_(221);
+
 function getGfx(target) {
   var node = domClosest(target, 'svg, .djs-element', true);
   return node && new Snap(node);
@@ -24187,21 +24189,27 @@ function HoverFix(eventBus, dragging, elementRegistry) {
       return;
     }
 
-    var originalEvent = event.originalEvent;
+    var originalEvent = event.originalEvent,
+        position,
+        target,
+        element,
+        gfx;
 
-    var target, element, gfx;
+    if (!(originalEvent instanceof MouseEvent)) {
+      return;
+    }
 
-    if (originalEvent instanceof MouseEvent) {
-      // damn expensive operation, ouch!
-      target = document.elementFromPoint(originalEvent.x, originalEvent.y);
+    position = Event.toPoint(originalEvent);
 
-      gfx = getGfx(target);
+    // damn expensive operation, ouch!
+    target = document.elementFromPoint(position.x, position.y);
 
-      if (gfx) {
-        element = elementRegistry.get(gfx);
+    gfx = getGfx(target);
 
-        dragging.hover({ element: element, gfx: gfx });
-      }
+    if (gfx) {
+      element = elementRegistry.get(gfx);
+
+      dragging.hover({ element: element, gfx: gfx });
     }
   };
 
@@ -24210,7 +24218,7 @@ function HoverFix(eventBus, dragging, elementRegistry) {
 HoverFix.$inject = [ 'eventBus', 'dragging', 'elementRegistry' ];
 
 module.exports = HoverFix;
-},{"239":239,"391":391}],130:[function(_dereq_,module,exports){
+},{"221":221,"239":239,"391":391}],130:[function(_dereq_,module,exports){
 module.exports = {
   __init__: [
     'hoverFix'
