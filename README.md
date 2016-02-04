@@ -10,10 +10,13 @@ Fetch the dependency via `bower install bpmn-js` or download individual files fr
 Include the file into your project
 
 ```html
-<!-- dependencies ... -->
-
-<!-- bpmn-js -->
+<!-- bpmn-js viewer -->
 <script src="bower_components/bpmn-js/dist/bpmn-viewer.js"></script>
+
+<!-- or -->
+
+<!-- bpmn-js modeler -->
+<script src="bower_components/bpmn-js/dist/bpmn-modeler.js"></script>
 
 <script>
   // require is part of bundle file
