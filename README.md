@@ -19,7 +19,7 @@ Include the file into your project
 <script src="bower_components/bpmn-js/dist/bpmn-modeler.js"></script>
 
 <script>
-  // require is part of bundle file
+  // bundle exposes the viewer / modeler via the BpmnJS variable
   var BpmnViewer = window.BpmnJS;
 
   var xml; // ADD BPMN 2.0 XML HERE
