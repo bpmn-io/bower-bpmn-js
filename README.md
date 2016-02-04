@@ -5,9 +5,10 @@ This is a packaged version of [bpmn-js](https://github.com/bpmn-io/bpmn-js) for 
 
 ## Usage
 
-Fetch the dependency via `bower install bpmn-js` or download individual files from the [dist folder](https://github.com/bpmn-io/bower-bpmn-js/tree/master/dist).
+Download individual files from the [dist folder](https://github.com/bpmn-io/bower-bpmn-js/tree/master/dist) or
+fetch them with dependencies via `bower install bpmn-js`.
 
-Include the file into your project
+Include the file(s) into your project
 
 ```html
 <!-- bpmn-js viewer -->
