@@ -1,5 +1,5 @@
 /*!
- * bpmn-js - bpmn-viewer v0.13.1
+ * bpmn-js - bpmn-viewer v0.13.2
 
  * Copyright 2014, 2015 camunda Services GmbH and other contributors
  *
@@ -8,7 +8,7 @@
  *
  * Source Code: https://github.com/bpmn-io/bpmn-js
  *
- * Date: 2016-01-29
+ * Date: 2016-02-24
  */
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.BpmnJS = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 /**
@@ -38,7 +38,7 @@ function initListeners(diagram, listeners) {
   var events = diagram.get('eventBus');
 
   listeners.forEach(function(l) {
-    events.on(l.event, l.priority, l.handler, l.that);
+    events.on(l.event, l.priority, l.callback, l.that);
   });
 }
 
@@ -157,6 +157,15 @@ function Viewer(options) {
 module.exports = Viewer;
 
 
+/**
+ * Import and render a BPMN 2.0 diagram.
+ * 
+ * Once finished the viewer reports back the result to the
+ * provided callback function with (err, warnings).
+ * 
+ * @param {String} xml the BPMN 2.0 xml
+ * @param {Function} done invoked with (err, warnings=[])
+ */
 Viewer.prototype.importXML = function(xml, done) {
 
   var self = this;
@@ -180,6 +189,16 @@ Viewer.prototype.importXML = function(xml, done) {
   });
 };
 
+/**
+ * Export the currently displayed BPMN 2.0 diagram as
+ * a BPMN 2.0 XML document.
+ * 
+ * @param {Object} [options] export options
+ * @param {Boolean} [options.format=false] output formated XML
+ * @param {Boolean} [options.preamble=true] output preamble
+ * 
+ * @param {Function} done invoked with (err, xml)
+ */
 Viewer.prototype.saveXML = function(options, done) {
 
   if (!done) {
@@ -200,6 +219,13 @@ Viewer.prototype.createModdle = function() {
   return new BpmnModdle(this.options.moddleExtensions);
 };
 
+/**
+ * Export the currently displayed BPMN 2.0 diagram as
+ * an SVG image.
+ * 
+ * @param {Object} [options]
+ * @param {Function} done invoked with (err, svgStr)
+ */
 Viewer.prototype.saveSVG = function(options, done) {
 
   if (!done) {
@@ -230,6 +256,18 @@ Viewer.prototype.saveSVG = function(options, done) {
   done(null, svg);
 };
 
+/**
+ * Get a named diagram service.
+ * 
+ * @example
+ * 
+ * var elementRegistry = viewer.get('elementRegistry');
+ * var startEventShape = elementRegistry.get('StartEvent_1');
+ * 
+ * @param {String} name
+ * 
+ * @return {Object} diagram service instance
+ */
 Viewer.prototype.get = function(name) {
 
   if (!this.diagram) {
@@ -239,6 +277,19 @@ Viewer.prototype.get = function(name) {
   return this.diagram.get(name);
 };
 
+/**
+ * Invoke a function in the context of this viewer.
+ * 
+ * @example
+ * 
+ * viewer.invoke(function(elementRegistry) {
+ *   var startEventShape = elementRegistry.get('StartEvent_1');
+ * });
+ * 
+ * @param {Function} fn to be invoked
+ * 
+ * @return {Object} the functions return value
+ */
 Viewer.prototype.invoke = function(fn) {
 
   if (!this.diagram) {
@@ -327,17 +378,54 @@ Viewer.prototype.destroy = function() {
 /**
  * Register an event listener on the viewer
  *
+ * Remove a previously added listener via {@link #off(event, callback)}.
+ * 
  * @param {String} event
- * @param {Function} handler
+ * @param {Number} [priority]
+ * @param {Function} callback
+ * @param {Object} [that]
  */
-Viewer.prototype.on = function(event, priority, handler, that) {
+Viewer.prototype.on = function(event, priority, callback, that) {
   var diagram = this.diagram,
       listeners = this.__listeners = this.__listeners || [];
 
-  listeners.push({ event: event, priority: priority, handler: handler, that: that });
+  if (typeof priority === 'function') {
+    that = callback;
+    callback = priority;
+    priority = 1000;
+  }
+  
+  listeners.push({ event: event, priority: priority, callback: callback, that: that });
 
   if (diagram) {
-    diagram.get('eventBus').on(event, priority, handler, that);
+    return diagram.get('eventBus').on(event, priority, callback, that);
+  }
+};
+
+/**
+ * De-register an event callback
+ *
+ * @param {String} event
+ * @param {Function} callback
+ */
+Viewer.prototype.off = function(event, callback) {
+  var filter,
+      diagram = this.diagram;
+  
+  if (callback) {
+    filter = function(l) {
+      return !(l.event === event && l.callback === callback);
+    };
+  } else {
+    filter = function(l) {
+      return l.event !== event;
+    };
+  }
+  
+  this.__listeners = (this.__listeners || []).filter(filter);
+  
+  if (diagram) {
+    diagram.get('eventBus').off(event, callback);
   }
 };
 
@@ -12227,6 +12315,8 @@ var isFunction = _dereq_(187),
     bind = _dereq_(88),
     assign = _dereq_(195);
 
+var FN_REF = '__fn';
+
 var DEFAULT_PRIORITY = 1000;
 
 var slice = Array.prototype.slice;
@@ -12362,12 +12452,19 @@ EventBus.prototype.on = function(events, priority, callback, that) {
     throw new Error('priority must be a number');
   }
 
+  var actualCallback = callback;
+
   if (that) {
-    callback = bind(callback, that);
+    actualCallback = bind(callback, that);
+
+    // make sure we remember and are able to remove
+    // bound callbacks via {@link #off} using the original
+    // callback
+    actualCallback[FN_REF] = callback[FN_REF] || callback;
   }
 
   var self = this,
-      listener = { priority: priority, callback: callback };
+      listener = { priority: priority, callback: actualCallback };
 
   events.forEach(function(e) {
     self._addListener(e, listener);
@@ -12397,8 +12494,13 @@ EventBus.prototype.once = function(event, priority, callback, that) {
 
   function wrappedCallback() {
     self.off(event, wrappedCallback);
-    return callback.apply(that || self, arguments);
+    return callback.apply(that, arguments);
   }
+
+  // make sure we remember and are able to remove
+  // bound callbacks via {@link #off} using the original
+  // callback
+  wrappedCallback[FN_REF] = callback;
 
   this.on(event, priority, wrappedCallback);
 };
@@ -12414,14 +12516,18 @@ EventBus.prototype.once = function(event, priority, callback, that) {
  */
 EventBus.prototype.off = function(event, callback) {
   var listeners = this._getListeners(event),
-      listener, idx;
+      listener,
+      listenerCallback,
+      idx;
 
   if (callback) {
 
     // move through listeners from back to front
     // and remove matching listeners
     for (idx = listeners.length - 1; !!(listener = listeners[idx]); idx--) {
-      if (listener.callback === callback) {
+      listenerCallback = listener.callback;
+
+      if (listenerCallback === callback || listenerCallback[FN_REF] === callback) {
         listeners.splice(idx, 1);
       }
     }
@@ -14288,7 +14394,7 @@ function Base() {
   outgoingRefs.bind(this, 'outgoing');
 
   /**
-   * The list of outgoing connections
+   * The list of incoming connections
    *
    * @name Base#incoming
    * @type Array<Connection>
@@ -14439,6 +14545,7 @@ module.exports.Root = Root;
 module.exports.Shape = Shape;
 module.exports.Connection = Connection;
 module.exports.Label = Label;
+
 },{"195":195,"221":221,"75":75}],59:[function(_dereq_,module,exports){
 'use strict';
 
