@@ -1,5 +1,5 @@
 /*!
- * bpmn-js - bpmn-modeler v0.13.2
+ * bpmn-js - bpmn-modeler v0.13.3
 
  * Copyright 2014, 2015 camunda Services GmbH and other contributors
  *
@@ -8,7 +8,7 @@
  *
  * Source Code: https://github.com/bpmn-io/bpmn-js
  *
- * Date: 2016-02-24
+ * Date: 2016-03-07
  */
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.BpmnJS = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 'use strict';
@@ -321,10 +321,10 @@ module.exports = Viewer;
 
 /**
  * Import and render a BPMN 2.0 diagram.
- * 
+ *
  * Once finished the viewer reports back the result to the
  * provided callback function with (err, warnings).
- * 
+ *
  * @param {String} xml the BPMN 2.0 xml
  * @param {Function} done invoked with (err, warnings=[])
  */
@@ -354,11 +354,11 @@ Viewer.prototype.importXML = function(xml, done) {
 /**
  * Export the currently displayed BPMN 2.0 diagram as
  * a BPMN 2.0 XML document.
- * 
+ *
  * @param {Object} [options] export options
  * @param {Boolean} [options.format=false] output formated XML
  * @param {Boolean} [options.preamble=true] output preamble
- * 
+ *
  * @param {Function} done invoked with (err, xml)
  */
 Viewer.prototype.saveXML = function(options, done) {
@@ -378,13 +378,13 @@ Viewer.prototype.saveXML = function(options, done) {
 };
 
 Viewer.prototype.createModdle = function() {
-  return new BpmnModdle(this.options.moddleExtensions);
+  return new BpmnModdle(assign({}, this._moddleExtensions, this.options.moddleExtensions));
 };
 
 /**
  * Export the currently displayed BPMN 2.0 diagram as
  * an SVG image.
- * 
+ *
  * @param {Object} [options]
  * @param {Function} done invoked with (err, svgStr)
  */
@@ -420,14 +420,14 @@ Viewer.prototype.saveSVG = function(options, done) {
 
 /**
  * Get a named diagram service.
- * 
+ *
  * @example
- * 
+ *
  * var elementRegistry = viewer.get('elementRegistry');
  * var startEventShape = elementRegistry.get('StartEvent_1');
- * 
+ *
  * @param {String} name
- * 
+ *
  * @return {Object} diagram service instance
  */
 Viewer.prototype.get = function(name) {
@@ -441,15 +441,15 @@ Viewer.prototype.get = function(name) {
 
 /**
  * Invoke a function in the context of this viewer.
- * 
+ *
  * @example
- * 
+ *
  * viewer.invoke(function(elementRegistry) {
  *   var startEventShape = elementRegistry.get('StartEvent_1');
  * });
- * 
+ *
  * @param {Function} fn to be invoked
- * 
+ *
  * @return {Object} the functions return value
  */
 Viewer.prototype.invoke = function(fn) {
@@ -541,7 +541,7 @@ Viewer.prototype.destroy = function() {
  * Register an event listener on the viewer
  *
  * Remove a previously added listener via {@link #off(event, callback)}.
- * 
+ *
  * @param {String} event
  * @param {Number} [priority]
  * @param {Function} callback
@@ -556,7 +556,7 @@ Viewer.prototype.on = function(event, priority, callback, that) {
     callback = priority;
     priority = 1000;
   }
-  
+
   listeners.push({ event: event, priority: priority, callback: callback, that: that });
 
   if (diagram) {
@@ -573,7 +573,7 @@ Viewer.prototype.on = function(event, priority, callback, that) {
 Viewer.prototype.off = function(event, callback) {
   var filter,
       diagram = this.diagram;
-  
+
   if (callback) {
     filter = function(l) {
       return !(l.event === event && l.callback === callback);
@@ -583,9 +583,9 @@ Viewer.prototype.off = function(event, callback) {
       return l.event !== event;
     };
   }
-  
+
   this.__listeners = (this.__listeners || []).filter(filter);
-  
+
   if (diagram) {
     diagram.get('eventBus').off(event, callback);
   }
@@ -598,6 +598,8 @@ Viewer.prototype._modules = [
   _dereq_(172)
 ];
 
+// default moddle extensions the viewer is composed of
+Viewer.prototype._moddleExtensions = {};
 
 /* <project-logo> */
 
@@ -3547,7 +3549,7 @@ module.exports.getLabel = function(element) {
 };
 
 
-module.exports.setLabel = function(element, text) {
+module.exports.setLabel = function(element, text, isExternal) {
   var semantic = element.businessObject,
       attr = getLabelAttr(semantic);
 
@@ -3555,12 +3557,12 @@ module.exports.setLabel = function(element, text) {
     semantic[attr] = text;
   }
 
-  var label = element.label || element;
+  // show external label if not empty
+  if (isExternal) {
+    element.hidden = !text;
+  }
 
-  // show label
-  label.hidden = false;
-
-  return label;
+  return element;
 };
 },{"70":70}],15:[function(_dereq_,module,exports){
 'use strict';
@@ -3570,15 +3572,27 @@ var LabelUtil = _dereq_(14);
 
 /**
  * A handler that updates the text of a BPMN element.
- *
- * @param {EventBus} eventBus
  */
-function UpdateTextHandler(eventBus) {
+function UpdateLabelHandler() {
 
+  /**
+   * Set the label and return the changed elements.
+   *
+   * Element parameter can be label itself or connection (i.e. sequence flow).
+   *
+   * @param {djs.model.Base} element
+   * @param {String} text
+   */
   function setText(element, text) {
-    var label = LabelUtil.setLabel(element, text);
 
-    eventBus.fire('element.changed', { element: label });
+    // external label if present
+    var label = element.label || element;
+
+    var labelTarget = element.labelTarget || element;
+
+    LabelUtil.setLabel(label, text, labelTarget !== label);
+
+    return [ label, labelTarget ];
   }
 
   function execute(ctx) {
@@ -3590,23 +3604,13 @@ function UpdateTextHandler(eventBus) {
     return setText(ctx.element, ctx.oldLabel);
   }
 
-
-  function canExecute(ctx) {
-    return true;
-  }
-
   // API
 
   this.execute = execute;
   this.revert = revert;
-
-  this.canExecute = canExecute;
 }
 
-
-UpdateTextHandler.$inject = [ 'eventBus' ];
-
-module.exports = UpdateTextHandler;
+module.exports = UpdateLabelHandler;
 },{"14":14}],16:[function(_dereq_,module,exports){
 module.exports = {
   __depends__: [
@@ -6387,6 +6391,9 @@ UpdateCanvasRootHandler.prototype.execute = function(context) {
   newRootBusinessObject.di = diPlane;
 
   context.oldRoot = oldRoot;
+
+  // TODO(nikku): return changed elements?
+  // return [ newRoot, oldRoot ];
 };
 
 
@@ -6416,6 +6423,9 @@ UpdateCanvasRootHandler.prototype.revert = function(context) {
 
   diPlane.bpmnElement = oldRootBusinessObject;
   oldRootBusinessObject.di = diPlane;
+
+  // TODO(nikku): return changed elements?
+  // return [ newRoot, oldRoot ];
 };
 },{"218":218}],41:[function(_dereq_,module,exports){
 'use strict';
@@ -6573,6 +6583,9 @@ UpdateFlowNodeRefsHandler.prototype.execute = function(context) {
       Collections.add(newLane.get(FLOW_NODE_REFS_ATTR), flowNode);
     });
   });
+
+  // TODO(nikku): return changed elements
+  // return [ ... ];
 };
 
 
@@ -6597,6 +6610,9 @@ UpdateFlowNodeRefsHandler.prototype.revert = function(context) {
       Collections.add(oldLane.get(FLOW_NODE_REFS_ATTR), flowNode);
     });
   });
+
+  // TODO(nikku): return changed elements
+  // return [ ... ];
 };
 },{"207":207,"218":218,"44":44,"70":70}],42:[function(_dereq_,module,exports){
 'use strict';
@@ -14699,7 +14715,8 @@ module.exports = Properties;
 
 
 /**
- * Sets a named property on the target element
+ * Sets a named property on the target element.
+ * If the value is undefined, the property gets deleted.
  *
  * @param {Object} target
  * @param {String} name
@@ -14709,14 +14726,28 @@ Properties.prototype.set = function(target, name, value) {
 
   var property = this.model.getPropertyDescriptor(target, name);
 
-  if (!property) {
-    target.$attrs[name] = value;
+  var propertyName = property && property.name;
+
+  if (isUndefined(value)) {
+    // unset the property, if the specified value is undefined;
+    // delete from $attrs (for extensions) or the target itself
+    if (property) {
+      delete target[propertyName];
+    } else {
+      delete target.$attrs[name];
+    }
   } else {
-    Object.defineProperty(target, property.name, {
-      enumerable: !property.isReference,
-      writable: true,
-      value: value
-    });
+    // set the property, defining well defined properties on the fly
+    // or simply updating them in target.$attrs (for extensions)
+    if (property) {
+      if (propertyName in target) {
+        target[propertyName] = value;
+      } else {
+        defineProperty(target, property, value);
+      }
+    } else {
+      target.$attrs[name] = value;
+    }
   }
 };
 
@@ -14740,11 +14771,7 @@ Properties.prototype.get = function(target, name) {
 
   // check if access to collection property and lazily initialize it
   if (!target[propertyName] && property.isMany) {
-    Object.defineProperty(target, propertyName, {
-      enumerable: !property.isReference,
-      writable: true,
-      value: []
-    });
+    defineProperty(target, property, []);
   }
 
   return target[propertyName];
@@ -14776,6 +14803,20 @@ Properties.prototype.defineDescriptor = function(target, descriptor) {
 Properties.prototype.defineModel = function(target, model) {
   this.define(target, '$model', { value: model });
 };
+
+
+function isUndefined(val) {
+  return typeof val === 'undefined';
+}
+
+function defineProperty(target, property, value) {
+  Object.defineProperty(target, property.name, {
+    enumerable: !property.isReference,
+    writable: true,
+    value: value,
+    configurable: true
+  });
+}
 },{}],88:[function(_dereq_,module,exports){
 'use strict';
 
@@ -23002,16 +23043,18 @@ module.exports = {
  * </ul>
  *
  * @param {EventBus} eventBus
+ * @param {Canvas} canvas
  * @param {ElementRegistry} elementRegistry
  * @param {GraphicsFactory} graphicsFactory
  */
-function ChangeSupport(eventBus, elementRegistry, graphicsFactory) {
+function ChangeSupport(eventBus, canvas, elementRegistry, graphicsFactory) {
 
   // redraw shapes / connections on change
 
   eventBus.on('element.changed', function(event) {
 
-    var element = event.element;
+    var element = event.element,
+        type;
 
     if (!event.gfx) {
       event.gfx = elementRegistry.getGraphics(element);
@@ -23022,11 +23065,15 @@ function ChangeSupport(eventBus, elementRegistry, graphicsFactory) {
       return;
     }
 
-    if (element.waypoints) {
-      eventBus.fire('connection.changed', event);
+
+    // element may be root
+    if (canvas.getRootElement() === element) {
+      type = 'root';
     } else {
-      eventBus.fire('shape.changed', event);
+      type = element.waypoints ? 'connection' : 'shape';
     }
+
+    eventBus.fire(type + '.changed', event);
   });
 
   eventBus.on('elements.changed', function(event) {
@@ -23049,7 +23096,7 @@ function ChangeSupport(eventBus, elementRegistry, graphicsFactory) {
   });
 }
 
-ChangeSupport.$inject = [ 'eventBus', 'elementRegistry', 'graphicsFactory' ];
+ChangeSupport.$inject = [ 'eventBus', 'canvas', 'elementRegistry', 'graphicsFactory' ];
 
 module.exports = ChangeSupport;
 
@@ -30181,6 +30228,7 @@ module.exports = {
 };
 
 },{"130":130,"164":164,"179":179,"180":180,"182":182,"186":186}],184:[function(_dereq_,module,exports){
+
 'use strict';
 
 var inherits = _dereq_(242);
@@ -30209,17 +30257,24 @@ module.exports = RuleProvider;
 
 
 /**
- * Adds a modeling rule for the given action, implemented through a callback function.
+ * Adds a modeling rule for the given action, implemented through
+ * a callback function.
  *
- * The function will receive the modeling specific action context to perform its check.
- * It must return false or null to disallow the action from happening.
+ * The function will receive the modeling specific action context
+ * to perform its check. It must return `false` to disallow the
+ * action from happening or `true` to allow the action.
  *
- * Returning <code>null</code> may encode simply ignoring the action.
+ * A rule provider may pass over the evaluation to lower priority
+ * rules by returning return nothing (or <code>undefined</code>).
  *
  * @example
  *
  * ResizableRules.prototype.init = function() {
  *
+ *   \/**
+ *    * Return `true`, `false` or nothing to denote
+ *    * _allowed_, _not allowed_ and _continue evaluating_.
+ *    *\/
  *   this.addRule('shape.resize', function(context) {
  *
  *     var shape = context.shape;
@@ -30229,6 +30284,11 @@ module.exports = RuleProvider;
  *       if (!shape.resizable) {
  *         return false;
  *       }
+ *
+ *       // not returning anything (read: undefined)
+ *       // will continue the evaluation of other rules
+ *       // (with lower priority)
+ *       return;
  *     } else {
  *       // element must have minimum size of 10*10 points
  *       return context.newBounds.width > 10 && context.newBounds.height > 10;

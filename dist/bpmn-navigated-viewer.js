@@ -1,5 +1,5 @@
 /*!
- * bpmn-js - bpmn-navigated-viewer v0.13.2
+ * bpmn-js - bpmn-navigated-viewer v0.13.3
 
  * Copyright 2014, 2015 camunda Services GmbH and other contributors
  *
@@ -8,7 +8,7 @@
  *
  * Source Code: https://github.com/bpmn-io/bpmn-js
  *
- * Date: 2016-02-24
+ * Date: 2016-03-07
  */
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.BpmnJS = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 'use strict';
@@ -188,10 +188,10 @@ module.exports = Viewer;
 
 /**
  * Import and render a BPMN 2.0 diagram.
- * 
+ *
  * Once finished the viewer reports back the result to the
  * provided callback function with (err, warnings).
- * 
+ *
  * @param {String} xml the BPMN 2.0 xml
  * @param {Function} done invoked with (err, warnings=[])
  */
@@ -221,11 +221,11 @@ Viewer.prototype.importXML = function(xml, done) {
 /**
  * Export the currently displayed BPMN 2.0 diagram as
  * a BPMN 2.0 XML document.
- * 
+ *
  * @param {Object} [options] export options
  * @param {Boolean} [options.format=false] output formated XML
  * @param {Boolean} [options.preamble=true] output preamble
- * 
+ *
  * @param {Function} done invoked with (err, xml)
  */
 Viewer.prototype.saveXML = function(options, done) {
@@ -245,13 +245,13 @@ Viewer.prototype.saveXML = function(options, done) {
 };
 
 Viewer.prototype.createModdle = function() {
-  return new BpmnModdle(this.options.moddleExtensions);
+  return new BpmnModdle(assign({}, this._moddleExtensions, this.options.moddleExtensions));
 };
 
 /**
  * Export the currently displayed BPMN 2.0 diagram as
  * an SVG image.
- * 
+ *
  * @param {Object} [options]
  * @param {Function} done invoked with (err, svgStr)
  */
@@ -287,14 +287,14 @@ Viewer.prototype.saveSVG = function(options, done) {
 
 /**
  * Get a named diagram service.
- * 
+ *
  * @example
- * 
+ *
  * var elementRegistry = viewer.get('elementRegistry');
  * var startEventShape = elementRegistry.get('StartEvent_1');
- * 
+ *
  * @param {String} name
- * 
+ *
  * @return {Object} diagram service instance
  */
 Viewer.prototype.get = function(name) {
@@ -308,15 +308,15 @@ Viewer.prototype.get = function(name) {
 
 /**
  * Invoke a function in the context of this viewer.
- * 
+ *
  * @example
- * 
+ *
  * viewer.invoke(function(elementRegistry) {
  *   var startEventShape = elementRegistry.get('StartEvent_1');
  * });
- * 
+ *
  * @param {Function} fn to be invoked
- * 
+ *
  * @return {Object} the functions return value
  */
 Viewer.prototype.invoke = function(fn) {
@@ -408,7 +408,7 @@ Viewer.prototype.destroy = function() {
  * Register an event listener on the viewer
  *
  * Remove a previously added listener via {@link #off(event, callback)}.
- * 
+ *
  * @param {String} event
  * @param {Number} [priority]
  * @param {Function} callback
@@ -423,7 +423,7 @@ Viewer.prototype.on = function(event, priority, callback, that) {
     callback = priority;
     priority = 1000;
   }
-  
+
   listeners.push({ event: event, priority: priority, callback: callback, that: that });
 
   if (diagram) {
@@ -440,7 +440,7 @@ Viewer.prototype.on = function(event, priority, callback, that) {
 Viewer.prototype.off = function(event, callback) {
   var filter,
       diagram = this.diagram;
-  
+
   if (callback) {
     filter = function(l) {
       return !(l.event === event && l.callback === callback);
@@ -450,9 +450,9 @@ Viewer.prototype.off = function(event, callback) {
       return l.event !== event;
     };
   }
-  
+
   this.__listeners = (this.__listeners || []).filter(filter);
-  
+
   if (diagram) {
     diagram.get('eventBus').off(event, callback);
   }
@@ -465,6 +465,8 @@ Viewer.prototype._modules = [
   _dereq_(54)
 ];
 
+// default moddle extensions the viewer is composed of
+Viewer.prototype._moddleExtensions = {};
 
 /* <project-logo> */
 
@@ -7182,7 +7184,8 @@ module.exports = Properties;
 
 
 /**
- * Sets a named property on the target element
+ * Sets a named property on the target element.
+ * If the value is undefined, the property gets deleted.
  *
  * @param {Object} target
  * @param {String} name
@@ -7192,14 +7195,28 @@ Properties.prototype.set = function(target, name, value) {
 
   var property = this.model.getPropertyDescriptor(target, name);
 
-  if (!property) {
-    target.$attrs[name] = value;
+  var propertyName = property && property.name;
+
+  if (isUndefined(value)) {
+    // unset the property, if the specified value is undefined;
+    // delete from $attrs (for extensions) or the target itself
+    if (property) {
+      delete target[propertyName];
+    } else {
+      delete target.$attrs[name];
+    }
   } else {
-    Object.defineProperty(target, property.name, {
-      enumerable: !property.isReference,
-      writable: true,
-      value: value
-    });
+    // set the property, defining well defined properties on the fly
+    // or simply updating them in target.$attrs (for extensions)
+    if (property) {
+      if (propertyName in target) {
+        target[propertyName] = value;
+      } else {
+        defineProperty(target, property, value);
+      }
+    } else {
+      target.$attrs[name] = value;
+    }
   }
 };
 
@@ -7223,11 +7240,7 @@ Properties.prototype.get = function(target, name) {
 
   // check if access to collection property and lazily initialize it
   if (!target[propertyName] && property.isMany) {
-    Object.defineProperty(target, propertyName, {
-      enumerable: !property.isReference,
-      writable: true,
-      value: []
-    });
+    defineProperty(target, property, []);
   }
 
   return target[propertyName];
@@ -7259,6 +7272,20 @@ Properties.prototype.defineDescriptor = function(target, descriptor) {
 Properties.prototype.defineModel = function(target, model) {
   this.define(target, '$model', { value: model });
 };
+
+
+function isUndefined(val) {
+  return typeof val === 'undefined';
+}
+
+function defineProperty(target, property, value) {
+  Object.defineProperty(target, property.name, {
+    enumerable: !property.isReference,
+    writable: true,
+    value: value,
+    configurable: true
+  });
+}
 },{}],31:[function(_dereq_,module,exports){
 'use strict';
 
