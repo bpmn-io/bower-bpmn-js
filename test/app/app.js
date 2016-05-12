@@ -3,7 +3,7 @@ var BpmnJS = window.BpmnJS;
 var bpmnjs = new BpmnJS({ container: '#canvas' });
 
 function success() {
-  $('body').addClass('success');
+  $('body').removeClass('fail').addClass('success');
 }
 
 function fail(err) {

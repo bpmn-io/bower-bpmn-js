@@ -8,15 +8,44 @@
   <link rel="stylesheet" href="../bower_components/bpmn-js/dist/assets/diagram-js.css">
   <link rel="stylesheet" href="../bower_components/bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css">
 
-  <link rel="stylesheet" href="style.css">
+  <style>
+    #modeler, #viewer, #navigated-viewer {
+      height: 600px;
+      width: 1000px;
+
+      border: solid 1px #CCC;
+
+      display: block;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      background: white;
+      padding: 5px 10px;
+      margin: 0;
+    }
+
+    body.fail {
+      background: red;
+    }
+
+    body.success {
+      background: lightgreen;
+    }
+  </style>
 
   <title>bpmn-js bower packaging test</title>
 </head>
 <body class="fail">
 
-  <h1>Modeler</h1>
+  <h1>Modeler (embedded)</h1>
+  <div id="modeler"></div>
 
-  <div id="canvas"></div>
+  <h1>Viewer (embedded)</h1>
+  <div id="viewer"></div>
+
+  <h1>Navigated Viewer (embedded)</h1>
+  <div id="navigated-viewer"></div>
 
   <!-- test dependencies -->
   <script src="../bower_components/jquery/dist/jquery.js"></script>
@@ -25,6 +54,6 @@
   <script src="../bower_components/bpmn-js/dist/bpmn-modeler.js"></script>
 
   <!-- app -->
-  <script src="./app.js"></script>
+  <script src="./embedded-viewer-modeler.js"></script>
 </body>
 </html>
