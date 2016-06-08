@@ -1,5 +1,5 @@
 /*!
- * bpmn-js - bpmn-modeler v0.15.1
+ * bpmn-js - bpmn-modeler v0.15.2
 
  * Copyright 2014, 2015 camunda Services GmbH and other contributors
  *
@@ -8,7 +8,7 @@
  *
  * Source Code: https://github.com/bpmn-io/bpmn-js
  *
- * Date: 2016-05-20
+ * Date: 2016-06-08
  */
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.BpmnJS = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 'use strict';
@@ -3473,26 +3473,32 @@ function BpmnCopyPaste(bpmnFactory, eventBus, copyPaste, clipboard, moddle, canv
     var descriptor = context.descriptor,
         createdElements = context.createdElements,
         parent = descriptor.parent,
-        businessObject, eventDefinitions, newEventDefinition, rootElement,
-        conditionExpression, loopCharacteristics,
-        source, target, canConnect;
+        rootElement = canvas.getRootElement(),
+        businessObject,
+        eventDefinitions,
+        newEventDefinition,
+        conditionExpression,
+        loopCharacteristics,
+        source,
+        target,
+        canConnect;
 
     if (descriptor.type === 'label') {
       return;
     }
 
     if (is(parent, 'bpmn:Process')) {
-      rootElement = canvas.getRootElement();
-
       descriptor.parent = is(rootElement, 'bpmn:Collaboration') ? rootElement : parent;
+    }
+
+    if (descriptor.type === 'bpmn:DataOutputAssociation' ||
+        descriptor.type === 'bpmn:DataInputAssociation' ||
+        descriptor.type === 'bpmn:MessageFlow') {
+      descriptor.parent = rootElement;
     }
 
     if (is(parent, 'bpmn:Lane')) {
       descriptor.parent = parent.parent;
-    }
-
-    if (descriptor.type === 'bpmn:MessageFlow') {
-      descriptor.parent = canvas.getRootElement();
     }
 
     // make sure that the correct type of connection is created
@@ -3513,6 +3519,10 @@ function BpmnCopyPaste(bpmnFactory, eventBus, copyPaste, clipboard, moddle, canv
     }
 
     descriptor.businessObject = businessObject = bpmnFactory.create(descriptor.type);
+
+    if (descriptor.type === 'bpmn:Participant' && descriptor.processRef) {
+      descriptor.processRef = businessObject.processRef = bpmnFactory.create('bpmn:Process');
+    }
 
     setProperties(businessObject, descriptor, [
       'name',
@@ -17214,7 +17224,7 @@ CommandStack.prototype._fire = function(command, qualifier, event) {
 
   event = assign(new InternalEvent(), event);
 
-  for (i = 0; !!(name = names[i]); i++) {
+  for (i = 0; (name = names[i]); i++) {
     result = this._eventBus.fire('commandStack.' + name, event);
 
     if (event.cancelBubble) {
@@ -17710,7 +17720,7 @@ Canvas.prototype.hasMarker = function(element, marker) {
  * @param  {String} marker
  */
 Canvas.prototype.toggleMarker = function(element, marker) {
-  if(this.hasMarker(element, marker)) {
+  if (this.hasMarker(element, marker)) {
     this.removeMarker(element, marker);
   } else {
     this.addMarker(element, marker);
@@ -18274,7 +18284,7 @@ Canvas.prototype._setZoom = function(scale, center) {
  *
  * @return {Dimensions}
  */
-Canvas.prototype.getSize = function () {
+Canvas.prototype.getSize = function() {
   return {
     width: this._container.clientWidth,
     height: this._container.clientHeight
@@ -18517,7 +18527,7 @@ ElementRegistry.prototype.filter = function(fn) {
   var filtered = [];
 
   this.forEach(function(element, gfx) {
-    if(fn(element, gfx)) {
+    if (fn(element, gfx)) {
       filtered.push(element);
     }
   });
@@ -18803,7 +18813,7 @@ EventBus.prototype.off = function(event, callback) {
 
     // move through listeners from back to front
     // and remove matching listeners
-    for (idx = listeners.length - 1; !!(listener = listeners[idx]); idx--) {
+    for (idx = listeners.length - 1; (listener = listeners[idx]); idx--) {
       listenerCallback = listener.callback;
 
       if (listenerCallback === callback || listenerCallback[FN_REF] === callback) {
@@ -18926,7 +18936,7 @@ EventBus.prototype._invokeListeners = function(event, args, listeners) {
       listener,
       returnValue;
 
-  for (idx = 0; !!(listener = listeners[idx]); idx++) {
+  for (idx = 0; (listener = listeners[idx]); idx++) {
 
     // handle stopped propagation
     if (event.cancelBubble) {
@@ -18993,7 +19003,7 @@ EventBus.prototype._addListener = function(event, newListener) {
 
   // ensure we order listeners by priority from
   // 0 (high) to n > 0 (low)
-  for (idx = 0; !!(existingListener = listeners[idx]); idx++) {
+  for (idx = 0; (existingListener = listeners[idx]); idx++) {
     if (existingListener.priority < newListener.priority) {
 
       // prepend newListener at before existingListener
@@ -19184,7 +19194,7 @@ GraphicsFactory.prototype.drawShape = function(visual, element) {
   return eventBus.fire('render.shape', { gfx: visual, element: element });
 };
 
-GraphicsFactory.prototype.getShapePath = function (element) {
+GraphicsFactory.prototype.getShapePath = function(element) {
   var eventBus = this._eventBus;
 
   return eventBus.fire('render.getShapePath', element);
@@ -19196,7 +19206,7 @@ GraphicsFactory.prototype.drawConnection = function(visual, element) {
   return eventBus.fire('render.connection', { gfx: visual, element: element });
 };
 
-GraphicsFactory.prototype.getConnectionPath = function (waypoints) {
+GraphicsFactory.prototype.getConnectionPath = function(waypoints) {
   var eventBus = this._eventBus;
 
   return eventBus.fire('render.getConnectionPath', waypoints);
@@ -19402,7 +19412,7 @@ DefaultRenderer.prototype.getConnectionPath = function getConnectionPath(connect
 
   var idx, point, connectionPath = [];
 
-  for (idx = 0; !!(point = waypoints[idx]); idx++) {
+  for (idx = 0; (point = waypoints[idx]); idx++) {
 
     // take invisible docking into account
     // when creating the path
@@ -19556,7 +19566,7 @@ function AttachSupport(eventBus, modeling, moveVisuals, rules) {
 
     // ensure we move all attachers with their hosts
     // if they have not been moved already
-    forEach(attachers, function(attacher){
+    forEach(attachers, function(attacher) {
       if (!enclosedElements[attacher.id]) {
         modeling.moveShape(attacher, delta, newParent);
       }
@@ -19601,7 +19611,7 @@ function AttachSupport(eventBus, modeling, moveVisuals, rules) {
       forEach(shape.attachers, function(attacher) {
 
         // remove invalid outgoing connections
-        forEach(attacher.outgoing, function(connection) {
+        forEach(attacher.outgoing.slice(), function(connection) {
           var allowed = rules.allowed('connection.reconnectStart', {
             connection: connection,
             source: connection.source,
@@ -19614,7 +19624,7 @@ function AttachSupport(eventBus, modeling, moveVisuals, rules) {
         });
 
         // remove invalid incoming connections
-        forEach(attacher.incoming, function(connection) {
+        forEach(attacher.incoming.slice(), function(connection) {
           var allowed = rules.allowed('connection.reconnectEnd', {
             connection: connection,
             source: connection.source,
@@ -19661,7 +19671,7 @@ function AttachSupport(eventBus, modeling, moveVisuals, rules) {
     });
 
     // move attachers if new host has different size
-    if (!!newShape.attachers.length) {
+    if (newShape.attachers.length) {
 
       forEach(newShape.attachers, function(attacher) {
         var delta = getNewAttachShapeDelta(attacher, oldShape, newShape);
@@ -19816,25 +19826,25 @@ var EventUtil = _dereq_(240);
  * or cancelled manually.
  *
  * Default options :
- *   scrollThresholdIn: [ 20, 25, 20, 20 ],
- *   scrollThresholdOut: [ -1000, 0, -1000, -1000 ],
+ *   scrollThresholdIn: [ 20, 20, 20, 20 ],
+ *   scrollThresholdOut: [ 0, 0, 0, 0 ],
  *   scrollRepeatTimeout: 15,
  *   scrollStep: 10
  *
  * Threshold order:
  *   [ left, top, right, bottom ]
  */
-function AutoScroll(eventBus, canvas, mouseTracking) {
+function AutoScroll(config, eventBus, canvas, mouseTracking) {
 
   this._canvas = canvas;
   this._mouseTracking = mouseTracking;
 
-  this._opts = {
-    scrollThresholdIn: [ 20, 25, 20, 20 ],
-    scrollThresholdOut: [ -1000, 0, -1000, -1000 ],
+  this._opts = assign({
+    scrollThresholdIn: [ 20, 20, 20, 20 ],
+    scrollThresholdOut: [ 0, 0, 0, 0 ],
     scrollRepeatTimeout: 15,
     scrollStep: 10
-  };
+  }, config);
 
   var self = this;
 
@@ -19849,7 +19859,7 @@ function AutoScroll(eventBus, canvas, mouseTracking) {
   });
 }
 
-AutoScroll.$inject = [ 'eventBus', 'canvas', 'mouseTracking'];
+AutoScroll.$inject = [ 'config.autoScroll', 'eventBus', 'canvas', 'mouseTracking'];
 
 module.exports = AutoScroll;
 
@@ -19953,7 +19963,7 @@ module.exports = {
     _dereq_(178)
   ],
   __init__: [ 'autoScroll' ],
-  autoScroll: [ 'type', _dereq_(118) ],
+  autoScroll: [ 'type', _dereq_(118) ]
 };
 },{"118":118,"140":140,"178":178}],120:[function(_dereq_,module,exports){
 'use strict';
@@ -20025,9 +20035,32 @@ function BendpointMove(injector, eventBus, canvas, dragging, graphicsFactory, ru
   }
 
   function filterRedundantWaypoints(waypoints) {
-    return waypoints.filter(function(r, idx) {
-      return !Geometry.pointsOnLine(waypoints[idx - 1], waypoints[idx + 1], r);
-    });
+
+    // alter copy of waypoints, not original
+    waypoints = waypoints.slice();
+
+    var idx = 0,
+        point,
+        previousPoint,
+        nextPoint;
+
+    while (waypoints[idx]) {
+      point = waypoints[idx];
+      previousPoint = waypoints[idx - 1];
+      nextPoint = waypoints[idx + 1];
+
+      if (Geometry.pointDistance(point, nextPoint) === 0 ||
+          Geometry.pointsOnLine(previousPoint, nextPoint, point)) {
+
+        // remove point, if overlapping with {nextPoint}
+        // or on line with {previousPoint} -> {point} -> {nextPoint}
+        waypoints.splice(idx, 1);
+      } else {
+        idx++;
+      }
+    }
+
+    return waypoints;
   }
 
   eventBus.on('bendpoint.move.start', function(e) {
@@ -21353,7 +21386,7 @@ ContextPad.prototype._init = function() {
   eventBus.on('elements.delete', function(event) {
     var elements = event.elements;
 
-    forEach(elements, function(e){
+    forEach(elements, function(e) {
       if (self.isOpen(e)) {
         self.close();
       }
@@ -21454,7 +21487,7 @@ ContextPad.prototype.trigger = function(action, event, autoActivate) {
  * @param {Boolean} force if true, force reopening the context pad
  */
 ContextPad.prototype.open = function(element, force) {
-  if (!force && this.isOpen(element)){
+  if (!force && this.isOpen(element)) {
     return;
   }
 
@@ -21553,7 +21586,7 @@ ContextPad.prototype.getPad = function(element) {
  * Close the context pad
  */
 ContextPad.prototype.close = function() {
-  if (!this.isOpen()){
+  if (!this.isOpen()) {
     return;
   }
 
@@ -22932,19 +22965,19 @@ function EditorActions(eventBus, commandStack, modeling, selection,
 
       var actualSpeed = speed / Math.min(Math.sqrt(canvas.viewbox().scale), 1);
 
-      switch(opts.direction) {
-        case 'left':    // Left
-          dx = actualSpeed;
-          break;
-        case 'up':    // Up
-          dy = actualSpeed;
-          break;
-        case 'right':    // Right
-          dx = -actualSpeed;
-          break;
-        case 'down':    // Down
-          dy = -actualSpeed;
-          break;
+      switch (opts.direction) {
+      case 'left':    // Left
+        dx = actualSpeed;
+        break;
+      case 'up':    // Up
+        dy = actualSpeed;
+        break;
+      case 'right':    // Right
+        dx = -actualSpeed;
+        break;
+      case 'down':    // Down
+        dy = -actualSpeed;
+        break;
       }
 
       if (dy && invertY) {
@@ -23137,8 +23170,8 @@ function GlobalConnect(eventBus, dragging, connect, canvas, toolManager) {
       return;
     }
 
-    eventBus.once('element.out', function () {
-      eventBus.once([ 'connect.ended', 'connect.canceled' ], function () {
+    eventBus.once('element.out', function() {
+      eventBus.once([ 'connect.ended', 'connect.canceled' ], function() {
         eventBus.fire('global-connect.drag.ended');
       });
 
@@ -23506,15 +23539,12 @@ function InteractionEvents(eventBus, elementRegistry, styles) {
   eventBus.on([ 'shape.added', 'connection.added' ], function(event) {
     var element = event.element,
         gfx = event.gfx,
-        hit,
-        type;
+        hit;
 
     if (element.waypoints) {
       hit = createLine(element.waypoints);
-      type = 'connection';
     } else {
       hit = Snap.create('rect', { x: 0, y: 0, width: element.width, height: element.height });
-      type = 'shape';
     }
 
     hit.attr(HIT_STYLE).appendTo(gfx.node);
@@ -23687,7 +23717,7 @@ function Keyboard(config, eventBus, editorActions) {
       return;
     }
 
-    for (i = 0; !!(l = listeners[i]); i++) {
+    for (i = 0; (l = listeners[i]); i++) {
       if (l(code, event)) {
         event.preventDefault();
         event.stopPropagation();
@@ -23885,22 +23915,22 @@ Keyboard.prototype._init = function() {
 
       var opts = {
         invertY: config.invertY,
-        speed: (config.speed || 50),
+        speed: (config.speed || 50)
       };
 
-      switch(key) {
-        case 37:    // Left
-          opts.direction = 'left';
-          break;
-        case 38:    // Up
-          opts.direction = 'up';
-          break;
-        case 39:    // Right
-          opts.direction = 'right';
-          break;
-        case 40:    // Down
-          opts.direction = 'down';
-          break;
+      switch (key) {
+      case 37:    // Left
+        opts.direction = 'left';
+        break;
+      case 38:    // Up
+        opts.direction = 'up';
+        break;
+      case 39:    // Right
+        opts.direction = 'right';
+        break;
+      case 40:    // Down
+        opts.direction = 'down';
+        break;
       }
 
       editorActions.trigger('moveCanvas', opts);
@@ -24283,12 +24313,12 @@ function toBBox(event) {
   if ((start.x <= end.x && start.y < end.y) ||
       (start.x < end.x && start.y <= end.y)) {
 
-      bbox = {
-        x: start.x,
-        y: start.y,
-        width:  end.x - start.x,
-        height: end.y - start.y
-      };
+    bbox = {
+      x: start.x,
+      y: start.y,
+      width:  end.x - start.x,
+      height: end.y - start.y
+    };
   } else if ((start.x >= end.x && start.y < end.y) ||
              (start.x > end.x && start.y <= end.y)) {
 
@@ -25462,8 +25492,8 @@ MoveElementsHandler.prototype.postExecute = function(context) {
       primaryShape;
 
   if (hints && hints.primaryShape) {
-      primaryShape = hints.primaryShape;
-      hints.oldParent = primaryShape.parent;
+    primaryShape = hints.primaryShape;
+    hints.oldParent = primaryShape.parent;
   }
 
   this._helper.moveClosure(context.closure, context.delta, context.newParent, context.newHost, primaryShape);
@@ -25766,7 +25796,7 @@ PasteHandler.prototype.postExecute = function(context) {
 
   var tree = context.tree,
       labels = tree.labels,
-      pastedElements;
+      topLevelElements = [];
 
   forEach(labels, function(labelDescriptor) {
     var labelTarget = this._getCreatedElement(labelDescriptor.labelTarget, tree),
@@ -25799,11 +25829,16 @@ PasteHandler.prototype.postExecute = function(context) {
     modeling.moveShape(label, newPosition, labelTarget.parent);
   }, this);
 
-  pastedElements = map(tree.createdElements, function(data) {
-    return data.element;
+  forEach(tree[0], function(descriptor) {
+    var id = descriptor.id,
+        toplevel = tree.createdElements[id];
+
+    if (toplevel) {
+      topLevelElements.push(toplevel.element);
+    }
   });
 
-  selection.select(pastedElements);
+  selection.select(topLevelElements);
 };
 
 
@@ -25986,15 +26021,24 @@ module.exports = ReplaceShapeHandler;
  *
  * @param {Object} context
  */
- ReplaceShapeHandler.prototype.preExecute = function(context) {
+ReplaceShapeHandler.prototype.preExecute = function(context) {
 
-  var modeling = this._modeling,
+  var self = this,
+      modeling = this._modeling,
       rules = this._rules;
 
   var oldShape = context.oldShape,
       newData = context.newData,
       hints = context.hints,
       newShape;
+
+  function canReconnect(type, source, target, connection) {
+    return rules.allowed(type, {
+      source: source,
+      target: target,
+      connection: connection
+    });
+  }
 
 
   // (1) place a new shape at the given position
@@ -26004,7 +26048,7 @@ module.exports = ReplaceShapeHandler;
     y: newData.y
   };
 
-  newShape = context.newShape = context.newShape || modeling.createShape(newData, position, oldShape.parent);
+  newShape = context.newShape = context.newShape || self.createShape(newData, position, oldShape.parent);
 
 
   // (2) update the host
@@ -26016,8 +26060,12 @@ module.exports = ReplaceShapeHandler;
 
   // (3) adopt all children from the old shape
 
+  var children;
+
   if (hints.moveChildren !== false) {
-    modeling.moveElements(oldShape.children, { x: 0, y: 0 }, newShape);
+    children = oldShape.children.slice();
+
+    modeling.moveElements(children, { x: 0, y: 0 }, newShape);
   }
 
   // (4) reconnect connections to the new shape (where allowed)
@@ -26028,28 +26076,22 @@ module.exports = ReplaceShapeHandler;
   forEach(incoming, function(connection) {
     var waypoints = connection.waypoints,
         docking = waypoints[waypoints.length - 1],
-        allowed = rules.allowed('connection.reconnectEnd', {
-          source: connection.source,
-          target: newShape,
-          connection: connection
-        });
+        source = connection.source,
+        allowed = canReconnect('connection.reconnectEnd', source, newShape, connection);
 
     if (allowed) {
-      modeling.reconnectEnd(connection, newShape, docking);
+      self.reconnectEnd(connection, newShape, docking);
     }
   });
 
   forEach(outgoing, function(connection) {
     var waypoints = connection.waypoints,
         docking = waypoints[0],
-        allowed = rules.allowed('connection.reconnectStart', {
-          source: newShape,
-          target: connection.target,
-          connection: connection
-        });
+        target = connection.target,
+        allowed = canReconnect('connection.reconnectStart', newShape, target, connection);
 
     if (allowed) {
-      modeling.reconnectStart(connection, newShape, docking);
+      self.reconnectStart(connection, newShape, docking);
     }
 
   });
@@ -26078,6 +26120,24 @@ ReplaceShapeHandler.prototype.postExecute = function(context) {
 ReplaceShapeHandler.prototype.execute = function(context) {};
 
 ReplaceShapeHandler.prototype.revert = function(context) {};
+
+
+ReplaceShapeHandler.prototype.createShape = function(shape, position, target) {
+  var modeling = this._modeling;
+  return modeling.createShape(shape, position, target);
+};
+
+
+ReplaceShapeHandler.prototype.reconnectStart = function(connection, newSource, dockingPoint) {
+  var modeling = this._modeling;
+  modeling.reconnectStart(connection, newSource, dockingPoint);
+};
+
+
+ReplaceShapeHandler.prototype.reconnectEnd = function(connection, newTarget, dockingPoint) {
+  var modeling = this._modeling;
+  modeling.reconnectEnd(connection, newTarget, dockingPoint);
+};
 
 },{"275":275}],171:[function(_dereq_,module,exports){
 'use strict';
@@ -26785,7 +26845,7 @@ function removeNested(elements) {
   var ids = groupBy(elements, 'id');
 
   return filter(elements, function(element) {
-    while (!!(element = element.parent)) {
+    while ((element = element.parent)) {
 
       // parent in selection
       if (ids[element.id]) {
@@ -27690,7 +27750,7 @@ Overlays.prototype._addOverlay = function(overlay) {
   this._updateOverlayVisibilty(overlay, this._canvas.viewbox());
 };
 
-Overlays.prototype._updateOverlayVisibilty = function (overlay, viewbox) {
+Overlays.prototype._updateOverlayVisibilty = function(overlay, viewbox) {
   var show = overlay.show,
       htmlContainer = overlay.htmlContainer,
       visible = true;
@@ -27754,8 +27814,10 @@ Overlays.prototype._init = function() {
 
     if (container) {
       domRemove(container.html);
-      var i = self._overlayContainers.indexOf();
-      self._overlayContainers.splice(i, 1);
+      var i = self._overlayContainers.indexOf(container);
+      if (i !== -1) {
+        self._overlayContainers.splice(i, 1);
+      }
     }
   });
 
@@ -27990,7 +28052,6 @@ Palette.prototype.trigger = function(action, event, autoActivate) {
       entry,
       handler,
       originalEvent,
-      result = false,
       button = event.delegateTarget || event.target;
 
   if (!button) {
@@ -28011,11 +28072,11 @@ Palette.prototype.trigger = function(action, event, autoActivate) {
   // simple action (via callback function)
   if (isFunction(handler)) {
     if (action === 'click') {
-      result = handler(originalEvent, autoActivate);
+      handler(originalEvent, autoActivate);
     }
   } else {
     if (handler[action]) {
-      result = handler[action](originalEvent, autoActivate);
+      handler[action](originalEvent, autoActivate);
     }
   }
 
@@ -28217,7 +28278,7 @@ PopupMenu.prototype.create = function(id, element) {
  *
  * @return {Boolean} true if empty
  */
-PopupMenu.prototype.isEmpty = function () {
+PopupMenu.prototype.isEmpty = function() {
 
   var current = this._current;
 
@@ -28472,44 +28533,44 @@ PopupMenu.prototype._createEntries = function(entries, className) {
  */
 PopupMenu.prototype._createEntry = function(entry) {
 
-    if (!entry.id) {
-      throw new Error ('every entry must have the id property set');
-    }
+  if (!entry.id) {
+    throw new Error ('every entry must have the id property set');
+  }
 
-    var entryContainer = domify('<div>'),
-        entryClasses = domClasses(entryContainer);
+  var entryContainer = domify('<div>'),
+      entryClasses = domClasses(entryContainer);
 
-    entryClasses.add('entry');
+  entryClasses.add('entry');
 
-    if (entry.className) {
-      entryClasses.add(entry.className);
-    }
+  if (entry.className) {
+    entryClasses.add(entry.className);
+  }
 
-    domAttr(entryContainer, DATA_REF, entry.id);
+  domAttr(entryContainer, DATA_REF, entry.id);
 
-    if (entry.label) {
-      var label = domify('<span>');
-      label.textContent = entry.label;
-      entryContainer.appendChild(label);
-    }
+  if (entry.label) {
+    var label = domify('<span>');
+    label.textContent = entry.label;
+    entryContainer.appendChild(label);
+  }
 
-    if (entry.imageUrl) {
-      entryContainer.appendChild(domify('<img src="' + entry.imageUrl + '" />'));
-    }
+  if (entry.imageUrl) {
+    entryContainer.appendChild(domify('<img src="' + entry.imageUrl + '" />'));
+  }
 
-    if (entry.active === true) {
-      entryClasses.add('active');
-    }
+  if (entry.active === true) {
+    entryClasses.add('active');
+  }
 
-    if (entry.disabled === true) {
-      entryClasses.add('disabled');
-    }
+  if (entry.disabled === true) {
+    entryClasses.add('disabled');
+  }
 
-    if (entry.title) {
-      entryContainer.title = entry.title;
-    }
+  if (entry.title) {
+    entryContainer.title = entry.title;
+  }
 
-    return entryContainer;
+  return entryContainer;
 };
 
 
@@ -29015,40 +29076,40 @@ module.exports.resizeBounds = function(bounds, direction, delta) {
 
   switch (direction) {
 
-    case 'nw':
-      return {
-        x: bounds.x + dx,
-        y: bounds.y + dy,
-        width: bounds.width - dx,
-        height: bounds.height - dy
-      };
+  case 'nw':
+    return {
+      x: bounds.x + dx,
+      y: bounds.y + dy,
+      width: bounds.width - dx,
+      height: bounds.height - dy
+    };
 
-    case 'sw':
-      return {
-        x: bounds.x + dx,
-        y: bounds.y,
-        width: bounds.width - dx,
-        height: bounds.height + dy
-      };
+  case 'sw':
+    return {
+      x: bounds.x + dx,
+      y: bounds.y,
+      width: bounds.width - dx,
+      height: bounds.height + dy
+    };
 
-    case 'ne':
-      return {
-        x: bounds.x,
-        y: bounds.y + dy,
-        width: bounds.width + dx,
-        height: bounds.height - dy
-      };
+  case 'ne':
+    return {
+      x: bounds.x,
+      y: bounds.y + dy,
+      width: bounds.width + dx,
+      height: bounds.height - dy
+    };
 
-    case 'se':
-      return {
-        x: bounds.x,
-        y: bounds.y,
-        width: bounds.width + dx,
-        height: bounds.height + dy
-      };
+  case 'se':
+    return {
+      x: bounds.x,
+      y: bounds.y,
+      width: bounds.width + dx,
+      height: bounds.height + dy
+    };
 
-    default:
-      throw new Error('unrecognized direction: ' + direction);
+  default:
+    throw new Error('unrecognized direction: ' + direction);
   }
 };
 
@@ -29135,7 +29196,7 @@ module.exports.getMinResizeBounds = function(direction, currentBounds, minDimens
     top: min(minBox.top, childrenBox.top),
     left: min(minBox.left, childrenBox.left),
     bottom: max(minBox.bottom, childrenBox.bottom),
-    right: max(minBox.right, childrenBox.right),
+    right: max(minBox.right, childrenBox.right)
   };
 
   return asBounds(combinedBox);
@@ -29243,7 +29304,7 @@ var LOW_PRIORITY = 500;
  * @param {EventBus} eventBus
  * @param {Canvas} canvas
  */
-function ResizeVisuals(eventBus, canvas){
+function ResizeVisuals(eventBus, canvas) {
 
   this._canvas = canvas;
 
@@ -29632,7 +29693,7 @@ SearchPad.prototype._bindEvents = function() {
  * Unbinds all previously established listeners
  */
 SearchPad.prototype._unbindEvents = function() {
-  this._eventMaps.forEach(function(m){
+  this._eventMaps.forEach(function(m) {
     domDelegate.unbind(m.el, m.type, m.listener);
   });
 };
@@ -29757,7 +29818,7 @@ SearchPad.prototype._createResultNode = function(result, id) {
   var node = domify(SearchPad.RESULT_HTML);
 
   // create only if available
-  if (result.primaryTokens.length > 0){
+  if (result.primaryTokens.length > 0) {
     createInnerTextNode(node, result.primaryTokens, SearchPad.RESULT_PRIMARY_HTML);
   }
 
@@ -29962,7 +30023,7 @@ function constructOverlay(box) {
 
   var styles = [
     'width: '+ w +'px',
-    'height: '+ h + 'px',
+    'height: '+ h + 'px'
   ].join('; ');
 
   return {
@@ -31328,40 +31389,40 @@ module.exports.resizeBounds = function(bounds, direction, delta) {
 
   switch (direction) {
 
-    case 'n':
-      return {
-        x: bounds.x,
-        y: bounds.y + dy,
-        width: bounds.width,
-        height: bounds.height - dy
-      };
+  case 'n':
+    return {
+      x: bounds.x,
+      y: bounds.y + dy,
+      width: bounds.width,
+      height: bounds.height - dy
+    };
 
-    case 's':
-      return {
-        x: bounds.x,
-        y: bounds.y,
-        width: bounds.width,
-        height: bounds.height + dy
-      };
+  case 's':
+    return {
+      x: bounds.x,
+      y: bounds.y,
+      width: bounds.width,
+      height: bounds.height + dy
+    };
 
-    case 'w':
-      return {
-        x: bounds.x + dx,
-        y: bounds.y,
-        width: bounds.width - dx,
-        height: bounds.height
-      };
+  case 'w':
+    return {
+      x: bounds.x + dx,
+      y: bounds.y,
+      width: bounds.width - dx,
+      height: bounds.height
+    };
 
-    case 'e':
-      return {
-        x: bounds.x,
-        y: bounds.y,
-        width: bounds.width + dx,
-        height: bounds.height
-      };
+  case 'e':
+    return {
+      x: bounds.x,
+      y: bounds.y,
+      width: bounds.width + dx,
+      height: bounds.height
+    };
 
-    default:
-      throw new Error('unrecognized direction: ' + direction);
+  default:
+    throw new Error('unrecognized direction: ' + direction);
   }
 };
 },{}],213:[function(_dereq_,module,exports){
@@ -31912,9 +31973,7 @@ var mouseEvents = [
 ];
 
 function log() {
-  if (false) {
-    console.log.apply(console, arguments);
-  }
+  // console.log.apply(console, arguments);
 }
 
 function get(service, injector) {
@@ -31984,7 +32043,7 @@ function createTouchRecognizer(node) {
       var i, r;
 
       log('recognizer', 'reset');
-      for (i = 0; !!(r = recognizers[i]); i++) {
+      for (i = 0; (r = recognizers[i]); i++) {
         r.reset();
         r.state = 8; // FAILED STATE
       }
@@ -32723,36 +32782,36 @@ module.exports.connectRectangles = function(source, target, start, end, hints) {
   if (directions === 'h:h') {
 
     switch (orientation) {
-      case 'top-right':
-      case 'right':
-      case 'bottom-right':
-        start = { original: start, x: source.x, y: start.y };
-        end = { original: end, x: target.x + target.width, y: end.y };
-        break;
-      case 'top-left':
-      case 'left':
-      case 'bottom-left':
-        start = { original: start, x: source.x + source.width, y: start.y };
-        end = { original: end, x: target.x, y: end.y };
-        break;
+    case 'top-right':
+    case 'right':
+    case 'bottom-right':
+      start = { original: start, x: source.x, y: start.y };
+      end = { original: end, x: target.x + target.width, y: end.y };
+      break;
+    case 'top-left':
+    case 'left':
+    case 'bottom-left':
+      start = { original: start, x: source.x + source.width, y: start.y };
+      end = { original: end, x: target.x, y: end.y };
+      break;
     }
   }
 
   if (directions === 'v:v') {
 
     switch (orientation) {
-      case 'top-left':
-      case 'top':
-      case 'top-right':
-        start = { original: start, x: start.x, y: source.y + source.height };
-        end = { original: end, x: end.x, y: target.y };
-        break;
-      case 'bottom-left':
-      case 'bottom':
-      case 'bottom-right':
-        start = { original: start, x: start.x, y: source.y };
-        end = { original: end, x: end.x, y: target.y + target.height };
-        break;
+    case 'top-left':
+    case 'top':
+    case 'top-right':
+      start = { original: start, x: start.x, y: source.y + source.height };
+      end = { original: end, x: end.x, y: target.y };
+      break;
+    case 'bottom-left':
+    case 'bottom':
+    case 'bottom-right':
+      start = { original: start, x: start.x, y: source.y };
+      end = { original: end, x: end.x, y: target.y + target.height };
+      break;
     }
   }
 
@@ -32849,7 +32908,6 @@ function isInRange(axis, a, b) {
 module.exports.layoutStraight = function(source, target, start, end, hints) {
   var axis = {},
       primaryAxis,
-      secondaryAxis,
       orientation;
 
   orientation = getOrientation(source, target);
@@ -32862,12 +32920,10 @@ module.exports.layoutStraight = function(source, target, start, end, hints) {
 
   if (/top|bottom/.test(orientation)) {
     primaryAxis = 'x';
-    secondaryAxis = 'y';
   }
 
   if (/left|right/.test(orientation)) {
     primaryAxis = 'y';
-    secondaryAxis = 'x';
   }
 
   if (!isInRange(primaryAxis, start, target)) {
@@ -32928,12 +32984,12 @@ module.exports._repairConnectionSide = function(moved, other, newDocking, points
     var alignment = pointsAligned(oldPeer, candidate);
 
     switch (alignment) {
-      case 'v':
+    case 'v':
         // repair vertical alignment
-        return { x: candidate.x, y: newPeer.y };
-      case 'h':
+      return { x: candidate.x, y: newPeer.y };
+    case 'h':
         // repair horizontal alignment
-        return { x: newPeer.x, y: candidate.y };
+      return { x: newPeer.x, y: candidate.y };
     }
 
     return { x: candidate.x, y: candidate. y };
@@ -33008,23 +33064,23 @@ module.exports._repairConnectionSide = function(moved, other, newDocking, points
 function getDirections(orientation, defaultLayout) {
 
   switch (orientation) {
-    case 'intersect':
-      return null;
+  case 'intersect':
+    return null;
 
-    case 'top':
-    case 'bottom':
-      return 'v:v';
+  case 'top':
+  case 'bottom':
+    return 'v:v';
 
-    case 'left':
-    case 'right':
-      return 'h:h';
+  case 'left':
+  case 'right':
+    return 'h:h';
 
     // 'top-left'
     // 'top-right'
     // 'bottom-left'
     // 'bottom-right'
-    default:
-      return defaultLayout;
+  default:
+    return defaultLayout;
   }
 }
 
@@ -34220,6 +34276,10 @@ module.exports.toPoint = toPoint;
  * @return {Number}  distance
  */
 function pointDistance(a, b) {
+  if (!a || !b) {
+    return -1;
+  }
+
   return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
 }
 
@@ -34429,7 +34489,7 @@ function getBendpointIntersection(waypoints, reference) {
 
   var i, w;
 
-  for (i = 0; !!(w = waypoints[i]); i++) {
+  for (i = 0; (w = waypoints[i]); i++) {
 
     if (pointDistance(w, reference) <= INTERSECTION_THRESHOLD) {
       return {
@@ -34622,7 +34682,7 @@ module.exports.saveClear = function(collection, removeFn) {
 
   var e;
 
-  while (!!(e = collection[0])) {
+  while ((e = collection[0])) {
     removeFn(e);
   }
 
@@ -34642,7 +34702,7 @@ module.exports.componentsToPath = function(elements) {
 function toSVGPoints(points) {
   var result = '';
 
-  for (var i = 0, p; !!(p = points[i]); i++) {
+  for (var i = 0, p; (p = points[i]); i++) {
     result += p.x + ',' + p.y + ' ';
   }
 
@@ -34724,7 +34784,7 @@ function layoutNext(lines, maxWidth, fakeText) {
 
   var textBBox;
 
-  while (true) {
+  for (;;) {
     textBBox = getTextBBox(fitLine, fakeText);
 
     textBBox.width = fitLine ? textBBox.width : 0;
@@ -34868,12 +34928,12 @@ Text.prototype.createText = function(parent, text, options) {
   var y, x;
 
   switch (align.vertical) {
-    case 'middle':
-      y = (box.height - totalHeight) / 2 - layouted[0].height / 4;
-      break;
+  case 'middle':
+    y = (box.height - totalHeight) / 2 - layouted[0].height / 4;
+    break;
 
-    default:
-      y = padding.top;
+  default:
+    y = padding.top;
   }
 
   var textElement = parent.text().attr(style);
@@ -34882,17 +34942,17 @@ Text.prototype.createText = function(parent, text, options) {
     y += line.height;
 
     switch (align.horizontal) {
-      case 'left':
-        x = padding.left;
-        break;
+    case 'left':
+      x = padding.left;
+      break;
 
-      case 'right':
-        x = (maxWidth - padding.right - line.width);
-        break;
+    case 'right':
+      x = (maxWidth - padding.right - line.width);
+      break;
 
-      default:
+    default:
         // aka center
-        x = Math.max(((maxWidth - line.width) / 2 + padding.left), 0);
+      x = Math.max(((maxWidth - line.width) / 2 + padding.left), 0);
     }
 
 

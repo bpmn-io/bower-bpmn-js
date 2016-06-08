@@ -1,5 +1,5 @@
 /*!
- * bpmn-js - bpmn-viewer v0.15.1
+ * bpmn-js - bpmn-viewer v0.15.2
 
  * Copyright 2014, 2015 camunda Services GmbH and other contributors
  *
@@ -8,7 +8,7 @@
  *
  * Source Code: https://github.com/bpmn-io/bpmn-js
  *
- * Date: 2016-05-20
+ * Date: 2016-06-08
  */
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.BpmnJS = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 /**
@@ -8187,7 +8187,7 @@ Canvas.prototype.hasMarker = function(element, marker) {
  * @param  {String} marker
  */
 Canvas.prototype.toggleMarker = function(element, marker) {
-  if(this.hasMarker(element, marker)) {
+  if (this.hasMarker(element, marker)) {
     this.removeMarker(element, marker);
   } else {
     this.addMarker(element, marker);
@@ -8751,7 +8751,7 @@ Canvas.prototype._setZoom = function(scale, center) {
  *
  * @return {Dimensions}
  */
-Canvas.prototype.getSize = function () {
+Canvas.prototype.getSize = function() {
   return {
     width: this._container.clientWidth,
     height: this._container.clientHeight
@@ -8994,7 +8994,7 @@ ElementRegistry.prototype.filter = function(fn) {
   var filtered = [];
 
   this.forEach(function(element, gfx) {
-    if(fn(element, gfx)) {
+    if (fn(element, gfx)) {
       filtered.push(element);
     }
   });
@@ -9280,7 +9280,7 @@ EventBus.prototype.off = function(event, callback) {
 
     // move through listeners from back to front
     // and remove matching listeners
-    for (idx = listeners.length - 1; !!(listener = listeners[idx]); idx--) {
+    for (idx = listeners.length - 1; (listener = listeners[idx]); idx--) {
       listenerCallback = listener.callback;
 
       if (listenerCallback === callback || listenerCallback[FN_REF] === callback) {
@@ -9403,7 +9403,7 @@ EventBus.prototype._invokeListeners = function(event, args, listeners) {
       listener,
       returnValue;
 
-  for (idx = 0; !!(listener = listeners[idx]); idx++) {
+  for (idx = 0; (listener = listeners[idx]); idx++) {
 
     // handle stopped propagation
     if (event.cancelBubble) {
@@ -9470,7 +9470,7 @@ EventBus.prototype._addListener = function(event, newListener) {
 
   // ensure we order listeners by priority from
   // 0 (high) to n > 0 (low)
-  for (idx = 0; !!(existingListener = listeners[idx]); idx++) {
+  for (idx = 0; (existingListener = listeners[idx]); idx++) {
     if (existingListener.priority < newListener.priority) {
 
       // prepend newListener at before existingListener
@@ -9661,7 +9661,7 @@ GraphicsFactory.prototype.drawShape = function(visual, element) {
   return eventBus.fire('render.shape', { gfx: visual, element: element });
 };
 
-GraphicsFactory.prototype.getShapePath = function (element) {
+GraphicsFactory.prototype.getShapePath = function(element) {
   var eventBus = this._eventBus;
 
   return eventBus.fire('render.getShapePath', element);
@@ -9673,7 +9673,7 @@ GraphicsFactory.prototype.drawConnection = function(visual, element) {
   return eventBus.fire('render.connection', { gfx: visual, element: element });
 };
 
-GraphicsFactory.prototype.getConnectionPath = function (waypoints) {
+GraphicsFactory.prototype.getConnectionPath = function(waypoints) {
   var eventBus = this._eventBus;
 
   return eventBus.fire('render.getConnectionPath', waypoints);
@@ -9879,7 +9879,7 @@ DefaultRenderer.prototype.getConnectionPath = function getConnectionPath(connect
 
   var idx, point, connectionPath = [];
 
-  for (idx = 0; !!(point = waypoints[idx]); idx++) {
+  for (idx = 0; (point = waypoints[idx]); idx++) {
 
     // take invisible docking into account
     // when creating the path
@@ -10147,15 +10147,12 @@ function InteractionEvents(eventBus, elementRegistry, styles) {
   eventBus.on([ 'shape.added', 'connection.added' ], function(event) {
     var element = event.element,
         gfx = event.gfx,
-        hit,
-        type;
+        hit;
 
     if (element.waypoints) {
       hit = createLine(element.waypoints);
-      type = 'connection';
     } else {
       hit = Snap.create('rect', { x: 0, y: 0, width: element.width, height: element.height });
-      type = 'shape';
     }
 
     hit.attr(HIT_STYLE).appendTo(gfx.node);
@@ -10818,7 +10815,7 @@ Overlays.prototype._addOverlay = function(overlay) {
   this._updateOverlayVisibilty(overlay, this._canvas.viewbox());
 };
 
-Overlays.prototype._updateOverlayVisibilty = function (overlay, viewbox) {
+Overlays.prototype._updateOverlayVisibilty = function(overlay, viewbox) {
   var show = overlay.show,
       htmlContainer = overlay.htmlContainer,
       visible = true;
@@ -10882,8 +10879,10 @@ Overlays.prototype._init = function() {
 
     if (container) {
       domRemove(container.html);
-      var i = self._overlayContainers.indexOf();
-      self._overlayContainers.splice(i, 1);
+      var i = self._overlayContainers.indexOf(container);
+      if (i !== -1) {
+        self._overlayContainers.splice(i, 1);
+      }
     }
   });
 
@@ -12029,7 +12028,7 @@ module.exports.componentsToPath = function(elements) {
 function toSVGPoints(points) {
   var result = '';
 
-  for (var i = 0, p; !!(p = points[i]); i++) {
+  for (var i = 0, p; (p = points[i]); i++) {
     result += p.x + ',' + p.y + ' ';
   }
 
@@ -12111,7 +12110,7 @@ function layoutNext(lines, maxWidth, fakeText) {
 
   var textBBox;
 
-  while (true) {
+  for (;;) {
     textBBox = getTextBBox(fitLine, fakeText);
 
     textBBox.width = fitLine ? textBBox.width : 0;
@@ -12255,12 +12254,12 @@ Text.prototype.createText = function(parent, text, options) {
   var y, x;
 
   switch (align.vertical) {
-    case 'middle':
-      y = (box.height - totalHeight) / 2 - layouted[0].height / 4;
-      break;
+  case 'middle':
+    y = (box.height - totalHeight) / 2 - layouted[0].height / 4;
+    break;
 
-    default:
-      y = padding.top;
+  default:
+    y = padding.top;
   }
 
   var textElement = parent.text().attr(style);
@@ -12269,17 +12268,17 @@ Text.prototype.createText = function(parent, text, options) {
     y += line.height;
 
     switch (align.horizontal) {
-      case 'left':
-        x = padding.left;
-        break;
+    case 'left':
+      x = padding.left;
+      break;
 
-      case 'right':
-        x = (maxWidth - padding.right - line.width);
-        break;
+    case 'right':
+      x = (maxWidth - padding.right - line.width);
+      break;
 
-      default:
+    default:
         // aka center
-        x = Math.max(((maxWidth - line.width) / 2 + padding.left), 0);
+      x = Math.max(((maxWidth - line.width) / 2 + padding.left), 0);
     }
 
 
