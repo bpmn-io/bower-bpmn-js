@@ -1,5 +1,5 @@
 /*!
- * bpmn-js - bpmn-viewer v0.16.0
+ * bpmn-js - bpmn-viewer v0.16.2
 
  * Copyright 2014, 2015 camunda Services GmbH and other contributors
  *
@@ -8,7 +8,7 @@
  *
  * Source Code: https://github.com/bpmn-io/bpmn-js
  *
- * Date: 2016-07-05
+ * Date: 2016-07-26
  */
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.BpmnJS = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 /**
@@ -19,20 +19,20 @@
  */
 'use strict';
 
-var assign = _dereq_(115),
-    omit = _dereq_(118),
-    isString = _dereq_(113),
-    isNumber = _dereq_(111);
+var assign = _dereq_(190),
+    omit = _dereq_(194),
+    isString = _dereq_(187),
+    isNumber = _dereq_(184);
 
-var domify = _dereq_(125),
-    domQuery = _dereq_(127),
-    domRemove = _dereq_(128);
+var domify = _dereq_(205),
+    domQuery = _dereq_(207),
+    domRemove = _dereq_(208);
 
-var Diagram = _dereq_(146),
+var Diagram = _dereq_(29),
     BpmnModdle = _dereq_(15);
 
 
-var inherits = _dereq_(28);
+var inherits = _dereq_(70);
 
 var Importer = _dereq_(8);
 
@@ -441,9 +441,9 @@ Viewer.prototype._createModdle = function(options) {
 // modules the viewer is composed of
 Viewer.prototype._modules = [
   _dereq_(2),
-  _dereq_(168),
-  _dereq_(167),
-  _dereq_(163)
+  _dereq_(51),
+  _dereq_(50),
+  _dereq_(46)
 ];
 
 // default moddle extensions the viewer is composed of
@@ -452,7 +452,7 @@ Viewer.prototype._moddleExtensions = {};
 /* <project-logo> */
 
 var PoweredBy = _dereq_(14),
-    domEvent = _dereq_(126);
+    domEvent = _dereq_(206);
 
 /**
  * Adds the project logo to the diagram container as
@@ -486,7 +486,7 @@ function addProjectLogo(container) {
 }
 
 /* </project-logo> */
-},{"111":111,"113":113,"115":115,"118":118,"125":125,"126":126,"127":127,"128":128,"14":14,"146":146,"15":15,"163":163,"167":167,"168":168,"2":2,"28":28,"8":8}],2:[function(_dereq_,module,exports){
+},{"14":14,"15":15,"184":184,"187":187,"190":190,"194":194,"2":2,"205":205,"206":206,"207":207,"208":208,"29":29,"46":46,"50":50,"51":51,"70":70,"8":8}],2:[function(_dereq_,module,exports){
 module.exports = {
   __depends__: [
     _dereq_(5),
@@ -496,21 +496,21 @@ module.exports = {
 },{"10":10,"5":5}],3:[function(_dereq_,module,exports){
 'use strict';
 
-var inherits = _dereq_(28),
-    isObject = _dereq_(112),
-    assign = _dereq_(115),
-    forEach = _dereq_(33),
-    every = _dereq_(30),
-    includes = _dereq_(34),
-    some = _dereq_(37);
+var inherits = _dereq_(70),
+    isObject = _dereq_(185),
+    assign = _dereq_(190),
+    forEach = _dereq_(76),
+    every = _dereq_(73),
+    includes = _dereq_(78),
+    some = _dereq_(81);
 
-var BaseRenderer = _dereq_(154),
-    TextUtil = _dereq_(179),
+var BaseRenderer = _dereq_(37),
+    TextUtil = _dereq_(62),
     DiUtil = _dereq_(11);
 
 var is = _dereq_(13).is;
 
-var RenderUtil = _dereq_(178);
+var RenderUtil = _dereq_(61);
 
 var componentsToPath = RenderUtil.componentsToPath,
     createLine = RenderUtil.createLine;
@@ -928,7 +928,7 @@ function BpmnRenderer(eventBus, styles, pathMap, priority) {
         containerHeight: event.height,
         position: {
           mx: 0.5,
-          my: 0.555
+          my: 0.2
         }
       });
 
@@ -2148,10 +2148,10 @@ function getRectPath(shape) {
   return componentsToPath(rectPath);
 }
 
-},{"11":11,"112":112,"115":115,"13":13,"154":154,"178":178,"179":179,"28":28,"30":30,"33":33,"34":34,"37":37}],4:[function(_dereq_,module,exports){
+},{"11":11,"13":13,"185":185,"190":190,"37":37,"61":61,"62":62,"70":70,"73":73,"76":76,"78":78,"81":81}],4:[function(_dereq_,module,exports){
 'use strict';
 
-var Snap = _dereq_(316);
+var Snap = _dereq_(63);
 
 /**
  * Map containing SVG paths needed by BpmnRenderer.
@@ -2206,12 +2206,11 @@ function PathMap() {
       widthElements: [10, 20]
     },
     'EVENT_ESCALATION': {
-      d: 'm {mx},{my} c -{e.x1},{e.y0} -{e.x3},{e.y1} -{e.x5},{e.y4} {e.x1},-{e.y3} {e.x3},-{e.y5} {e.x5},-{e.y6} ' +
-        '{e.x0},{e.y3} {e.x2},{e.y5} {e.x4},{e.y6} -{e.x0},-{e.y0} -{e.x2},-{e.y1} -{e.x4},-{e.y4} z',
+      d: 'M {mx},{my} l {e.x0},{e.y0} l -{e.x0},-{e.y1} l -{e.x0},{e.y1} Z',
       height: 36,
       width: 36,
-      heightElements: [2.382, 4.764, 4.926, 6.589333, 7.146, 13.178667, 19.768],
-      widthElements: [2.463, 2.808, 4.926, 5.616, 7.389, 8.424]
+      heightElements: [20, 7],
+      widthElements: [8]
     },
     'EVENT_CONDITIONAL': {
       d: 'M {e.x0},{e.y0} l {e.x1},0 l 0,{e.y2} l -{e.x1},0 Z ' +
@@ -2603,7 +2602,7 @@ function PathMap() {
 
 module.exports = PathMap;
 
-},{"316":316}],5:[function(_dereq_,module,exports){
+},{"63":63}],5:[function(_dereq_,module,exports){
 module.exports = {
   __init__: [ 'bpmnRenderer' ],
   bpmnRenderer: [ 'type', _dereq_(3) ],
@@ -2613,8 +2612,8 @@ module.exports = {
 },{"3":3,"4":4}],6:[function(_dereq_,module,exports){
 'use strict';
 
-var assign = _dereq_(115),
-    map = _dereq_(35);
+var assign = _dereq_(190),
+    map = _dereq_(79);
 
 var LabelUtil = _dereq_(12);
 
@@ -2866,14 +2865,14 @@ BpmnImporter.prototype._getElement = function(semantic) {
   return this._elementRegistry.get(semantic.id);
 };
 
-},{"11":11,"115":115,"12":12,"13":13,"35":35,"9":9}],7:[function(_dereq_,module,exports){
+},{"11":11,"12":12,"13":13,"190":190,"79":79,"9":9}],7:[function(_dereq_,module,exports){
 'use strict';
 
-var filter = _dereq_(31),
-    find = _dereq_(32),
-    forEach = _dereq_(33);
+var filter = _dereq_(74),
+    find = _dereq_(75),
+    forEach = _dereq_(76);
 
-var Refs = _dereq_(141);
+var Refs = _dereq_(221);
 
 var elementToString = _dereq_(9).elementToString;
 
@@ -3313,7 +3312,7 @@ function BpmnTreeWalker(handler, translate) {
 }
 
 module.exports = BpmnTreeWalker;
-},{"141":141,"31":31,"32":32,"33":33,"9":9}],8:[function(_dereq_,module,exports){
+},{"221":221,"74":74,"75":75,"76":76,"9":9}],8:[function(_dereq_,module,exports){
 'use strict';
 
 var BpmnTreeWalker = _dereq_(7);
@@ -3397,11 +3396,11 @@ module.exports.elementToString = function(e) {
 },{}],10:[function(_dereq_,module,exports){
 module.exports = {
   __depends__: [
-    _dereq_(168)
+    _dereq_(51)
   ],
   bpmnImporter: [ 'type', _dereq_(6) ]
 };
-},{"168":168,"6":6}],11:[function(_dereq_,module,exports){
+},{"51":51,"6":6}],11:[function(_dereq_,module,exports){
 'use strict';
 
 var is = _dereq_(13).is,
@@ -3435,7 +3434,7 @@ module.exports.isEventSubProcess = function(element) {
 },{"13":13}],12:[function(_dereq_,module,exports){
 'use strict';
 
-var assign = _dereq_(115);
+var assign = _dereq_(190);
 
 var is = _dereq_(13).is;
 
@@ -3573,7 +3572,7 @@ module.exports.getExternalLabelBounds = function(semantic, element) {
   }, size);
 };
 
-},{"115":115,"13":13}],13:[function(_dereq_,module,exports){
+},{"13":13,"190":190}],13:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -3615,9 +3614,9 @@ module.exports.getBusinessObject = getBusinessObject;
 
 'use strict';
 
-var domify = _dereq_(125);
+var domify = _dereq_(205);
 
-var domDelegate = _dereq_(124);
+var domDelegate = _dereq_(204);
 
 /* jshint -W101 */
 
@@ -3690,18 +3689,18 @@ function open() {
 }
 
 module.exports.open = open;
-},{"124":124,"125":125}],15:[function(_dereq_,module,exports){
+},{"204":204,"205":205}],15:[function(_dereq_,module,exports){
 module.exports = _dereq_(17);
 },{"17":17}],16:[function(_dereq_,module,exports){
 'use strict';
 
-var isString = _dereq_(113),
-    isFunction = _dereq_(109),
-    assign = _dereq_(115);
+var isString = _dereq_(187),
+    isFunction = _dereq_(182),
+    assign = _dereq_(190);
 
-var Moddle = _dereq_(132),
-    XmlReader = _dereq_(130),
-    XmlWriter = _dereq_(131);
+var Moddle = _dereq_(212),
+    XmlReader = _dereq_(210),
+    XmlWriter = _dereq_(211);
 
 /**
  * A sub class of {@link Moddle} with support for import and export of BPMN 2.0 xml files.
@@ -3773,10 +3772,10 @@ BpmnModdle.prototype.toXML = function(element, options, done) {
   }
 };
 
-},{"109":109,"113":113,"115":115,"130":130,"131":131,"132":132}],17:[function(_dereq_,module,exports){
+},{"182":182,"187":187,"190":190,"210":210,"211":211,"212":212}],17:[function(_dereq_,module,exports){
 'use strict';
 
-var assign = _dereq_(115);
+var assign = _dereq_(190);
 
 var BpmnModdle = _dereq_(16);
 
@@ -3790,7 +3789,7 @@ var packages = {
 module.exports = function(additionalPackages, options) {
   return new BpmnModdle(assign({}, packages, additionalPackages), options);
 };
-},{"115":115,"16":16,"18":18,"19":19,"20":20,"21":21}],18:[function(_dereq_,module,exports){
+},{"16":16,"18":18,"19":19,"190":190,"20":20,"21":21}],18:[function(_dereq_,module,exports){
 module.exports={
   "name": "BPMN20",
   "uri": "http://www.omg.org/spec/BPMN/20100524/MODEL",
@@ -7274,7 +7273,200 @@ module.exports={
   }
 }
 },{}],22:[function(_dereq_,module,exports){
-var matches = _dereq_(25)
+/**
+ * Module dependencies.
+ */
+
+try {
+  var index = _dereq_(26);
+} catch (err) {
+  var index = _dereq_(26);
+}
+
+/**
+ * Whitespace regexp.
+ */
+
+var re = /\s+/;
+
+/**
+ * toString reference.
+ */
+
+var toString = Object.prototype.toString;
+
+/**
+ * Wrap `el` in a `ClassList`.
+ *
+ * @param {Element} el
+ * @return {ClassList}
+ * @api public
+ */
+
+module.exports = function(el){
+  return new ClassList(el);
+};
+
+/**
+ * Initialize a new ClassList for `el`.
+ *
+ * @param {Element} el
+ * @api private
+ */
+
+function ClassList(el) {
+  if (!el || !el.nodeType) {
+    throw new Error('A DOM element reference is required');
+  }
+  this.el = el;
+  this.list = el.classList;
+}
+
+/**
+ * Add class `name` if not already present.
+ *
+ * @param {String} name
+ * @return {ClassList}
+ * @api public
+ */
+
+ClassList.prototype.add = function(name){
+  // classList
+  if (this.list) {
+    this.list.add(name);
+    return this;
+  }
+
+  // fallback
+  var arr = this.array();
+  var i = index(arr, name);
+  if (!~i) arr.push(name);
+  this.el.className = arr.join(' ');
+  return this;
+};
+
+/**
+ * Remove class `name` when present, or
+ * pass a regular expression to remove
+ * any which match.
+ *
+ * @param {String|RegExp} name
+ * @return {ClassList}
+ * @api public
+ */
+
+ClassList.prototype.remove = function(name){
+  if ('[object RegExp]' == toString.call(name)) {
+    return this.removeMatching(name);
+  }
+
+  // classList
+  if (this.list) {
+    this.list.remove(name);
+    return this;
+  }
+
+  // fallback
+  var arr = this.array();
+  var i = index(arr, name);
+  if (~i) arr.splice(i, 1);
+  this.el.className = arr.join(' ');
+  return this;
+};
+
+/**
+ * Remove all classes matching `re`.
+ *
+ * @param {RegExp} re
+ * @return {ClassList}
+ * @api private
+ */
+
+ClassList.prototype.removeMatching = function(re){
+  var arr = this.array();
+  for (var i = 0; i < arr.length; i++) {
+    if (re.test(arr[i])) {
+      this.remove(arr[i]);
+    }
+  }
+  return this;
+};
+
+/**
+ * Toggle class `name`, can force state via `force`.
+ *
+ * For browsers that support classList, but do not support `force` yet,
+ * the mistake will be detected and corrected.
+ *
+ * @param {String} name
+ * @param {Boolean} force
+ * @return {ClassList}
+ * @api public
+ */
+
+ClassList.prototype.toggle = function(name, force){
+  // classList
+  if (this.list) {
+    if ("undefined" !== typeof force) {
+      if (force !== this.list.toggle(name, force)) {
+        this.list.toggle(name); // toggle again to correct
+      }
+    } else {
+      this.list.toggle(name);
+    }
+    return this;
+  }
+
+  // fallback
+  if ("undefined" !== typeof force) {
+    if (!force) {
+      this.remove(name);
+    } else {
+      this.add(name);
+    }
+  } else {
+    if (this.has(name)) {
+      this.remove(name);
+    } else {
+      this.add(name);
+    }
+  }
+
+  return this;
+};
+
+/**
+ * Return an array of classes.
+ *
+ * @return {Array}
+ * @api public
+ */
+
+ClassList.prototype.array = function(){
+  var className = this.el.getAttribute('class') || '';
+  var str = className.replace(/^\s+|\s+$/g, '');
+  var arr = str.split(re);
+  if ('' === arr[0]) arr.shift();
+  return arr;
+};
+
+/**
+ * Check if class `name` is present.
+ *
+ * @param {String} name
+ * @return {ClassList}
+ * @api public
+ */
+
+ClassList.prototype.has =
+ClassList.prototype.contains = function(name){
+  return this.list
+    ? this.list.contains(name)
+    : !! ~index(this.array(), name);
+};
+
+},{"26":26}],23:[function(_dereq_,module,exports){
+var matches = _dereq_(27)
 
 module.exports = function (element, selector, checkYoSelf, root) {
   element = checkYoSelf ? {parentNode: element} : element
@@ -7294,21 +7486,21 @@ module.exports = function (element, selector, checkYoSelf, root) {
   }
 }
 
-},{"25":25}],23:[function(_dereq_,module,exports){
+},{"27":27}],24:[function(_dereq_,module,exports){
 /**
  * Module dependencies.
  */
 
 try {
-  var closest = _dereq_(22);
+  var closest = _dereq_(23);
 } catch(err) {
-  var closest = _dereq_(22);
+  var closest = _dereq_(23);
 }
 
 try {
-  var event = _dereq_(24);
+  var event = _dereq_(25);
 } catch(err) {
-  var event = _dereq_(24);
+  var event = _dereq_(25);
 }
 
 /**
@@ -7347,7 +7539,7 @@ exports.unbind = function(el, type, fn, capture){
   event.unbind(el, type, fn, capture);
 };
 
-},{"22":22,"24":24}],24:[function(_dereq_,module,exports){
+},{"23":23,"25":25}],25:[function(_dereq_,module,exports){
 var bind = window.addEventListener ? 'addEventListener' : 'attachEvent',
     unbind = window.removeEventListener ? 'removeEventListener' : 'detachEvent',
     prefix = bind !== 'addEventListener' ? 'on' : '';
@@ -7383,15 +7575,23 @@ exports.unbind = function(el, type, fn, capture){
   el[unbind](prefix + type, fn, capture || false);
   return fn;
 };
-},{}],25:[function(_dereq_,module,exports){
+},{}],26:[function(_dereq_,module,exports){
+module.exports = function(arr, obj){
+  if (arr.indexOf) return arr.indexOf(obj);
+  for (var i = 0; i < arr.length; ++i) {
+    if (arr[i] === obj) return i;
+  }
+  return -1;
+};
+},{}],27:[function(_dereq_,module,exports){
 /**
  * Module dependencies.
  */
 
 try {
-  var query = _dereq_(26);
+  var query = _dereq_(28);
 } catch (err) {
-  var query = _dereq_(26);
+  var query = _dereq_(28);
 }
 
 /**
@@ -7435,7 +7635,7 @@ function match(el, selector) {
   return false;
 }
 
-},{"26":26}],26:[function(_dereq_,module,exports){
+},{"28":28}],28:[function(_dereq_,module,exports){
 function one(selector, el) {
   return el.querySelector(selector);
 }
@@ -7458,7 +7658,5194 @@ exports.engine = function(obj){
   return exports;
 };
 
-},{}],27:[function(_dereq_,module,exports){
+},{}],29:[function(_dereq_,module,exports){
+module.exports = _dereq_(30);
+},{"30":30}],30:[function(_dereq_,module,exports){
+'use strict';
+
+var di = _dereq_(65);
+
+
+/**
+ * Bootstrap an injector from a list of modules, instantiating a number of default components
+ *
+ * @ignore
+ * @param {Array<didi.Module>} bootstrapModules
+ *
+ * @return {didi.Injector} a injector to use to access the components
+ */
+function bootstrap(bootstrapModules) {
+
+  var modules = [],
+      components = [];
+
+  function hasModule(m) {
+    return modules.indexOf(m) >= 0;
+  }
+
+  function addModule(m) {
+    modules.push(m);
+  }
+
+  function visit(m) {
+    if (hasModule(m)) {
+      return;
+    }
+
+    (m.__depends__ || []).forEach(visit);
+
+    if (hasModule(m)) {
+      return;
+    }
+
+    addModule(m);
+
+    (m.__init__ || []).forEach(function(c) {
+      components.push(c);
+    });
+  }
+
+  bootstrapModules.forEach(visit);
+
+  var injector = new di.Injector(modules);
+
+  components.forEach(function(c) {
+
+    try {
+      // eagerly resolve component (fn or string)
+      injector[typeof c === 'string' ? 'get' : 'invoke'](c);
+    } catch (e) {
+      console.error('Failed to instantiate component');
+      console.error(e.stack);
+
+      throw e;
+    }
+  });
+
+  return injector;
+}
+
+/**
+ * Creates an injector from passed options.
+ *
+ * @ignore
+ * @param  {Object} options
+ * @return {didi.Injector}
+ */
+function createInjector(options) {
+
+  options = options || {};
+
+  var configModule = {
+    'config': ['value', options]
+  };
+
+  var coreModule = _dereq_(36);
+
+  var modules = [ configModule, coreModule ].concat(options.modules || []);
+
+  return bootstrap(modules);
+}
+
+
+/**
+ * The main diagram-js entry point that bootstraps the diagram with the given
+ * configuration.
+ *
+ * To register extensions with the diagram, pass them as Array<didi.Module> to the constructor.
+ *
+ * @class djs.Diagram
+ * @memberOf djs
+ * @constructor
+ *
+ * @example
+ *
+ * <caption>Creating a plug-in that logs whenever a shape is added to the canvas.</caption>
+ *
+ * // plug-in implemenentation
+ * function MyLoggingPlugin(eventBus) {
+ *   eventBus.on('shape.added', function(event) {
+ *     console.log('shape ', event.shape, ' was added to the diagram');
+ *   });
+ * }
+ *
+ * // export as module
+ * module.exports = {
+ *   __init__: [ 'myLoggingPlugin' ],
+ *     myLoggingPlugin: [ 'type', MyLoggingPlugin ]
+ * };
+ *
+ *
+ * // instantiate the diagram with the new plug-in
+ *
+ * var diagram = new Diagram({ modules: [ require('path-to-my-logging-plugin') ] });
+ *
+ * diagram.invoke([ 'canvas', function(canvas) {
+ *   // add shape to drawing canvas
+ *   canvas.addShape({ x: 10, y: 10 });
+ * });
+ *
+ * // 'shape ... was added to the diagram' logged to console
+ *
+ * @param {Object} options
+ * @param {Array<didi.Module>} [options.modules] external modules to instantiate with the diagram
+ * @param {didi.Injector} [injector] an (optional) injector to bootstrap the diagram with
+ */
+function Diagram(options, injector) {
+
+  // create injector unless explicitly specified
+  this.injector = injector = injector || createInjector(options);
+
+  // API
+
+  /**
+   * Resolves a diagram service
+   *
+   * @method Diagram#get
+   *
+   * @param {String} name the name of the diagram service to be retrieved
+   * @param {Boolean} [strict=true] if false, resolve missing services to null
+   */
+  this.get = injector.get;
+
+  /**
+   * Executes a function into which diagram services are injected
+   *
+   * @method Diagram#invoke
+   *
+   * @param {Function|Object[]} fn the function to resolve
+   * @param {Object} locals a number of locals to use to resolve certain dependencies
+   */
+  this.invoke = injector.invoke;
+
+  // init
+
+  // indicate via event
+
+
+  /**
+   * An event indicating that all plug-ins are loaded.
+   *
+   * Use this event to fire other events to interested plug-ins
+   *
+   * @memberOf Diagram
+   *
+   * @event diagram.init
+   *
+   * @example
+   *
+   * eventBus.on('diagram.init', function() {
+   *   eventBus.fire('my-custom-event', { foo: 'BAR' });
+   * });
+   *
+   * @type {Object}
+   */
+  this.get('eventBus').fire('diagram.init');
+}
+
+module.exports = Diagram;
+
+
+/**
+ * Destroys the diagram
+ *
+ * @method  Diagram#destroy
+ */
+Diagram.prototype.destroy = function() {
+  this.get('eventBus').fire('diagram.destroy');
+};
+
+/**
+ * Clear the diagram, removing all contents.
+ */
+Diagram.prototype.clear = function() {
+  this.get('eventBus').fire('diagram.clear');
+};
+},{"36":36,"65":65}],31:[function(_dereq_,module,exports){
+'use strict';
+
+var isNumber = _dereq_(184),
+    assign = _dereq_(190),
+    forEach = _dereq_(76),
+    every = _dereq_(73),
+    debounce = _dereq_(84);
+
+var Collections = _dereq_(54),
+    Elements = _dereq_(55);
+
+var Snap = _dereq_(63);
+
+function round(number, resolution) {
+  return Math.round(number * resolution) / resolution;
+}
+
+function ensurePx(number) {
+  return isNumber(number) ? number + 'px' : number;
+}
+
+/**
+ * Creates a HTML container element for a SVG element with
+ * the given configuration
+ *
+ * @param  {Object} options
+ * @return {HTMLElement} the container element
+ */
+function createContainer(options) {
+
+  options = assign({}, { width: '100%', height: '100%' }, options);
+
+  var container = options.container || document.body;
+
+  // create a <div> around the svg element with the respective size
+  // this way we can always get the correct container size
+  // (this is impossible for <svg> elements at the moment)
+  var parent = document.createElement('div');
+  parent.setAttribute('class', 'djs-container');
+
+  assign(parent.style, {
+    position: 'relative',
+    overflow: 'hidden',
+    width: ensurePx(options.width),
+    height: ensurePx(options.height)
+  });
+
+  container.appendChild(parent);
+
+  return parent;
+}
+
+function createGroup(parent, cls) {
+  return parent.group().attr({ 'class' : cls });
+}
+
+var BASE_LAYER = 'base';
+
+
+var REQUIRED_MODEL_ATTRS = {
+  shape: [ 'x', 'y', 'width', 'height' ],
+  connection: [ 'waypoints' ]
+};
+
+/**
+ * The main drawing canvas.
+ *
+ * @class
+ * @constructor
+ *
+ * @emits Canvas#canvas.init
+ *
+ * @param {Object} config
+ * @param {EventBus} eventBus
+ * @param {GraphicsFactory} graphicsFactory
+ * @param {ElementRegistry} elementRegistry
+ */
+function Canvas(config, eventBus, graphicsFactory, elementRegistry) {
+
+  this._eventBus = eventBus;
+  this._elementRegistry = elementRegistry;
+  this._graphicsFactory = graphicsFactory;
+
+  this._init(config || {});
+}
+
+Canvas.$inject = [ 'config.canvas', 'eventBus', 'graphicsFactory', 'elementRegistry' ];
+
+module.exports = Canvas;
+
+
+Canvas.prototype._init = function(config) {
+
+  var eventBus = this._eventBus;
+
+  // Creates a <svg> element that is wrapped into a <div>.
+  // This way we are always able to correctly figure out the size of the svg element
+  // by querying the parent node.
+  //
+  // (It is not possible to get the size of a svg element cross browser @ 2014-04-01)
+  //
+  // <div class="djs-container" style="width: {desired-width}, height: {desired-height}">
+  //   <svg width="100%" height="100%">
+  //    ...
+  //   </svg>
+  // </div>
+
+  // html container
+  var container = this._container = createContainer(config),
+      svg = this._svg = Snap.createSnapAt('100%', '100%', container),
+      viewport = this._viewport = createGroup(svg, 'viewport');
+
+  this._layers = {};
+
+  // debounce canvas.viewbox.changed events
+  // for smoother diagram interaction
+  if (config.deferUpdate !== false) {
+    this._viewboxChanged = debounce(this._viewboxChanged, 300);
+  }
+
+  eventBus.on('diagram.init', function() {
+
+    /**
+     * An event indicating that the canvas is ready to be drawn on.
+     *
+     * @memberOf Canvas
+     *
+     * @event canvas.init
+     *
+     * @type {Object}
+     * @property {Snap<SVGSVGElement>} svg the created svg element
+     * @property {Snap<SVGGroup>} viewport the direct parent of diagram elements and shapes
+     */
+    eventBus.fire('canvas.init', {
+      svg: svg,
+      viewport: viewport
+    });
+
+    // fire this in order for certain components to check
+    // if they need to be adjusted due the canvas size
+    this.resized();
+
+  }, this);
+
+  eventBus.on('diagram.destroy', 500, this._destroy, this);
+  eventBus.on('diagram.clear', 500, this._clear, this);
+};
+
+Canvas.prototype._destroy = function(emit) {
+  this._eventBus.fire('canvas.destroy', {
+    svg: this._svg,
+    viewport: this._viewport
+  });
+
+  var parent = this._container.parentNode;
+
+  if (parent) {
+    parent.removeChild(this._container);
+  }
+
+  delete this._svg;
+  delete this._container;
+  delete this._layers;
+  delete this._rootElement;
+  delete this._viewport;
+};
+
+Canvas.prototype._clear = function() {
+
+  var self = this;
+
+  var allElements = this._elementRegistry.getAll();
+
+  // remove all elements
+  allElements.forEach(function(element) {
+    var type = Elements.getType(element);
+
+    if (type === 'root') {
+      self.setRootElement(null, true);
+    } else {
+      self._removeElement(element, type);
+    }
+  });
+
+  // force recomputation of view box
+  delete this._cachedViewbox;
+};
+
+/**
+ * Returns the default layer on which
+ * all elements are drawn.
+ *
+ * @returns {Snap<SVGGroup>}
+ */
+Canvas.prototype.getDefaultLayer = function() {
+  return this.getLayer(BASE_LAYER);
+};
+
+/**
+ * Returns a layer that is used to draw elements
+ * or annotations on it.
+ *
+ * @param  {String} name
+ *
+ * @returns {Snap<SVGGroup>}
+ */
+Canvas.prototype.getLayer = function(name) {
+
+  if (!name) {
+    throw new Error('must specify a name');
+  }
+
+  var layer = this._layers[name];
+  if (!layer) {
+    layer = this._layers[name] = createGroup(this._viewport, 'layer-' + name);
+  }
+
+  return layer;
+};
+
+
+/**
+ * Returns the html element that encloses the
+ * drawing canvas.
+ *
+ * @return {DOMNode}
+ */
+Canvas.prototype.getContainer = function() {
+  return this._container;
+};
+
+
+/////////////// markers ///////////////////////////////////
+
+Canvas.prototype._updateMarker = function(element, marker, add) {
+  var container;
+
+  if (!element.id) {
+    element = this._elementRegistry.get(element);
+  }
+
+  // we need to access all
+  container = this._elementRegistry._elements[element.id];
+
+  if (!container) {
+    return;
+  }
+
+  forEach([ container.gfx, container.secondaryGfx ], function(gfx) {
+    if (gfx) {
+      // invoke either addClass or removeClass based on mode
+      gfx[add ? 'addClass' : 'removeClass'](marker);
+    }
+  });
+
+  /**
+   * An event indicating that a marker has been updated for an element
+   *
+   * @event element.marker.update
+   * @type {Object}
+   * @property {djs.model.Element} element the shape
+   * @property {Object} gfx the graphical representation of the shape
+   * @property {String} marker
+   * @property {Boolean} add true if the marker was added, false if it got removed
+   */
+  this._eventBus.fire('element.marker.update', { element: element, gfx: container.gfx, marker: marker, add: !!add });
+};
+
+
+/**
+ * Adds a marker to an element (basically a css class).
+ *
+ * Fires the element.marker.update event, making it possible to
+ * integrate extension into the marker life-cycle, too.
+ *
+ * @example
+ * canvas.addMarker('foo', 'some-marker');
+ *
+ * var fooGfx = canvas.getGraphics('foo');
+ *
+ * fooGfx; // <g class="... some-marker"> ... </g>
+ *
+ * @param {String|djs.model.Base} element
+ * @param {String} marker
+ */
+Canvas.prototype.addMarker = function(element, marker) {
+  this._updateMarker(element, marker, true);
+};
+
+
+/**
+ * Remove a marker from an element.
+ *
+ * Fires the element.marker.update event, making it possible to
+ * integrate extension into the marker life-cycle, too.
+ *
+ * @param  {String|djs.model.Base} element
+ * @param  {String} marker
+ */
+Canvas.prototype.removeMarker = function(element, marker) {
+  this._updateMarker(element, marker, false);
+};
+
+/**
+ * Check the existence of a marker on element.
+ *
+ * @param  {String|djs.model.Base} element
+ * @param  {String} marker
+ */
+Canvas.prototype.hasMarker = function(element, marker) {
+  if (!element.id) {
+    element = this._elementRegistry.get(element);
+  }
+
+  var gfx = this.getGraphics(element);
+
+  return gfx && gfx.hasClass(marker);
+};
+
+/**
+ * Toggles a marker on an element.
+ *
+ * Fires the element.marker.update event, making it possible to
+ * integrate extension into the marker life-cycle, too.
+ *
+ * @param  {String|djs.model.Base} element
+ * @param  {String} marker
+ */
+Canvas.prototype.toggleMarker = function(element, marker) {
+  if (this.hasMarker(element, marker)) {
+    this.removeMarker(element, marker);
+  } else {
+    this.addMarker(element, marker);
+  }
+};
+
+Canvas.prototype.getRootElement = function() {
+  if (!this._rootElement) {
+    this.setRootElement({ id: '__implicitroot', children: [] });
+  }
+
+  return this._rootElement;
+};
+
+
+
+//////////////// root element handling ///////////////////////////
+
+/**
+ * Sets a given element as the new root element for the canvas
+ * and returns the new root element.
+ *
+ * @param {Object|djs.model.Root} element
+ * @param {Boolean} [override] whether to override the current root element, if any
+ *
+ * @return {Object|djs.model.Root} new root element
+ */
+Canvas.prototype.setRootElement = function(element, override) {
+
+  if (element) {
+    this._ensureValid('root', element);
+  }
+
+  var currentRoot = this._rootElement,
+      elementRegistry = this._elementRegistry,
+      eventBus = this._eventBus;
+
+  if (currentRoot) {
+    if (!override) {
+      throw new Error('rootElement already set, need to specify override');
+    }
+
+    // simulate element remove event sequence
+    eventBus.fire('root.remove', { element: currentRoot });
+    eventBus.fire('root.removed', { element: currentRoot });
+
+    elementRegistry.remove(currentRoot);
+  }
+
+  if (element) {
+    var gfx = this.getDefaultLayer();
+
+    // resemble element add event sequence
+    eventBus.fire('root.add', { element: element });
+
+    elementRegistry.add(element, gfx, this._svg);
+
+    eventBus.fire('root.added', { element: element, gfx: gfx });
+  }
+
+  this._rootElement = element;
+
+  return element;
+};
+
+
+
+///////////// add functionality ///////////////////////////////
+
+Canvas.prototype._ensureValid = function(type, element) {
+  if (!element.id) {
+    throw new Error('element must have an id');
+  }
+
+  if (this._elementRegistry.get(element.id)) {
+    throw new Error('element with id ' + element.id + ' already exists');
+  }
+
+  var requiredAttrs = REQUIRED_MODEL_ATTRS[type];
+
+  var valid = every(requiredAttrs, function(attr) {
+    return typeof element[attr] !== 'undefined';
+  });
+
+  if (!valid) {
+    throw new Error(
+      'must supply { ' + requiredAttrs.join(', ') + ' } with ' + type);
+  }
+};
+
+Canvas.prototype._setParent = function(element, parent, parentIndex) {
+  Collections.add(parent.children, element, parentIndex);
+  element.parent = parent;
+};
+
+/**
+ * Adds an element to the canvas.
+ *
+ * This wires the parent <-> child relationship between the element and
+ * a explicitly specified parent or an implicit root element.
+ *
+ * During add it emits the events
+ *
+ *  * <{type}.add> (element, parent)
+ *  * <{type}.added> (element, gfx)
+ *
+ * Extensions may hook into these events to perform their magic.
+ *
+ * @param {String} type
+ * @param {Object|djs.model.Base} element
+ * @param {Object|djs.model.Base} [parent]
+ * @param {Number} [parentIndex]
+ *
+ * @return {Object|djs.model.Base} the added element
+ */
+Canvas.prototype._addElement = function(type, element, parent, parentIndex) {
+
+  parent = parent || this.getRootElement();
+
+  var eventBus = this._eventBus,
+      graphicsFactory = this._graphicsFactory;
+
+  this._ensureValid(type, element);
+
+  eventBus.fire(type + '.add', { element: element, parent: parent });
+
+  this._setParent(element, parent, parentIndex);
+
+  // create graphics
+  var gfx = graphicsFactory.create(type, element);
+
+  this._elementRegistry.add(element, gfx);
+
+  // update its visual
+  graphicsFactory.update(type, element, gfx);
+
+  eventBus.fire(type + '.added', { element: element, gfx: gfx });
+
+  return element;
+};
+
+/**
+ * Adds a shape to the canvas
+ *
+ * @param {Object|djs.model.Shape} shape to add to the diagram
+ * @param {djs.model.Base} [parent]
+ * @param {Number} [parentIndex]
+ *
+ * @return {djs.model.Shape} the added shape
+ */
+Canvas.prototype.addShape = function(shape, parent, parentIndex) {
+  return this._addElement('shape', shape, parent, parentIndex);
+};
+
+/**
+ * Adds a connection to the canvas
+ *
+ * @param {Object|djs.model.Connection} connection to add to the diagram
+ * @param {djs.model.Base} [parent]
+ * @param {Number} [parentIndex]
+ *
+ * @return {djs.model.Connection} the added connection
+ */
+Canvas.prototype.addConnection = function(connection, parent, parentIndex) {
+  return this._addElement('connection', connection, parent, parentIndex);
+};
+
+
+/**
+ * Internal remove element
+ */
+Canvas.prototype._removeElement = function(element, type) {
+
+  var elementRegistry = this._elementRegistry,
+      graphicsFactory = this._graphicsFactory,
+      eventBus = this._eventBus;
+
+  element = elementRegistry.get(element.id || element);
+
+  if (!element) {
+    // element was removed already
+    return;
+  }
+
+  eventBus.fire(type + '.remove', { element: element });
+
+  graphicsFactory.remove(element);
+
+  // unset parent <-> child relationship
+  Collections.remove(element.parent && element.parent.children, element);
+  element.parent = null;
+
+  eventBus.fire(type + '.removed', { element: element });
+
+  elementRegistry.remove(element);
+
+  return element;
+};
+
+
+/**
+ * Removes a shape from the canvas
+ *
+ * @param {String|djs.model.Shape} shape or shape id to be removed
+ *
+ * @return {djs.model.Shape} the removed shape
+ */
+Canvas.prototype.removeShape = function(shape) {
+
+  /**
+   * An event indicating that a shape is about to be removed from the canvas.
+   *
+   * @memberOf Canvas
+   *
+   * @event shape.remove
+   * @type {Object}
+   * @property {djs.model.Shape} element the shape descriptor
+   * @property {Object} gfx the graphical representation of the shape
+   */
+
+  /**
+   * An event indicating that a shape has been removed from the canvas.
+   *
+   * @memberOf Canvas
+   *
+   * @event shape.removed
+   * @type {Object}
+   * @property {djs.model.Shape} element the shape descriptor
+   * @property {Object} gfx the graphical representation of the shape
+   */
+  return this._removeElement(shape, 'shape');
+};
+
+
+/**
+ * Removes a connection from the canvas
+ *
+ * @param {String|djs.model.Connection} connection or connection id to be removed
+ *
+ * @return {djs.model.Connection} the removed connection
+ */
+Canvas.prototype.removeConnection = function(connection) {
+
+  /**
+   * An event indicating that a connection is about to be removed from the canvas.
+   *
+   * @memberOf Canvas
+   *
+   * @event connection.remove
+   * @type {Object}
+   * @property {djs.model.Connection} element the connection descriptor
+   * @property {Object} gfx the graphical representation of the connection
+   */
+
+  /**
+   * An event indicating that a connection has been removed from the canvas.
+   *
+   * @memberOf Canvas
+   *
+   * @event connection.removed
+   * @type {Object}
+   * @property {djs.model.Connection} element the connection descriptor
+   * @property {Object} gfx the graphical representation of the connection
+   */
+  return this._removeElement(connection, 'connection');
+};
+
+
+/**
+ * Return the graphical object underlaying a certain diagram element
+ *
+ * @param {String|djs.model.Base} element descriptor of the element
+ * @param {Boolean} [secondary=false] whether to return the secondary connected element
+ *
+ * @return {SVGElement}
+ */
+Canvas.prototype.getGraphics = function(element, secondary) {
+  return this._elementRegistry.getGraphics(element, secondary);
+};
+
+
+/**
+ * Perform a viewbox update via a given change function.
+ *
+ * @param {Function} changeFn
+ */
+Canvas.prototype._changeViewbox = function(changeFn) {
+
+  // notify others of the upcoming viewbox change
+  this._eventBus.fire('canvas.viewbox.changing');
+
+  // perform actual change
+  changeFn.apply(this);
+
+  // reset the cached viewbox so that
+  // a new get operation on viewbox or zoom
+  // triggers a viewbox re-computation
+  this._cachedViewbox = null;
+
+  // notify others of the change; this step
+  // may or may not be debounced
+  this._viewboxChanged();
+};
+
+Canvas.prototype._viewboxChanged = function() {
+  this._eventBus.fire('canvas.viewbox.changed', { viewbox: this.viewbox() });
+};
+
+
+/**
+ * Gets or sets the view box of the canvas, i.e. the
+ * area that is currently displayed.
+ *
+ * The getter may return a cached viewbox (if it is currently
+ * changing). To force a recomputation, pass `false` as the first argument.
+ *
+ * @example
+ *
+ * canvas.viewbox({ x: 100, y: 100, width: 500, height: 500 })
+ *
+ * // sets the visible area of the diagram to (100|100) -> (600|100)
+ * // and and scales it according to the diagram width
+ *
+ * var viewbox = canvas.viewbox(); // pass `false` to force recomputing the box.
+ *
+ * console.log(viewbox);
+ * // {
+ * //   inner: Dimensions,
+ * //   outer: Dimensions,
+ * //   scale,
+ * //   x, y,
+ * //   width, height
+ * // }
+ *
+ * @param  {Object} [box] the new view box to set
+ * @param  {Number} box.x the top left X coordinate of the canvas visible in view box
+ * @param  {Number} box.y the top left Y coordinate of the canvas visible in view box
+ * @param  {Number} box.width the visible width
+ * @param  {Number} box.height
+ *
+ * @return {Object} the current view box
+ */
+Canvas.prototype.viewbox = function(box) {
+
+  if (box === undefined && this._cachedViewbox) {
+    return this._cachedViewbox;
+  }
+
+  var viewport = this._viewport,
+      innerBox,
+      outerBox = this.getSize(),
+      matrix,
+      scale,
+      x, y;
+
+  if (!box) {
+    // compute the inner box based on the
+    // diagrams default layer. This allows us to exclude
+    // external components, such as overlays
+    innerBox = this.getDefaultLayer().getBBox(true);
+
+    matrix = viewport.transform().localMatrix;
+    scale = round(matrix.a, 1000);
+
+    x = round(-matrix.e || 0, 1000);
+    y = round(-matrix.f || 0, 1000);
+
+    box = this._cachedViewbox = {
+      x: x ? x / scale : 0,
+      y: y ? y / scale : 0,
+      width: outerBox.width / scale,
+      height: outerBox.height / scale,
+      scale: scale,
+      inner: {
+        width: innerBox.width,
+        height: innerBox.height,
+        x: innerBox.x,
+        y: innerBox.y
+      },
+      outer: outerBox
+    };
+
+    return box;
+  } else {
+
+    this._changeViewbox(function() {
+      scale = Math.min(outerBox.width / box.width, outerBox.height / box.height);
+
+      matrix = new Snap.Matrix().scale(scale).translate(-box.x, -box.y);
+      viewport.transform(matrix);
+    });
+  }
+
+  return box;
+};
+
+
+/**
+ * Gets or sets the scroll of the canvas.
+ *
+ * @param {Object} [delta] the new scroll to apply.
+ *
+ * @param {Number} [delta.dx]
+ * @param {Number} [delta.dy]
+ */
+Canvas.prototype.scroll = function(delta) {
+
+  var node = this._viewport.node;
+  var matrix = node.getCTM();
+
+  if (delta) {
+    this._changeViewbox(function() {
+      delta = assign({ dx: 0, dy: 0 }, delta || {});
+
+      matrix = this._svg.node.createSVGMatrix().translate(delta.dx, delta.dy).multiply(matrix);
+
+      setCTM(node, matrix);
+    });
+  }
+
+  return { x: matrix.e, y: matrix.f };
+};
+
+
+/**
+ * Gets or sets the current zoom of the canvas, optionally zooming
+ * to the specified position.
+ *
+ * The getter may return a cached zoom level. Call it with `false` as
+ * the first argument to force recomputation of the current level.
+ *
+ * @param {String|Number} [newScale] the new zoom level, either a number, i.e. 0.9,
+ *                                   or `fit-viewport` to adjust the size to fit the current viewport
+ * @param {String|Point} [center] the reference point { x: .., y: ..} to zoom to, 'auto' to zoom into mid or null
+ *
+ * @return {Number} the current scale
+ */
+Canvas.prototype.zoom = function(newScale, center) {
+
+  if (!newScale) {
+    return this.viewbox(newScale).scale;
+  }
+
+  if (newScale === 'fit-viewport') {
+    return this._fitViewport(center);
+  }
+
+  var outer,
+      matrix;
+
+  this._changeViewbox(function() {
+
+    if (typeof center !== 'object') {
+      outer = this.viewbox().outer;
+
+      center = {
+        x: outer.width / 2,
+        y: outer.height / 2
+      };
+    }
+
+    matrix = this._setZoom(newScale, center);
+  });
+
+  return round(matrix.a, 1000);
+};
+
+function setCTM(node, m) {
+  var mstr = 'matrix(' + m.a + ',' + m.b + ',' + m.c + ',' + m.d + ',' + m.e + ',' + m.f + ')';
+  node.setAttribute('transform', mstr);
+}
+
+Canvas.prototype._fitViewport = function(center) {
+
+  var vbox = this.viewbox(),
+      outer = vbox.outer,
+      inner = vbox.inner,
+      newScale,
+      newViewbox;
+
+  // display the complete diagram without zooming in.
+  // instead of relying on internal zoom, we perform a
+  // hard reset on the canvas viewbox to realize this
+  //
+  // if diagram does not need to be zoomed in, we focus it around
+  // the diagram origin instead
+
+  if (inner.x >= 0 &&
+      inner.y >= 0 &&
+      inner.x + inner.width <= outer.width &&
+      inner.y + inner.height <= outer.height &&
+      !center) {
+
+    newViewbox = {
+      x: 0,
+      y: 0,
+      width: Math.max(inner.width + inner.x, outer.width),
+      height: Math.max(inner.height + inner.y, outer.height)
+    };
+  } else {
+
+    newScale = Math.min(1, outer.width / inner.width, outer.height / inner.height);
+    newViewbox = {
+      x: inner.x + (center ? inner.width / 2 - outer.width / newScale / 2 : 0),
+      y: inner.y + (center ? inner.height / 2 - outer.height / newScale / 2 : 0),
+      width: outer.width / newScale,
+      height: outer.height / newScale
+    };
+  }
+
+  this.viewbox(newViewbox);
+
+  return this.viewbox(false).scale;
+};
+
+
+Canvas.prototype._setZoom = function(scale, center) {
+
+  var svg = this._svg.node,
+      viewport = this._viewport.node;
+
+  var matrix = svg.createSVGMatrix();
+  var point = svg.createSVGPoint();
+
+  var centerPoint,
+      originalPoint,
+      currentMatrix,
+      scaleMatrix,
+      newMatrix;
+
+  currentMatrix = viewport.getCTM();
+
+
+  var currentScale = currentMatrix.a;
+
+  if (center) {
+    centerPoint = assign(point, center);
+
+    // revert applied viewport transformations
+    originalPoint = centerPoint.matrixTransform(currentMatrix.inverse());
+
+    // create scale matrix
+    scaleMatrix = matrix
+                    .translate(originalPoint.x, originalPoint.y)
+                    .scale(1 / currentScale * scale)
+                    .translate(-originalPoint.x, -originalPoint.y);
+
+    newMatrix = currentMatrix.multiply(scaleMatrix);
+  } else {
+    newMatrix = matrix.scale(scale);
+  }
+
+  setCTM(this._viewport.node, newMatrix);
+
+  return newMatrix;
+};
+
+
+/**
+ * Returns the size of the canvas
+ *
+ * @return {Dimensions}
+ */
+Canvas.prototype.getSize = function() {
+  return {
+    width: this._container.clientWidth,
+    height: this._container.clientHeight
+  };
+};
+
+
+/**
+ * Return the absolute bounding box for the given element
+ *
+ * The absolute bounding box may be used to display overlays in the
+ * callers (browser) coordinate system rather than the zoomed in/out
+ * canvas coordinates.
+ *
+ * @param  {ElementDescriptor} element
+ * @return {Bounds} the absolute bounding box
+ */
+Canvas.prototype.getAbsoluteBBox = function(element) {
+  var vbox = this.viewbox();
+  var bbox;
+
+  // connection
+  // use svg bbox
+  if (element.waypoints) {
+    var gfx = this.getGraphics(element);
+
+    var transformBBox = gfx.getBBox(true);
+    bbox = gfx.getBBox();
+
+    bbox.x -= transformBBox.x;
+    bbox.y -= transformBBox.y;
+
+    bbox.width += 2 * transformBBox.x;
+    bbox.height +=  2 * transformBBox.y;
+  }
+  // shapes
+  // use data
+  else {
+    bbox = element;
+  }
+
+  var x = bbox.x * vbox.scale - vbox.x * vbox.scale;
+  var y = bbox.y * vbox.scale - vbox.y * vbox.scale;
+
+  var width = bbox.width * vbox.scale;
+  var height = bbox.height * vbox.scale;
+
+  return {
+    x: x,
+    y: y,
+    width: width,
+    height: height
+  };
+};
+
+/**
+ * Fires an event in order other modules can react to the
+ * canvas resizing
+ */
+Canvas.prototype.resized = function() {
+
+  // force recomputation of view box
+  delete this._cachedViewbox;
+
+  this._eventBus.fire('canvas.resized');
+};
+
+},{"184":184,"190":190,"54":54,"55":55,"63":63,"73":73,"76":76,"84":84}],32:[function(_dereq_,module,exports){
+'use strict';
+
+var Model = _dereq_(53);
+
+var assign = _dereq_(190);
+
+/**
+ * A factory for diagram-js shapes
+ */
+function ElementFactory() {
+  this._uid = 12;
+}
+
+module.exports = ElementFactory;
+
+
+ElementFactory.prototype.createRoot = function(attrs) {
+  return this.create('root', attrs);
+};
+
+ElementFactory.prototype.createLabel = function(attrs) {
+  return this.create('label', attrs);
+};
+
+ElementFactory.prototype.createShape = function(attrs) {
+  return this.create('shape', attrs);
+};
+
+ElementFactory.prototype.createConnection = function(attrs) {
+  return this.create('connection', attrs);
+};
+
+/**
+ * Create a model element with the given type and
+ * a number of pre-set attributes.
+ *
+ * @param  {String} type
+ * @param  {Object} attrs
+ * @return {djs.model.Base} the newly created model instance
+ */
+ElementFactory.prototype.create = function(type, attrs) {
+
+  attrs = assign({}, attrs || {});
+
+  if (!attrs.id) {
+    attrs.id = type + '_' + (this._uid++);
+  }
+
+  return Model.create(type, attrs);
+};
+},{"190":190,"53":53}],33:[function(_dereq_,module,exports){
+'use strict';
+
+var ELEMENT_ID = 'data-element-id';
+
+
+/**
+ * @class
+ *
+ * A registry that keeps track of all shapes in the diagram.
+ */
+function ElementRegistry() {
+  this._elements = {};
+}
+
+module.exports = ElementRegistry;
+
+/**
+ * Register a pair of (element, gfx, (secondaryGfx)).
+ *
+ * @param {djs.model.Base} element
+ * @param {Snap<SVGElement>} gfx
+ * @param {Snap<SVGElement>} [secondaryGfx] optional other element to register, too
+ */
+ElementRegistry.prototype.add = function(element, gfx, secondaryGfx) {
+
+  var id = element.id;
+
+  this._validateId(id);
+
+  // associate dom node with element
+  gfx.attr(ELEMENT_ID, id);
+
+  if (secondaryGfx) {
+    secondaryGfx.attr(ELEMENT_ID, id);
+  }
+
+  this._elements[id] = { element: element, gfx: gfx, secondaryGfx: secondaryGfx };
+};
+
+/**
+ * Removes an element from the registry.
+ *
+ * @param {djs.model.Base} element
+ */
+ElementRegistry.prototype.remove = function(element) {
+  var elements = this._elements,
+      id = element.id || element,
+      container = id && elements[id];
+
+  if (container) {
+
+    // unset element id on gfx
+    container.gfx.attr(ELEMENT_ID, '');
+
+    if (container.secondaryGfx) {
+      container.secondaryGfx.attr(ELEMENT_ID, '');
+    }
+
+    delete elements[id];
+  }
+};
+
+/**
+ * Update the id of an element
+ *
+ * @param {djs.model.Base} element
+ * @param {String} newId
+ */
+ElementRegistry.prototype.updateId = function(element, newId) {
+
+  this._validateId(newId);
+
+  if (typeof element === 'string') {
+    element = this.get(element);
+  }
+
+  var gfx = this.getGraphics(element),
+      secondaryGfx = this.getGraphics(element, true);
+
+  this.remove(element);
+
+  element.id = newId;
+
+  this.add(element, gfx, secondaryGfx);
+};
+
+/**
+ * Return the model element for a given id or graphics.
+ *
+ * @example
+ *
+ * elementRegistry.get('SomeElementId_1');
+ * elementRegistry.get(gfx);
+ *
+ *
+ * @param {String|SVGElement} filter for selecting the element
+ *
+ * @return {djs.model.Base}
+ */
+ElementRegistry.prototype.get = function(filter) {
+  var id;
+
+  if (typeof filter === 'string') {
+    id = filter;
+  } else {
+    id = filter && filter.attr(ELEMENT_ID);
+  }
+
+  var container = this._elements[id];
+  return container && container.element;
+};
+
+/**
+ * Return all elements that match a given filter function.
+ *
+ * @param {Function} fn
+ *
+ * @return {Array<djs.model.Base>}
+ */
+ElementRegistry.prototype.filter = function(fn) {
+
+  var filtered = [];
+
+  this.forEach(function(element, gfx) {
+    if (fn(element, gfx)) {
+      filtered.push(element);
+    }
+  });
+
+  return filtered;
+};
+
+/**
+ * Return all rendered model elements.
+ *
+ * @return {Array<djs.model.Base>}
+ */
+ElementRegistry.prototype.getAll = function() {
+  return this.filter(function(e) { return e; });
+};
+
+/**
+ * Iterate over all diagram elements.
+ *
+ * @param {Function} fn
+ */
+ElementRegistry.prototype.forEach = function(fn) {
+
+  var map = this._elements;
+
+  Object.keys(map).forEach(function(id) {
+    var container = map[id],
+        element = container.element,
+        gfx = container.gfx;
+
+    return fn(element, gfx);
+  });
+};
+
+/**
+ * Return the graphical representation of an element or its id.
+ *
+ * @example
+ * elementRegistry.getGraphics('SomeElementId_1');
+ * elementRegistry.getGraphics(rootElement); // <g ...>
+ *
+ * elementRegistry.getGraphics(rootElement, true); // <svg ...>
+ *
+ *
+ * @param {String|djs.model.Base} filter
+ * @param {Boolean} [secondary=false] whether to return the secondary connected element
+ *
+ * @return {SVGElement}
+ */
+ElementRegistry.prototype.getGraphics = function(filter, secondary) {
+  var id = filter.id || filter;
+
+  var container = this._elements[id];
+  return container && (secondary ? container.secondaryGfx : container.gfx);
+};
+
+/**
+ * Validate the suitability of the given id and signals a problem
+ * with an exception.
+ *
+ * @param {String} id
+ *
+ * @throws {Error} if id is empty or already assigned
+ */
+ElementRegistry.prototype._validateId = function(id) {
+  if (!id) {
+    throw new Error('element must have an id');
+  }
+
+  if (this._elements[id]) {
+    throw new Error('element with id ' + id + ' already added');
+  }
+};
+},{}],34:[function(_dereq_,module,exports){
+'use strict';
+
+var isFunction = _dereq_(182),
+    isArray = _dereq_(181),
+    isNumber = _dereq_(184),
+    bind = _dereq_(83),
+    assign = _dereq_(190);
+
+var FN_REF = '__fn';
+
+var DEFAULT_PRIORITY = 1000;
+
+var slice = Array.prototype.slice;
+
+/**
+ * A general purpose event bus.
+ *
+ * This component is used to communicate across a diagram instance.
+ * Other parts of a diagram can use it to listen to and broadcast events.
+ *
+ *
+ * ## Registering for Events
+ *
+ * The event bus provides the {@link EventBus#on} and {@link EventBus#once}
+ * methods to register for events. {@link EventBus#off} can be used to
+ * remove event registrations. Listeners receive an instance of {@link Event}
+ * as the first argument. It allows them to hook into the event execution.
+ *
+ * ```javascript
+ *
+ * // listen for event
+ * eventBus.on('foo', function(event) {
+ *
+ *   // access event type
+ *   event.type; // 'foo'
+ *
+ *   // stop propagation to other listeners
+ *   event.stopPropagation();
+ *
+ *   // prevent event default
+ *   event.preventDefault();
+ * });
+ *
+ * // listen for event with custom payload
+ * eventBus.on('bar', function(event, payload) {
+ *   console.log(payload);
+ * });
+ *
+ * // listen for event returning value
+ * eventBus.on('foobar', function(event) {
+ *
+ *   // stop event propagation + prevent default
+ *   return false;
+ *
+ *   // stop event propagation + return custom result
+ *   return {
+ *     complex: 'listening result'
+ *   };
+ * });
+ *
+ *
+ * // listen with custom priority (default=1000, higher is better)
+ * eventBus.on('priorityfoo', 1500, function(event) {
+ *   console.log('invoked first!');
+ * });
+ *
+ *
+ * // listen for event and pass the context (`this`)
+ * eventBus.on('foobar', function(event) {
+ *   this.foo();
+ * }, this);
+ * ```
+ *
+ *
+ * ## Emitting Events
+ *
+ * Events can be emitted via the event bus using {@link EventBus#fire}.
+ *
+ * ```javascript
+ *
+ * // false indicates that the default action
+ * // was prevented by listeners
+ * if (eventBus.fire('foo') === false) {
+ *   console.log('default has been prevented!');
+ * };
+ *
+ *
+ * // custom args + return value listener
+ * eventBus.on('sum', function(event, a, b) {
+ *   return a + b;
+ * });
+ *
+ * // you can pass custom arguments + retrieve result values.
+ * var sum = eventBus.fire('sum', 1, 2);
+ * console.log(sum); // 3
+ * ```
+ */
+function EventBus() {
+  this._listeners = {};
+
+  // cleanup on destroy on lowest priority to allow
+  // message passing until the bitter end
+  this.on('diagram.destroy', 1, this._destroy, this);
+}
+
+module.exports = EventBus;
+
+
+/**
+ * Register an event listener for events with the given name.
+ *
+ * The callback will be invoked with `event, ...additionalArguments`
+ * that have been passed to {@link EventBus#fire}.
+ *
+ * Returning false from a listener will prevent the events default action
+ * (if any is specified). To stop an event from being processed further in
+ * other listeners execute {@link Event#stopPropagation}.
+ *
+ * Returning anything but `undefined` from a listener will stop the listener propagation.
+ *
+ * @param {String|Array<String>} events
+ * @param {Number} [priority=1000] the priority in which this listener is called, larger is higher
+ * @param {Function} callback
+ * @param {Object} [that] Pass context (`this`) to the callback
+ */
+EventBus.prototype.on = function(events, priority, callback, that) {
+
+  events = isArray(events) ? events : [ events ];
+
+  if (isFunction(priority)) {
+    that = callback;
+    callback = priority;
+    priority = DEFAULT_PRIORITY;
+  }
+
+  if (!isNumber(priority)) {
+    throw new Error('priority must be a number');
+  }
+
+  var actualCallback = callback;
+
+  if (that) {
+    actualCallback = bind(callback, that);
+
+    // make sure we remember and are able to remove
+    // bound callbacks via {@link #off} using the original
+    // callback
+    actualCallback[FN_REF] = callback[FN_REF] || callback;
+  }
+
+  var self = this,
+      listener = { priority: priority, callback: actualCallback };
+
+  events.forEach(function(e) {
+    self._addListener(e, listener);
+  });
+};
+
+
+/**
+ * Register an event listener that is executed only once.
+ *
+ * @param {String} event the event name to register for
+ * @param {Function} callback the callback to execute
+ * @param {Object} [that] Pass context (`this`) to the callback
+ */
+EventBus.prototype.once = function(event, priority, callback, that) {
+  var self = this;
+
+  if (isFunction(priority)) {
+    that = callback;
+    callback = priority;
+    priority = DEFAULT_PRIORITY;
+  }
+
+  if (!isNumber(priority)) {
+    throw new Error('priority must be a number');
+  }
+
+  function wrappedCallback() {
+    self.off(event, wrappedCallback);
+    return callback.apply(that, arguments);
+  }
+
+  // make sure we remember and are able to remove
+  // bound callbacks via {@link #off} using the original
+  // callback
+  wrappedCallback[FN_REF] = callback;
+
+  this.on(event, priority, wrappedCallback);
+};
+
+
+/**
+ * Removes event listeners by event and callback.
+ *
+ * If no callback is given, all listeners for a given event name are being removed.
+ *
+ * @param {String} event
+ * @param {Function} [callback]
+ */
+EventBus.prototype.off = function(event, callback) {
+  var listeners = this._getListeners(event),
+      listener,
+      listenerCallback,
+      idx;
+
+  if (callback) {
+
+    // move through listeners from back to front
+    // and remove matching listeners
+    for (idx = listeners.length - 1; (listener = listeners[idx]); idx--) {
+      listenerCallback = listener.callback;
+
+      if (listenerCallback === callback || listenerCallback[FN_REF] === callback) {
+        listeners.splice(idx, 1);
+      }
+    }
+  } else {
+    // clear listeners
+    listeners.length = 0;
+  }
+};
+
+
+/**
+ * Fires a named event.
+ *
+ * @example
+ *
+ * // fire event by name
+ * events.fire('foo');
+ *
+ * // fire event object with nested type
+ * var event = { type: 'foo' };
+ * events.fire(event);
+ *
+ * // fire event with explicit type
+ * var event = { x: 10, y: 20 };
+ * events.fire('element.moved', event);
+ *
+ * // pass additional arguments to the event
+ * events.on('foo', function(event, bar) {
+ *   alert(bar);
+ * });
+ *
+ * events.fire({ type: 'foo' }, 'I am bar!');
+ *
+ * @param {String} [name] the optional event name
+ * @param {Object} [event] the event object
+ * @param {...Object} additional arguments to be passed to the callback functions
+ *
+ * @return {Boolean} the events return value, if specified or false if the
+ *                   default action was prevented by listeners
+ */
+EventBus.prototype.fire = function(type, data) {
+
+  var event,
+      listeners,
+      returnValue,
+      args;
+
+  args = slice.call(arguments);
+
+  if (typeof type === 'object') {
+    event = type;
+    type = event.type;
+  }
+
+  if (!type) {
+    throw new Error('no event type specified');
+  }
+
+  listeners = this._listeners[type];
+
+  if (!listeners) {
+    return;
+  }
+
+  // we make sure we fire instances of our home made
+  // events here. We wrap them only once, though
+  if (data instanceof Event) {
+    // we are fine, we alread have an event
+    event = data;
+  } else {
+    event = new Event();
+    event.init(data);
+  }
+
+  // ensure we pass the event as the first parameter
+  args[0] = event;
+
+  // original event type (in case we delegate)
+  var originalType = event.type;
+
+  // update event type before delegation
+  if (type !== originalType) {
+    event.type = type;
+  }
+
+  try {
+    returnValue = this._invokeListeners(event, args, listeners);
+  } finally {
+    // reset event type after delegation
+    if (type !== originalType) {
+      event.type = originalType;
+    }
+  }
+
+  // set the return value to false if the event default
+  // got prevented and no other return value exists
+  if (returnValue === undefined && event.defaultPrevented) {
+    returnValue = false;
+  }
+
+  return returnValue;
+};
+
+
+EventBus.prototype.handleError = function(error) {
+  return this.fire('error', { error: error }) === false;
+};
+
+
+EventBus.prototype._destroy = function() {
+  this._listeners = {};
+};
+
+EventBus.prototype._invokeListeners = function(event, args, listeners) {
+
+  var idx,
+      listener,
+      returnValue;
+
+  for (idx = 0; (listener = listeners[idx]); idx++) {
+
+    // handle stopped propagation
+    if (event.cancelBubble) {
+      break;
+    }
+
+    returnValue = this._invokeListener(event, args, listener);
+  }
+
+  return returnValue;
+};
+
+EventBus.prototype._invokeListener = function(event, args, listener) {
+
+  var returnValue;
+
+  try {
+    // returning false prevents the default action
+    returnValue = invokeFunction(listener.callback, args);
+
+    // stop propagation on return value
+    if (returnValue !== undefined) {
+      event.returnValue = returnValue;
+      event.stopPropagation();
+    }
+
+    // prevent default on return false
+    if (returnValue === false) {
+      event.preventDefault();
+    }
+  } catch (e) {
+    if (!this.handleError(e)) {
+      console.error('unhandled error in event listener');
+      console.error(e.stack);
+
+      throw e;
+    }
+  }
+
+  return returnValue;
+};
+
+/*
+ * Add new listener with a certain priority to the list
+ * of listeners (for the given event).
+ *
+ * The semantics of listener registration / listener execution are
+ * first register, first serve: New listeners will always be inserted
+ * after existing listeners with the same priority.
+ *
+ * Example: Inserting two listeners with priority 1000 and 1300
+ *
+ *    * before: [ 1500, 1500, 1000, 1000 ]
+ *    * after: [ 1500, 1500, (new=1300), 1000, 1000, (new=1000) ]
+ *
+ * @param {String} event
+ * @param {Object} listener { priority, callback }
+ */
+EventBus.prototype._addListener = function(event, newListener) {
+
+  var listeners = this._getListeners(event),
+      existingListener,
+      idx;
+
+  // ensure we order listeners by priority from
+  // 0 (high) to n > 0 (low)
+  for (idx = 0; (existingListener = listeners[idx]); idx++) {
+    if (existingListener.priority < newListener.priority) {
+
+      // prepend newListener at before existingListener
+      listeners.splice(idx, 0, newListener);
+      return;
+    }
+  }
+
+  listeners.push(newListener);
+};
+
+
+EventBus.prototype._getListeners = function(name) {
+  var listeners = this._listeners[name];
+
+  if (!listeners) {
+    this._listeners[name] = listeners = [];
+  }
+
+  return listeners;
+};
+
+
+/**
+ * A event that is emitted via the event bus.
+ */
+function Event() { }
+
+module.exports.Event = Event;
+
+Event.prototype.stopPropagation = function() {
+  this.cancelBubble = true;
+};
+
+Event.prototype.preventDefault = function() {
+  this.defaultPrevented = true;
+};
+
+Event.prototype.init = function(data) {
+  assign(this, data || {});
+};
+
+
+/**
+ * Invoke function. Be fast...
+ *
+ * @param {Function} fn
+ * @param {Array<Object>} args
+ *
+ * @return {Any}
+ */
+function invokeFunction(fn, args) {
+  return fn.apply(null, args);
+}
+
+},{"181":181,"182":182,"184":184,"190":190,"83":83}],35:[function(_dereq_,module,exports){
+'use strict';
+
+var forEach = _dereq_(76),
+    reduce = _dereq_(80);
+
+var GraphicsUtil = _dereq_(57),
+    domClear = _dereq_(203);
+
+/**
+ * A factory that creates graphical elements
+ *
+ * @param {EventBus} eventBus
+ * @param {ElementRegistry} elementRegistry
+ */
+function GraphicsFactory(eventBus, elementRegistry) {
+  this._eventBus = eventBus;
+  this._elementRegistry = elementRegistry;
+}
+
+GraphicsFactory.$inject = [ 'eventBus' , 'elementRegistry' ];
+
+module.exports = GraphicsFactory;
+
+
+GraphicsFactory.prototype._getChildren = function(element) {
+
+  var gfx = this._elementRegistry.getGraphics(element);
+
+  var childrenGfx;
+
+  // root element
+  if (!element.parent) {
+    childrenGfx = gfx;
+  } else {
+    childrenGfx = GraphicsUtil.getChildren(gfx);
+    if (!childrenGfx) {
+      childrenGfx = gfx.parent().group().attr('class', 'djs-children');
+    }
+  }
+
+  return childrenGfx;
+};
+
+/**
+ * Clears the graphical representation of the element and returns the
+ * cleared visual (the <g class="djs-visual" /> element).
+ */
+GraphicsFactory.prototype._clear = function(gfx) {
+  var visual = GraphicsUtil.getVisual(gfx);
+
+  domClear(visual.node);
+
+  return visual;
+};
+
+/**
+ * Creates a gfx container for shapes and connections
+ *
+ * The layout is as follows:
+ *
+ * <g class="djs-group">
+ *
+ *   <!-- the gfx -->
+ *   <g class="djs-element djs-(shape|connection)">
+ *     <g class="djs-visual">
+ *       <!-- the renderer draws in here -->
+ *     </g>
+ *
+ *     <!-- extensions (overlays, click box, ...) goes here
+ *   </g>
+ *
+ *   <!-- the gfx child nodes -->
+ *   <g class="djs-children"></g>
+ * </g>
+ *
+ * @param {Object} parent
+ * @param {String} type the type of the element, i.e. shape | connection
+ */
+GraphicsFactory.prototype._createContainer = function(type, parentGfx) {
+  var outerGfx = parentGfx.group().attr('class', 'djs-group'),
+      gfx = outerGfx.group().attr('class', 'djs-element djs-' + type);
+
+  // create visual
+  gfx.group().attr('class', 'djs-visual');
+
+  return gfx;
+};
+
+GraphicsFactory.prototype.create = function(type, element) {
+  var childrenGfx = this._getChildren(element.parent);
+  return this._createContainer(type, childrenGfx);
+};
+
+
+GraphicsFactory.prototype.updateContainments = function(elements) {
+
+  var self = this,
+      elementRegistry = this._elementRegistry,
+      parents;
+
+
+  parents = reduce(elements, function(map, e) {
+
+    if (e.parent) {
+      map[e.parent.id] = e.parent;
+    }
+
+    return map;
+  }, {});
+
+  // update all parents of changed and reorganized their children
+  // in the correct order (as indicated in our model)
+  forEach(parents, function(parent) {
+
+    var childGfx = self._getChildren(parent),
+        children = parent.children;
+
+    if (!children) {
+      return;
+    }
+
+    forEach(children.slice().reverse(), function(c) {
+      var gfx = elementRegistry.getGraphics(c);
+      gfx.parent().prependTo(childGfx);
+    });
+  });
+};
+
+GraphicsFactory.prototype.drawShape = function(visual, element) {
+  var eventBus = this._eventBus;
+
+  return eventBus.fire('render.shape', { gfx: visual, element: element });
+};
+
+GraphicsFactory.prototype.getShapePath = function(element) {
+  var eventBus = this._eventBus;
+
+  return eventBus.fire('render.getShapePath', element);
+};
+
+GraphicsFactory.prototype.drawConnection = function(visual, element) {
+  var eventBus = this._eventBus;
+
+  return eventBus.fire('render.connection', { gfx: visual, element: element });
+};
+
+GraphicsFactory.prototype.getConnectionPath = function(waypoints) {
+  var eventBus = this._eventBus;
+
+  return eventBus.fire('render.getConnectionPath', waypoints);
+};
+
+GraphicsFactory.prototype.update = function(type, element, gfx) {
+  // Do not update root element
+  if (!element.parent) {
+    return;
+  }
+
+  var visual = this._clear(gfx);
+
+  // redraw
+  if (type === 'shape') {
+    this.drawShape(visual, element);
+
+    // update positioning
+    gfx.translate(element.x, element.y);
+  } else
+  if (type === 'connection') {
+    this.drawConnection(visual, element);
+  } else {
+    throw new Error('unknown type: ' + type);
+  }
+
+  gfx.attr('display', element.hidden ? 'none' : 'block');
+};
+
+GraphicsFactory.prototype.remove = function(element) {
+  var gfx = this._elementRegistry.getGraphics(element);
+
+  // remove
+  gfx.parent().remove();
+};
+
+},{"203":203,"57":57,"76":76,"80":80}],36:[function(_dereq_,module,exports){
+module.exports = {
+  __depends__: [ _dereq_(40) ],
+  __init__: [ 'canvas' ],
+  canvas: [ 'type', _dereq_(31) ],
+  elementRegistry: [ 'type', _dereq_(33) ],
+  elementFactory: [ 'type', _dereq_(32) ],
+  eventBus: [ 'type', _dereq_(34) ],
+  graphicsFactory: [ 'type', _dereq_(35) ]
+};
+},{"31":31,"32":32,"33":33,"34":34,"35":35,"40":40}],37:[function(_dereq_,module,exports){
+'use strict';
+
+var DEFAULT_RENDER_PRIORITY = 1000;
+
+/**
+ * The base implementation of shape and connection renderers.
+ *
+ * @param {EventBus} eventBus
+ * @param {Number} [renderPriority=1000]
+ */
+function BaseRenderer(eventBus, renderPriority) {
+  var self = this;
+
+  renderPriority = renderPriority || DEFAULT_RENDER_PRIORITY;
+
+  eventBus.on([ 'render.shape', 'render.connection' ], renderPriority, function(evt, context) {
+    var type = evt.type,
+        element = context.element,
+        visuals = context.gfx;
+
+    if (self.canRender(element)) {
+      if (type === 'render.shape') {
+        return self.drawShape(visuals, element);
+      } else {
+        return self.drawConnection(visuals, element);
+      }
+    }
+  });
+
+  eventBus.on([ 'render.getShapePath', 'render.getConnectionPath'], renderPriority, function(evt, element) {
+    if (self.canRender(element)) {
+      if (evt.type === 'render.getShapePath') {
+        return self.getShapePath(element);
+      } else {
+        return self.getConnectionPath(element);
+      }
+    }
+  });
+}
+
+/**
+ * Should check whether *this* renderer can render
+ * the element/connection.
+ *
+ * @param {element} element
+ *
+ * @returns {Boolean}
+ */
+BaseRenderer.prototype.canRender = function() {};
+
+/**
+ * Provides the shape's snap svg element to be drawn on the `canvas`.
+ *
+ * @param {djs.Graphics} visuals
+ * @param {Shape} shape
+ *
+ * @returns {Snap.svg} [returns a Snap.svg paper element ]
+ */
+BaseRenderer.prototype.drawShape = function() {};
+
+/**
+ * Provides the shape's snap svg element to be drawn on the `canvas`.
+ *
+ * @param {djs.Graphics} visuals
+ * @param {Connection} connection
+ *
+ * @returns {Snap.svg} [returns a Snap.svg paper element ]
+ */
+BaseRenderer.prototype.drawConnection = function() {};
+
+/**
+ * Gets the SVG path of a shape that represents it's visual bounds.
+ *
+ * @param {Shape} shape
+ *
+ * @return {string} svg path
+ */
+BaseRenderer.prototype.getShapePath = function() {};
+
+/**
+ * Gets the SVG path of a connection that represents it's visual bounds.
+ *
+ * @param {Connection} connection
+ *
+ * @return {string} svg path
+ */
+BaseRenderer.prototype.getConnectionPath = function() {};
+
+module.exports = BaseRenderer;
+
+},{}],38:[function(_dereq_,module,exports){
+'use strict';
+
+var inherits = _dereq_(70);
+
+var BaseRenderer = _dereq_(37);
+
+var renderUtil = _dereq_(61);
+
+var componentsToPath = renderUtil.componentsToPath,
+    createLine = renderUtil.createLine;
+
+// apply default renderer with lowest possible priority
+// so that it only kicks in if noone else could render
+var DEFAULT_RENDER_PRIORITY = 1;
+
+/**
+ * The default renderer used for shapes and connections.
+ *
+ * @param {EventBus} eventBus
+ * @param {Styles} styles
+ */
+function DefaultRenderer(eventBus, styles) {
+  //
+  BaseRenderer.call(this, eventBus, DEFAULT_RENDER_PRIORITY);
+
+  this.CONNECTION_STYLE = styles.style([ 'no-fill' ], { strokeWidth: 5, stroke: 'fuchsia' });
+  this.SHAPE_STYLE = styles.style({ fill: 'white', stroke: 'fuchsia', strokeWidth: 2 });
+}
+
+inherits(DefaultRenderer, BaseRenderer);
+
+
+DefaultRenderer.prototype.canRender = function() {
+  return true;
+};
+
+DefaultRenderer.prototype.drawShape = function drawShape(visuals, element) {
+  return visuals.rect(0, 0, element.width || 0, element.height || 0).attr(this.SHAPE_STYLE);
+};
+
+DefaultRenderer.prototype.drawConnection = function drawConnection(visuals, connection) {
+  return createLine(connection.waypoints, this.CONNECTION_STYLE).appendTo(visuals);
+};
+
+DefaultRenderer.prototype.getShapePath = function getShapePath(shape) {
+
+  var x = shape.x,
+      y = shape.y,
+      width = shape.width,
+      height = shape.height;
+
+  var shapePath = [
+    ['M', x, y],
+    ['l', width, 0],
+    ['l', 0, height],
+    ['l', -width, 0],
+    ['z']
+  ];
+
+  return componentsToPath(shapePath);
+};
+
+DefaultRenderer.prototype.getConnectionPath = function getConnectionPath(connection) {
+  var waypoints = connection.waypoints;
+
+  var idx, point, connectionPath = [];
+
+  for (idx = 0; (point = waypoints[idx]); idx++) {
+
+    // take invisible docking into account
+    // when creating the path
+    point = point.original || point;
+
+    connectionPath.push([ idx === 0 ? 'M' : 'L', point.x, point.y ]);
+  }
+
+  return componentsToPath(connectionPath);
+};
+
+
+DefaultRenderer.$inject = [ 'eventBus', 'styles' ];
+
+module.exports = DefaultRenderer;
+
+},{"37":37,"61":61,"70":70}],39:[function(_dereq_,module,exports){
+'use strict';
+
+var isArray = _dereq_(181),
+    assign = _dereq_(190),
+    reduce = _dereq_(80);
+
+
+/**
+ * A component that manages shape styles
+ */
+function Styles() {
+
+  var defaultTraits = {
+
+    'no-fill': {
+      fill: 'none'
+    },
+    'no-border': {
+      strokeOpacity: 0.0
+    },
+    'no-events': {
+      pointerEvents: 'none'
+    }
+  };
+
+  var self = this;
+
+  /**
+   * Builds a style definition from a className, a list of traits and an object of additional attributes.
+   *
+   * @param  {String} className
+   * @param  {Array<String>} traits
+   * @param  {Object} additionalAttrs
+   *
+   * @return {Object} the style defintion
+   */
+  this.cls = function(className, traits, additionalAttrs) {
+    var attrs = this.style(traits, additionalAttrs);
+
+    return assign(attrs, { 'class': className });
+  };
+
+  /**
+   * Builds a style definition from a list of traits and an object of additional attributes.
+   *
+   * @param  {Array<String>} traits
+   * @param  {Object} additionalAttrs
+   *
+   * @return {Object} the style defintion
+   */
+  this.style = function(traits, additionalAttrs) {
+
+    if (!isArray(traits) && !additionalAttrs) {
+      additionalAttrs = traits;
+      traits = [];
+    }
+
+    var attrs = reduce(traits, function(attrs, t) {
+      return assign(attrs, defaultTraits[t] || {});
+    }, {});
+
+    return additionalAttrs ? assign(attrs, additionalAttrs) : attrs;
+  };
+
+  this.computeStyle = function(custom, traits, defaultStyles) {
+    if (!isArray(traits)) {
+      defaultStyles = traits;
+      traits = [];
+    }
+
+    return self.style(traits || [], assign({}, defaultStyles, custom || {}));
+  };
+}
+
+module.exports = Styles;
+
+},{"181":181,"190":190,"80":80}],40:[function(_dereq_,module,exports){
+module.exports = {
+  __init__: [ 'defaultRenderer' ],
+  defaultRenderer: [ 'type', _dereq_(38) ],
+  styles: [ 'type', _dereq_(39) ]
+};
+
+},{"38":38,"39":39}],41:[function(_dereq_,module,exports){
+'use strict';
+
+var forEach = _dereq_(76),
+    domDelegate = _dereq_(204);
+
+
+var isPrimaryButton = _dereq_(59).isPrimaryButton;
+
+var Snap = _dereq_(63);
+
+var renderUtil = _dereq_(61);
+
+var createLine = renderUtil.createLine,
+    updateLine = renderUtil.updateLine;
+
+/**
+ * A plugin that provides interaction events for diagram elements.
+ *
+ * It emits the following events:
+ *
+ *   * element.hover
+ *   * element.out
+ *   * element.click
+ *   * element.dblclick
+ *   * element.mousedown
+ *
+ * Each event is a tuple { element, gfx, originalEvent }.
+ *
+ * Canceling the event via Event#preventDefault() prevents the original DOM operation.
+ *
+ * @param {EventBus} eventBus
+ */
+function InteractionEvents(eventBus, elementRegistry, styles) {
+
+  var HIT_STYLE = styles.cls('djs-hit', [ 'no-fill', 'no-border' ], {
+    stroke: 'white',
+    strokeWidth: 15
+  });
+
+  /**
+   * Fire an interaction event.
+   *
+   * @param {String} type local event name, e.g. element.click.
+   * @param {DOMEvent} event native event
+   * @param {djs.model.Base} [element] the diagram element to emit the event on;
+   *                                   defaults to the event target
+   */
+  function fire(type, event, element) {
+
+    // only react on left mouse button interactions
+    // for interaction events
+    if (!isPrimaryButton(event)) {
+      return;
+    }
+
+    var target, gfx, returnValue;
+
+    if (!element) {
+      target = event.delegateTarget || event.target;
+
+      if (target) {
+        gfx = new Snap(target);
+        element = elementRegistry.get(gfx);
+      }
+    } else {
+      gfx = elementRegistry.getGraphics(element);
+    }
+
+    if (!gfx || !element) {
+      return;
+    }
+
+    returnValue = eventBus.fire(type, { element: element, gfx: gfx, originalEvent: event });
+
+    if (returnValue === false) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+  }
+
+  // TODO(nikku): document this
+  var handlers = {};
+
+  function mouseHandler(type) {
+
+    var fn = handlers[type];
+
+    if (!fn) {
+      fn = handlers[type] = function(event) {
+        fire(type, event);
+      };
+    }
+
+    return fn;
+  }
+
+  var bindings = {
+    mouseover: 'element.hover',
+    mouseout: 'element.out',
+    click: 'element.click',
+    dblclick: 'element.dblclick',
+    mousedown: 'element.mousedown',
+    mouseup: 'element.mouseup'
+  };
+
+
+  ///// manual event trigger
+
+  /**
+   * Trigger an interaction event (based on a native dom event)
+   * on the target shape or connection.
+   *
+   * @param {String} eventName the name of the triggered DOM event
+   * @param {MouseEvent} event
+   * @param {djs.model.Base} targetElement
+   */
+  function triggerMouseEvent(eventName, event, targetElement) {
+
+    // i.e. element.mousedown...
+    var localEventName = bindings[eventName];
+
+    if (!localEventName) {
+      throw new Error('unmapped DOM event name <' + eventName + '>');
+    }
+
+    return fire(localEventName, event, targetElement);
+  }
+
+
+  var elementSelector = 'svg, .djs-element';
+
+  ///// event registration
+
+  function registerEvent(node, event, localEvent) {
+    var handler = mouseHandler(localEvent);
+    handler.$delegate = domDelegate.bind(node, elementSelector, event, handler);
+  }
+
+  function unregisterEvent(node, event, localEvent) {
+    domDelegate.unbind(node, event, mouseHandler(localEvent).$delegate);
+  }
+
+  function registerEvents(svg) {
+    forEach(bindings, function(val, key) {
+      registerEvent(svg.node, key, val);
+    });
+  }
+
+  function unregisterEvents(svg) {
+    forEach(bindings, function(val, key) {
+      unregisterEvent(svg.node, key, val);
+    });
+  }
+
+  eventBus.on('canvas.destroy', function(event) {
+    unregisterEvents(event.svg);
+  });
+
+  eventBus.on('canvas.init', function(event) {
+    registerEvents(event.svg);
+  });
+
+
+  eventBus.on([ 'shape.added', 'connection.added' ], function(event) {
+    var element = event.element,
+        gfx = event.gfx,
+        hit;
+
+    if (element.waypoints) {
+      hit = createLine(element.waypoints);
+    } else {
+      hit = Snap.create('rect', { x: 0, y: 0, width: element.width, height: element.height });
+    }
+
+    hit.attr(HIT_STYLE).appendTo(gfx.node);
+  });
+
+  // update djs-hit on change
+
+  eventBus.on('shape.changed', function(event) {
+
+    var element = event.element,
+        gfx = event.gfx,
+        hit = gfx.select('.djs-hit');
+
+    hit.attr({
+      width: element.width,
+      height: element.height
+    });
+  });
+
+  eventBus.on('connection.changed', function(event) {
+
+    var element = event.element,
+        gfx = event.gfx,
+        hit = gfx.select('.djs-hit');
+
+    updateLine(hit, element.waypoints);
+  });
+
+
+  // API
+
+  this.fire = fire;
+
+  this.triggerMouseEvent = triggerMouseEvent;
+
+  this.mouseHandler = mouseHandler;
+
+  this.registerEvent = registerEvent;
+  this.unregisterEvent = unregisterEvent;
+}
+
+
+InteractionEvents.$inject = [ 'eventBus', 'elementRegistry', 'styles' ];
+
+module.exports = InteractionEvents;
+
+
+/**
+ * An event indicating that the mouse hovered over an element
+ *
+ * @event element.hover
+ *
+ * @type {Object}
+ * @property {djs.model.Base} element
+ * @property {Snap<Element>} gfx
+ * @property {Event} originalEvent
+ */
+
+/**
+ * An event indicating that the mouse has left an element
+ *
+ * @event element.out
+ *
+ * @type {Object}
+ * @property {djs.model.Base} element
+ * @property {Snap<Element>} gfx
+ * @property {Event} originalEvent
+ */
+
+/**
+ * An event indicating that the mouse has clicked an element
+ *
+ * @event element.click
+ *
+ * @type {Object}
+ * @property {djs.model.Base} element
+ * @property {Snap<Element>} gfx
+ * @property {Event} originalEvent
+ */
+
+/**
+ * An event indicating that the mouse has double clicked an element
+ *
+ * @event element.dblclick
+ *
+ * @type {Object}
+ * @property {djs.model.Base} element
+ * @property {Snap<Element>} gfx
+ * @property {Event} originalEvent
+ */
+
+/**
+ * An event indicating that the mouse has gone down on an element.
+ *
+ * @event element.mousedown
+ *
+ * @type {Object}
+ * @property {djs.model.Base} element
+ * @property {Snap<Element>} gfx
+ * @property {Event} originalEvent
+ */
+
+/**
+ * An event indicating that the mouse has gone up on an element.
+ *
+ * @event element.mouseup
+ *
+ * @type {Object}
+ * @property {djs.model.Base} element
+ * @property {Snap<Element>} gfx
+ * @property {Event} originalEvent
+ */
+
+},{"204":204,"59":59,"61":61,"63":63,"76":76}],42:[function(_dereq_,module,exports){
+module.exports = {
+  __init__: [ 'interactionEvents' ],
+  interactionEvents: [ 'type', _dereq_(41) ]
+};
+},{"41":41}],43:[function(_dereq_,module,exports){
+'use strict';
+
+var getBBox = _dereq_(55).getBBox;
+
+
+/**
+ * @class
+ *
+ * A plugin that adds an outline to shapes and connections that may be activated and styled
+ * via CSS classes.
+ *
+ * @param {EventBus} eventBus
+ * @param {Styles} styles
+ * @param {ElementRegistry} elementRegistry
+ */
+function Outline(eventBus, styles, elementRegistry) {
+
+  this.offset = 6;
+
+  var OUTLINE_STYLE = styles.cls('djs-outline', [ 'no-fill' ]);
+
+  var self = this;
+
+  function createOutline(gfx, bounds) {
+    return gfx.rect(10, 10, 0, 0).attr(OUTLINE_STYLE);
+  }
+
+  eventBus.on([ 'shape.added', 'shape.changed' ], function(event) {
+    var element = event.element,
+        gfx     = event.gfx;
+
+    var outline = gfx.select('.djs-outline');
+
+    if (!outline) {
+      outline = createOutline(gfx, element);
+    }
+
+    self.updateShapeOutline(outline, element);
+  });
+
+  eventBus.on([ 'connection.added', 'connection.changed' ], function(event) {
+    var element = event.element,
+        gfx     = event.gfx;
+
+    var outline = gfx.select('.djs-outline');
+
+    if (!outline) {
+      outline = createOutline(gfx, element);
+    }
+
+    self.updateConnectionOutline(outline, element);
+  });
+}
+
+
+/**
+ * Updates the outline of a shape respecting the dimension of the
+ * element and an outline offset.
+ *
+ * @param  {SVGElement} outline
+ * @param  {djs.model.Base} element
+ */
+Outline.prototype.updateShapeOutline = function(outline, element) {
+
+  outline.attr({
+    x: -this.offset,
+    y: -this.offset,
+    width: element.width + this.offset * 2,
+    height: element.height + this.offset * 2
+  });
+
+};
+
+
+/**
+ * Updates the outline of a connection respecting the bounding box of
+ * the connection and an outline offset.
+ *
+ * @param  {SVGElement} outline
+ * @param  {djs.model.Base} element
+ */
+Outline.prototype.updateConnectionOutline = function(outline, connection) {
+
+  var bbox = getBBox(connection);
+
+  outline.attr({
+    x: bbox.x - this.offset,
+    y: bbox.y - this.offset,
+    width: bbox.width + this.offset * 2,
+    height: bbox.height + this.offset * 2
+  });
+
+};
+
+
+Outline.$inject = ['eventBus', 'styles', 'elementRegistry'];
+
+module.exports = Outline;
+
+},{"55":55}],44:[function(_dereq_,module,exports){
+'use strict';
+
+module.exports = {
+  __init__: [ 'outline' ],
+  outline: [ 'type', _dereq_(43) ]
+};
+},{"43":43}],45:[function(_dereq_,module,exports){
+'use strict';
+
+var isArray = _dereq_(181),
+    isString = _dereq_(187),
+    isObject = _dereq_(185),
+    assign = _dereq_(190),
+    forEach = _dereq_(76),
+    find = _dereq_(75),
+    filter = _dereq_(74);
+
+var domify = _dereq_(205),
+    domClasses = _dereq_(202),
+    domAttr = _dereq_(201),
+    domRemove = _dereq_(208),
+    domClear = _dereq_(203);
+
+var getBBox = _dereq_(55).getBBox;
+
+// document wide unique overlay ids
+var ids = new (_dereq_(58))('ov');
+
+
+function createRoot(parent) {
+  var root = domify('<div class="djs-overlay-container" style="position: absolute; width: 0; height: 0;" />');
+  parent.insertBefore(root, parent.firstChild);
+
+  return root;
+}
+
+
+function setPosition(el, x, y) {
+  assign(el.style, { left: x + 'px', top: y + 'px' });
+}
+
+function setVisible(el, visible) {
+  el.style.display = visible === false ? 'none' : '';
+}
+
+/**
+ * A service that allows users to attach overlays to diagram elements.
+ *
+ * The overlay service will take care of overlay positioning during updates.
+ *
+ * @example
+ *
+ * // add a pink badge on the top left of the shape
+ * overlays.add(someShape, {
+ *   position: {
+ *     top: -5,
+ *     left: -5
+ *   },
+ *   html: '<div style="width: 10px; background: fuchsia; color: white;">0</div>'
+ * });
+ *
+ * // or add via shape id
+ *
+ * overlays.add('some-element-id', {
+ *   position: {
+ *     top: -5,
+ *     left: -5
+ *   }
+ *   html: '<div style="width: 10px; background: fuchsia; color: white;">0</div>'
+ * });
+ *
+ * // or add with optional type
+ *
+ * overlays.add(someShape, 'badge', {
+ *   position: {
+ *     top: -5,
+ *     left: -5
+ *   }
+ *   html: '<div style="width: 10px; background: fuchsia; color: white;">0</div>'
+ * });
+ *
+ *
+ * // remove an overlay
+ *
+ * var id = overlays.add(...);
+ * overlays.remove(id);
+ *
+ * @param {EventBus} eventBus
+ * @param {Canvas} canvas
+ * @param {ElementRegistry} elementRegistry
+ */
+function Overlays(eventBus, canvas, elementRegistry) {
+
+  this._eventBus = eventBus;
+  this._canvas = canvas;
+  this._elementRegistry = elementRegistry;
+
+  this._ids = ids;
+
+  this._overlayDefaults = {
+    show: {
+      minZoom: 0.7,
+      maxZoom: 5.0
+    }
+  };
+
+  /**
+   * Mapping overlayId -> overlay
+   */
+  this._overlays = {};
+
+  /**
+   * Mapping elementId -> overlay container
+   */
+  this._overlayContainers = [];
+
+  // root html element for all overlays
+  this._overlayRoot = createRoot(canvas.getContainer());
+
+  this._init();
+}
+
+
+Overlays.$inject = [ 'eventBus', 'canvas', 'elementRegistry' ];
+
+module.exports = Overlays;
+
+
+/**
+ * Returns the overlay with the specified id or a list of overlays
+ * for an element with a given type.
+ *
+ * @example
+ *
+ * // return the single overlay with the given id
+ * overlays.get('some-id');
+ *
+ * // return all overlays for the shape
+ * overlays.get({ element: someShape });
+ *
+ * // return all overlays on shape with type 'badge'
+ * overlays.get({ element: someShape, type: 'badge' });
+ *
+ * // shape can also be specified as id
+ * overlays.get({ element: 'element-id', type: 'badge' });
+ *
+ *
+ * @param {Object} search
+ * @param {String} [search.id]
+ * @param {String|djs.model.Base} [search.element]
+ * @param {String} [search.type]
+ *
+ * @return {Object|Array<Object>} the overlay(s)
+ */
+Overlays.prototype.get = function(search) {
+
+  if (isString(search)) {
+    search = { id: search };
+  }
+
+  if (isString(search.element)) {
+    search.element = this._elementRegistry.get(search.element);
+  }
+
+  if (search.element) {
+    var container = this._getOverlayContainer(search.element, true);
+
+    // return a list of overlays when searching by element (+type)
+    if (container) {
+      return search.type ? filter(container.overlays, { type: search.type }) : container.overlays.slice();
+    } else {
+      return [];
+    }
+  } else
+  if (search.type) {
+    return filter(this._overlays, { type: search.type });
+  } else {
+    // return single element when searching by id
+    return search.id ? this._overlays[search.id] : null;
+  }
+};
+
+/**
+ * Adds a HTML overlay to an element.
+ *
+ * @param {String|djs.model.Base}   element   attach overlay to this shape
+ * @param {String}                  [type]    optional type to assign to the overlay
+ * @param {Object}                  overlay   the overlay configuration
+ *
+ * @param {String|DOMElement}       overlay.html                 html element to use as an overlay
+ * @param {Object}                  [overlay.show]               show configuration
+ * @param {Number}                  [overlay.show.minZoom]       minimal zoom level to show the overlay
+ * @param {Number}                  [overlay.show.maxZoom]       maximum zoom level to show the overlay
+ * @param {Object}                  overlay.position             where to attach the overlay
+ * @param {Number}                  [overlay.position.left]      relative to element bbox left attachment
+ * @param {Number}                  [overlay.position.top]       relative to element bbox top attachment
+ * @param {Number}                  [overlay.position.bottom]    relative to element bbox bottom attachment
+ * @param {Number}                  [overlay.position.right]     relative to element bbox right attachment
+ *
+ * @return {String}                 id that may be used to reference the overlay for update or removal
+ */
+Overlays.prototype.add = function(element, type, overlay) {
+
+  if (isObject(type)) {
+    overlay = type;
+    type = null;
+  }
+
+  if (!element.id) {
+    element = this._elementRegistry.get(element);
+  }
+
+  if (!overlay.position) {
+    throw new Error('must specifiy overlay position');
+  }
+
+  if (!overlay.html) {
+    throw new Error('must specifiy overlay html');
+  }
+
+  if (!element) {
+    throw new Error('invalid element specified');
+  }
+
+  var id = this._ids.next();
+
+  overlay = assign({}, this._overlayDefaults, overlay, {
+    id: id,
+    type: type,
+    element: element,
+    html: overlay.html
+  });
+
+  this._addOverlay(overlay);
+
+  return id;
+};
+
+
+/**
+ * Remove an overlay with the given id or all overlays matching the given filter.
+ *
+ * @see Overlays#get for filter options.
+ *
+ * @param {String} [id]
+ * @param {Object} [filter]
+ */
+Overlays.prototype.remove = function(filter) {
+
+  var overlays = this.get(filter) || [];
+
+  if (!isArray(overlays)) {
+    overlays = [ overlays ];
+  }
+
+  var self = this;
+
+  forEach(overlays, function(overlay) {
+
+    var container = self._getOverlayContainer(overlay.element, true);
+
+    if (overlay) {
+      domRemove(overlay.html);
+      domRemove(overlay.htmlContainer);
+
+      delete overlay.htmlContainer;
+      delete overlay.element;
+
+      delete self._overlays[overlay.id];
+    }
+
+    if (container) {
+      var idx = container.overlays.indexOf(overlay);
+      if (idx !== -1) {
+        container.overlays.splice(idx, 1);
+      }
+    }
+  });
+
+};
+
+
+Overlays.prototype.show = function() {
+  setVisible(this._overlayRoot);
+};
+
+
+Overlays.prototype.hide = function() {
+  setVisible(this._overlayRoot, false);
+};
+
+Overlays.prototype.clear = function() {
+  this._overlays = {};
+
+  this._overlayContainers = [];
+
+  domClear(this._overlayRoot);
+};
+
+Overlays.prototype._updateOverlayContainer = function(container) {
+  var element = container.element,
+      html = container.html;
+
+  // update container left,top according to the elements x,y coordinates
+  // this ensures we can attach child elements relative to this container
+
+  var x = element.x,
+      y = element.y;
+
+  if (element.waypoints) {
+    var bbox = getBBox(element);
+    x = bbox.x;
+    y = bbox.y;
+  }
+
+  setPosition(html, x, y);
+
+  domAttr(container.html, 'data-container-id', element.id);
+};
+
+
+Overlays.prototype._updateOverlay = function(overlay) {
+
+  var position = overlay.position,
+      htmlContainer = overlay.htmlContainer,
+      element = overlay.element;
+
+  // update overlay html relative to shape because
+  // it is already positioned on the element
+
+  // update relative
+  var left = position.left,
+      top = position.top;
+
+  if (position.right !== undefined) {
+
+    var width;
+
+    if (element.waypoints) {
+      width = getBBox(element).width;
+    } else {
+      width = element.width;
+    }
+
+    left = position.right * -1 + width;
+  }
+
+  if (position.bottom !== undefined) {
+
+    var height;
+
+    if (element.waypoints) {
+      height = getBBox(element).height;
+    } else {
+      height = element.height;
+    }
+
+    top = position.bottom * -1 + height;
+  }
+
+  setPosition(htmlContainer, left || 0, top || 0);
+};
+
+Overlays.prototype._createOverlayContainer = function(element) {
+  var html = domify('<div class="djs-overlays" style="position: absolute" />');
+
+  this._overlayRoot.appendChild(html);
+
+  var container = {
+    html: html,
+    element: element,
+    overlays: []
+  };
+
+  this._updateOverlayContainer(container);
+
+  this._overlayContainers.push(container);
+
+  return container;
+};
+
+
+Overlays.prototype._updateRoot = function(viewbox) {
+  var a = viewbox.scale || 1;
+  var d = viewbox.scale || 1;
+
+  var matrix = 'matrix(' + a + ',0,0,' + d + ',' + (-1 * viewbox.x * a) + ',' + (-1 * viewbox.y * d) + ')';
+
+  this._overlayRoot.style.transform = matrix;
+  this._overlayRoot.style['-ms-transform'] = matrix;
+  this._overlayRoot.style['-webkit-transform'] = matrix;
+};
+
+
+Overlays.prototype._getOverlayContainer = function(element, raw) {
+  var container = find(this._overlayContainers, function(c) {
+    return c.element === element;
+  });
+
+
+  if (!container && !raw) {
+    return this._createOverlayContainer(element);
+  }
+
+  return container;
+};
+
+
+
+
+
+Overlays.prototype._addOverlay = function(overlay) {
+
+  var id = overlay.id,
+      element = overlay.element,
+      html = overlay.html,
+      htmlContainer,
+      overlayContainer;
+
+  // unwrap jquery (for those who need it)
+  if (html.get) {
+    html = html.get(0);
+  }
+
+  // create proper html elements from
+  // overlay HTML strings
+  if (isString(html)) {
+    html = domify(html);
+  }
+
+  overlayContainer = this._getOverlayContainer(element);
+
+  htmlContainer = domify('<div class="djs-overlay" data-overlay-id="' + id + '" style="position: absolute">');
+
+  htmlContainer.appendChild(html);
+
+  if (overlay.type) {
+    domClasses(htmlContainer).add('djs-overlay-' + overlay.type);
+  }
+
+  overlay.htmlContainer = htmlContainer;
+
+  overlayContainer.overlays.push(overlay);
+  overlayContainer.html.appendChild(htmlContainer);
+
+  this._overlays[id] = overlay;
+
+  this._updateOverlay(overlay);
+  this._updateOverlayVisibilty(overlay, this._canvas.viewbox());
+};
+
+Overlays.prototype._updateOverlayVisibilty = function(overlay, viewbox) {
+  var show = overlay.show,
+      htmlContainer = overlay.htmlContainer,
+      visible = true;
+
+  if (show) {
+    if (show.minZoom > viewbox.scale ||
+        show.maxZoom < viewbox.scale) {
+      visible = false;
+    }
+
+    setVisible(htmlContainer, visible);
+  }
+};
+
+Overlays.prototype._updateOverlaysVisibilty = function(viewbox) {
+
+  var self = this;
+
+  forEach(this._overlays, function(overlay) {
+    self._updateOverlayVisibilty(overlay, viewbox);
+  });
+};
+
+
+Overlays.prototype._init = function() {
+
+  var eventBus = this._eventBus;
+
+  var self = this;
+
+
+  // scroll/zoom integration
+
+  function updateViewbox(viewbox) {
+    self._updateRoot(viewbox);
+    self._updateOverlaysVisibilty(viewbox);
+
+    self.show();
+  }
+
+  eventBus.on('canvas.viewbox.changing', function(event) {
+    self.hide();
+  });
+
+  eventBus.on('canvas.viewbox.changed', function(event) {
+    updateViewbox(event.viewbox);
+  });
+
+
+  // remove integration
+
+  eventBus.on([ 'shape.remove', 'connection.remove' ], function(e) {
+    var element = e.element;
+    var overlays = self.get({ element: element });
+
+    forEach(overlays, function(o) {
+      self.remove(o.id);
+    });
+
+    var container = self._getOverlayContainer(element);
+
+    if (container) {
+      domRemove(container.html);
+      var i = self._overlayContainers.indexOf(container);
+      if (i !== -1) {
+        self._overlayContainers.splice(i, 1);
+      }
+    }
+  });
+
+
+  // move integration
+
+  eventBus.on([
+    'element.changed'
+  ], function(e) {
+    var element = e.element;
+
+    var container = self._getOverlayContainer(element, true);
+
+    if (container) {
+      forEach(container.overlays, function(overlay) {
+        self._updateOverlay(overlay);
+      });
+
+      self._updateOverlayContainer(container);
+    }
+  });
+
+
+  // marker integration, simply add them on the overlays as classes, too.
+
+  eventBus.on('element.marker.update', function(e) {
+    var container = self._getOverlayContainer(e.element, true);
+    if (container) {
+      domClasses(container.html)[e.add ? 'add' : 'remove'](e.marker);
+    }
+  });
+
+
+  // clear overlays with diagram
+
+  eventBus.on('diagram.clear', this.clear, this);
+};
+
+},{"181":181,"185":185,"187":187,"190":190,"201":201,"202":202,"203":203,"205":205,"208":208,"55":55,"58":58,"74":74,"75":75,"76":76}],46:[function(_dereq_,module,exports){
+module.exports = {
+  __init__: [ 'overlays' ],
+  overlays: [ 'type', _dereq_(45) ]
+};
+},{"45":45}],47:[function(_dereq_,module,exports){
+'use strict';
+
+var isArray = _dereq_(181),
+    forEach = _dereq_(76);
+
+
+/**
+ * A service that offers the current selection in a diagram.
+ * Offers the api to control the selection, too.
+ *
+ * @class
+ *
+ * @param {EventBus} eventBus the event bus
+ */
+function Selection(eventBus) {
+
+  this._eventBus = eventBus;
+
+  this._selectedElements = [];
+
+  var self = this;
+
+  eventBus.on([ 'shape.remove', 'connection.remove' ], function(e) {
+    var element = e.element;
+    self.deselect(element);
+  });
+
+  eventBus.on([ 'diagram.clear' ], function(e) {
+    self.select(null);
+  });
+}
+
+Selection.$inject = [ 'eventBus' ];
+
+module.exports = Selection;
+
+
+Selection.prototype.deselect = function(element) {
+  var selectedElements = this._selectedElements;
+
+  var idx = selectedElements.indexOf(element);
+
+  if (idx !== -1) {
+    var oldSelection = selectedElements.slice();
+
+    selectedElements.splice(idx, 1);
+
+    this._eventBus.fire('selection.changed', { oldSelection: oldSelection, newSelection: selectedElements });
+  }
+};
+
+
+Selection.prototype.get = function() {
+  return this._selectedElements;
+};
+
+Selection.prototype.isSelected = function(element) {
+  return this._selectedElements.indexOf(element) !== -1;
+};
+
+
+/**
+ * This method selects one or more elements on the diagram.
+ *
+ * By passing an additional add parameter you can decide whether or not the element(s)
+ * should be added to the already existing selection or not.
+ *
+ * @method Selection#select
+ *
+ * @param  {Object|Object[]} elements element or array of elements to be selected
+ * @param  {boolean} [add] whether the element(s) should be appended to the current selection, defaults to false
+ */
+Selection.prototype.select = function(elements, add) {
+  var selectedElements = this._selectedElements,
+      oldSelection = selectedElements.slice();
+
+  if (!isArray(elements)) {
+    elements = elements ? [ elements ] : [];
+  }
+
+  // selection may be cleared by passing an empty array or null
+  // to the method
+  if (add) {
+    forEach(elements, function(element) {
+      if (selectedElements.indexOf(element) !== -1) {
+        // already selected
+        return;
+      } else {
+        selectedElements.push(element);
+      }
+    });
+  } else {
+    this._selectedElements = selectedElements = elements.slice();
+  }
+
+  this._eventBus.fire('selection.changed', { oldSelection: oldSelection, newSelection: selectedElements });
+};
+
+},{"181":181,"76":76}],48:[function(_dereq_,module,exports){
+'use strict';
+
+var hasPrimaryModifier = _dereq_(59).hasPrimaryModifier;
+
+var find = _dereq_(75);
+
+
+function SelectionBehavior(eventBus, selection, canvas, elementRegistry) {
+
+  eventBus.on('create.end', 500, function(e) {
+
+    // select the created shape after a
+    // successful create operation
+    if (e.context.canExecute) {
+      selection.select(e.context.shape);
+    }
+  });
+
+  eventBus.on('connect.end', 500, function(e) {
+
+    // select the connect end target
+    // after a connect operation
+    if (e.context.canExecute && e.context.target) {
+      selection.select(e.context.target);
+    }
+  });
+
+  eventBus.on('shape.move.end', 500, function(e) {
+    var previousSelection = e.previousSelection || [];
+
+    var shape = elementRegistry.get(e.context.shape.id);
+
+    // make sure at least the main moved element is being
+    // selected after a move operation
+    var inSelection = find(previousSelection, function(selectedShape) {
+      return shape.id === selectedShape.id;
+    });
+
+    if (!inSelection) {
+      selection.select(shape);
+    }
+  });
+
+  // Shift + click selection
+  eventBus.on('element.click', function(event) {
+
+    var element = event.element;
+
+    // do not select the root element
+    // or connections
+    if (element === canvas.getRootElement()) {
+      element = null;
+    }
+
+    var isSelected = selection.isSelected(element),
+        isMultiSelect = selection.get().length > 1;
+
+    // mouse-event: SELECTION_KEY
+    var add = hasPrimaryModifier(event);
+
+    // select OR deselect element in multi selection
+    if (isSelected && isMultiSelect) {
+      if (add) {
+        return selection.deselect(element);
+      } else {
+        return selection.select(element);
+      }
+    } else
+    if (!isSelected) {
+      selection.select(element, add);
+    } else {
+      selection.deselect(element);
+    }
+  });
+}
+
+SelectionBehavior.$inject = [ 'eventBus', 'selection', 'canvas', 'elementRegistry' ];
+module.exports = SelectionBehavior;
+
+},{"59":59,"75":75}],49:[function(_dereq_,module,exports){
+'use strict';
+
+var forEach = _dereq_(76);
+
+var MARKER_HOVER = 'hover',
+    MARKER_SELECTED = 'selected';
+
+
+/**
+ * A plugin that adds a visible selection UI to shapes and connections
+ * by appending the <code>hover</code> and <code>selected</code> classes to them.
+ *
+ * @class
+ *
+ * Makes elements selectable, too.
+ *
+ * @param {EventBus} events
+ * @param {SelectionService} selection
+ * @param {Canvas} canvas
+ */
+function SelectionVisuals(events, canvas, selection, graphicsFactory, styles) {
+
+  this._multiSelectionBox = null;
+
+  function addMarker(e, cls) {
+    canvas.addMarker(e, cls);
+  }
+
+  function removeMarker(e, cls) {
+    canvas.removeMarker(e, cls);
+  }
+
+  events.on('element.hover', function(event) {
+    addMarker(event.element, MARKER_HOVER);
+  });
+
+  events.on('element.out', function(event) {
+    removeMarker(event.element, MARKER_HOVER);
+  });
+
+  events.on('selection.changed', function(event) {
+
+    function deselect(s) {
+      removeMarker(s, MARKER_SELECTED);
+    }
+
+    function select(s) {
+      addMarker(s, MARKER_SELECTED);
+    }
+
+    var oldSelection = event.oldSelection,
+        newSelection = event.newSelection;
+
+    forEach(oldSelection, function(e) {
+      if (newSelection.indexOf(e) === -1) {
+        deselect(e);
+      }
+    });
+
+    forEach(newSelection, function(e) {
+      if (oldSelection.indexOf(e) === -1) {
+        select(e);
+      }
+    });
+  });
+}
+
+SelectionVisuals.$inject = [
+  'eventBus',
+  'canvas',
+  'selection',
+  'graphicsFactory',
+  'styles'
+];
+
+module.exports = SelectionVisuals;
+
+},{"76":76}],50:[function(_dereq_,module,exports){
+module.exports = {
+  __init__: [ 'selectionVisuals', 'selectionBehavior' ],
+  __depends__: [
+    _dereq_(42),
+    _dereq_(44)
+  ],
+  selection: [ 'type', _dereq_(47) ],
+  selectionVisuals: [ 'type', _dereq_(49) ],
+  selectionBehavior: [ 'type', _dereq_(48) ]
+};
+
+},{"42":42,"44":44,"47":47,"48":48,"49":49}],51:[function(_dereq_,module,exports){
+module.exports = {
+  translate: [ 'value', _dereq_(52) ]
+};
+},{"52":52}],52:[function(_dereq_,module,exports){
+'use strict';
+
+/**
+ * A simple translation stub to be used for multi-language support
+ * in diagrams. Can be easily replaced with a more sophisticated
+ * solution.
+ *
+ * @example
+ *
+ * // use it inside any diagram component by injecting `translate`.
+ *
+ * function MyService(translate) {
+ *   alert(translate('HELLO {you}', { you: 'You!' }));
+ * }
+ *
+ * @param {String} template to interpolate
+ * @param {Object} [replacements] a map with substitutes
+ *
+ * @return {String} the translated string
+ */
+module.exports = function translate(template, replacements) {
+
+  replacements = replacements || {};
+
+  return template.replace(/{([^}]+)}/g, function(_, key) {
+    return replacements[key] || '{' + key + '}';
+  });
+};
+},{}],53:[function(_dereq_,module,exports){
+'use strict';
+
+var assign = _dereq_(190),
+    inherits = _dereq_(70);
+
+var Refs = _dereq_(221);
+
+var parentRefs = new Refs({ name: 'children', enumerable: true, collection: true }, { name: 'parent' }),
+    labelRefs = new Refs({ name: 'label', enumerable: true }, { name: 'labelTarget' }),
+    attacherRefs = new Refs({ name: 'attachers', collection: true }, { name: 'host' }),
+    outgoingRefs = new Refs({ name: 'outgoing', collection: true }, { name: 'source' }),
+    incomingRefs = new Refs({ name: 'incoming', collection: true }, { name: 'target' });
+
+/**
+ * @namespace djs.model
+ */
+
+/**
+ * @memberOf djs.model
+ */
+
+/**
+ * The basic graphical representation
+ *
+ * @class
+ *
+ * @abstract
+ */
+function Base() {
+
+  /**
+   * The object that backs up the shape
+   *
+   * @name Base#businessObject
+   * @type Object
+   */
+  Object.defineProperty(this, 'businessObject', {
+    writable: true
+  });
+
+  /**
+   * The parent shape
+   *
+   * @name Base#parent
+   * @type Shape
+   */
+  parentRefs.bind(this, 'parent');
+
+  /**
+   * @name Base#label
+   * @type Label
+   */
+  labelRefs.bind(this, 'label');
+
+  /**
+   * The list of outgoing connections
+   *
+   * @name Base#outgoing
+   * @type Array<Connection>
+   */
+  outgoingRefs.bind(this, 'outgoing');
+
+  /**
+   * The list of incoming connections
+   *
+   * @name Base#incoming
+   * @type Array<Connection>
+   */
+  incomingRefs.bind(this, 'incoming');
+}
+
+
+/**
+ * A graphical object
+ *
+ * @class
+ * @constructor
+ *
+ * @extends Base
+ */
+function Shape() {
+  Base.call(this);
+
+  /**
+   * The list of children
+   *
+   * @name Shape#children
+   * @type Array<Base>
+   */
+  parentRefs.bind(this, 'children');
+
+  /**
+   * @name Shape#host
+   * @type Shape
+   */
+  attacherRefs.bind(this, 'host');
+
+  /**
+   * @name Shape#attachers
+   * @type Shape
+   */
+  attacherRefs.bind(this, 'attachers');
+}
+
+inherits(Shape, Base);
+
+
+/**
+ * A root graphical object
+ *
+ * @class
+ * @constructor
+ *
+ * @extends Shape
+ */
+function Root() {
+  Shape.call(this);
+}
+
+inherits(Root, Shape);
+
+
+/**
+ * A label for an element
+ *
+ * @class
+ * @constructor
+ *
+ * @extends Shape
+ */
+function Label() {
+  Shape.call(this);
+
+  /**
+   * The labeled element
+   *
+   * @name Label#labelTarget
+   * @type Base
+   */
+  labelRefs.bind(this, 'labelTarget');
+}
+
+inherits(Label, Shape);
+
+
+/**
+ * A connection between two elements
+ *
+ * @class
+ * @constructor
+ *
+ * @extends Base
+ */
+function Connection() {
+  Base.call(this);
+
+  /**
+   * The element this connection originates from
+   *
+   * @name Connection#source
+   * @type Base
+   */
+  outgoingRefs.bind(this, 'source');
+
+  /**
+   * The element this connection points to
+   *
+   * @name Connection#target
+   * @type Base
+   */
+  incomingRefs.bind(this, 'target');
+}
+
+inherits(Connection, Base);
+
+
+var types = {
+  connection: Connection,
+  shape: Shape,
+  label: Label,
+  root: Root
+};
+
+/**
+ * Creates a new model element of the specified type
+ *
+ * @method create
+ *
+ * @example
+ *
+ * var shape1 = Model.create('shape', { x: 10, y: 10, width: 100, height: 100 });
+ * var shape2 = Model.create('shape', { x: 210, y: 210, width: 100, height: 100 });
+ *
+ * var connection = Model.create('connection', { waypoints: [ { x: 110, y: 55 }, {x: 210, y: 55 } ] });
+ *
+ * @param  {String} type lower-cased model name
+ * @param  {Object} attrs attributes to initialize the new model instance with
+ *
+ * @return {Base} the new model instance
+ */
+module.exports.create = function(type, attrs) {
+  var Type = types[type];
+  if (!Type) {
+    throw new Error('unknown type: <' + type + '>');
+  }
+  return assign(new Type(), attrs);
+};
+
+
+module.exports.Base = Base;
+module.exports.Root = Root;
+module.exports.Shape = Shape;
+module.exports.Connection = Connection;
+module.exports.Label = Label;
+
+},{"190":190,"221":221,"70":70}],54:[function(_dereq_,module,exports){
+'use strict';
+
+/**
+ * Failsafe remove an element from a collection
+ *
+ * @param  {Array<Object>} [collection]
+ * @param  {Object} [element]
+ *
+ * @return {Number} the previous index of the element
+ */
+module.exports.remove = function(collection, element) {
+
+  if (!collection || !element) {
+    return -1;
+  }
+
+  var idx = collection.indexOf(element);
+
+  if (idx !== -1) {
+    collection.splice(idx, 1);
+  }
+
+  return idx;
+};
+
+/**
+ * Fail save add an element to the given connection, ensuring
+ * it does not yet exist.
+ *
+ * @param {Array<Object>} collection
+ * @param {Object} element
+ * @param {Number} idx
+ */
+module.exports.add = function(collection, element, idx) {
+
+  if (!collection || !element) {
+    return;
+  }
+
+  if (typeof idx !== 'number') {
+    idx = -1;
+  }
+
+  var currentIdx = collection.indexOf(element);
+
+  if (currentIdx !== -1) {
+
+    if (currentIdx === idx) {
+      // nothing to do, position has not changed
+      return;
+    } else {
+
+      if (idx !== -1) {
+        // remove from current position
+        collection.splice(currentIdx, 1);
+      } else {
+        // already exists in collection
+        return;
+      }
+    }
+  }
+
+  if (idx !== -1) {
+    // insert at specified position
+    collection.splice(idx, 0, element);
+  } else {
+    // push to end
+    collection.push(element);
+  }
+};
+
+
+/**
+ * Fail save get the index of an element in a collection.
+ *
+ * @param {Array<Object>} collection
+ * @param {Object} element
+ *
+ * @return {Number} the index or -1 if collection or element do
+ *                  not exist or the element is not contained.
+ */
+module.exports.indexOf = function(collection, element) {
+
+  if (!collection || !element) {
+    return -1;
+  }
+
+  return collection.indexOf(element);
+};
+
+},{}],55:[function(_dereq_,module,exports){
+'use strict';
+
+var isArray = _dereq_(181),
+    isNumber = _dereq_(184),
+    groupBy = _dereq_(77),
+    forEach = _dereq_(76);
+
+/**
+ * Adds an element to a collection and returns true if the
+ * element was added.
+ *
+ * @param {Array<Object>} elements
+ * @param {Object} e
+ * @param {Boolean} unique
+ */
+function add(elements, e, unique) {
+  var canAdd = !unique || elements.indexOf(e) === -1;
+
+  if (canAdd) {
+    elements.push(e);
+  }
+
+  return canAdd;
+}
+
+/**
+ * Iterate over each element in a collection, calling the iterator function `fn`
+ * with (element, index, recursionDepth).
+ *
+ * Recurse into all elements that are returned by `fn`.
+ *
+ * @param  {Object|Array<Object>} elements
+ * @param  {Function} fn iterator function called with (element, index, recursionDepth)
+ * @param  {Number} [depth] maximum recursion depth
+ */
+function eachElement(elements, fn, depth) {
+
+  depth = depth || 0;
+
+  if (!isArray(elements)) {
+    elements = [ elements ];
+  }
+
+  forEach(elements, function(s, i) {
+    var filter = fn(s, i, depth);
+
+    if (isArray(filter) && filter.length) {
+      eachElement(filter, fn, depth + 1);
+    }
+  });
+}
+
+/**
+ * Collects self + child elements up to a given depth from a list of elements.
+ *
+ * @param  {djs.model.Base|Array<djs.model.Base>} elements the elements to select the children from
+ * @param  {Boolean} unique whether to return a unique result set (no duplicates)
+ * @param  {Number} maxDepth the depth to search through or -1 for infinite
+ *
+ * @return {Array<djs.model.Base>} found elements
+ */
+function selfAndChildren(elements, unique, maxDepth) {
+  var result = [],
+      processedChildren = [];
+
+  eachElement(elements, function(element, i, depth) {
+    add(result, element, unique);
+
+    var children = element.children;
+
+    // max traversal depth not reached yet
+    if (maxDepth === -1 || depth < maxDepth) {
+
+      // children exist && children not yet processed
+      if (children && add(processedChildren, children, unique)) {
+        return children;
+      }
+    }
+  });
+
+  return result;
+}
+
+/**
+ * Return self + direct children for a number of elements
+ *
+ * @param  {Array<djs.model.Base>} elements to query
+ * @param  {Boolean} allowDuplicates to allow duplicates in the result set
+ *
+ * @return {Array<djs.model.Base>} the collected elements
+ */
+function selfAndDirectChildren(elements, allowDuplicates) {
+  return selfAndChildren(elements, !allowDuplicates, 1);
+}
+
+/**
+ * Return self + ALL children for a number of elements
+ *
+ * @param  {Array<djs.model.Base>} elements to query
+ * @param  {Boolean} allowDuplicates to allow duplicates in the result set
+ *
+ * @return {Array<djs.model.Base>} the collected elements
+ */
+function selfAndAllChildren(elements, allowDuplicates) {
+  return selfAndChildren(elements, !allowDuplicates, -1);
+}
+
+/**
+ * Gets the the closure for all selected elements,
+ * their connections and their attachment's connections
+ *
+ * @param {Array<djs.model.Base>} elements
+ * @return {Object} enclosure
+ */
+function getClosure(elements) {
+
+  // original elements passed to this function
+  var topLevel = groupBy(elements, function(e) { return e.id; });
+
+  var allShapes = {},
+      allConnections = {},
+      enclosedElements = {},
+      enclosedConnections = {};
+
+  function handleConnection(c) {
+    if (topLevel[c.source.id] && topLevel[c.target.id]) {
+      topLevel[c.id] = c;
+    }
+
+    // not enclosed as a child, but maybe logically
+    // (connecting two moved elements?)
+    if (allShapes[c.source.id] && allShapes[c.target.id]) {
+      enclosedConnections[c.id] = enclosedElements[c.id] = c;
+    }
+
+    allConnections[c.id] = c;
+  }
+
+  function handleElement(element) {
+
+    enclosedElements[element.id] = element;
+
+    if (element.waypoints) {
+      // remember connection
+      enclosedConnections[element.id] = allConnections[element.id] = element;
+    } else {
+      // remember shape
+      allShapes[element.id] = element;
+
+      // remember all connections
+      forEach(element.incoming, handleConnection);
+
+      forEach(element.outgoing, handleConnection);
+
+      // recurse into children
+      return element.children;
+    }
+  }
+
+  eachElement(elements, handleElement);
+
+  return {
+    allShapes: allShapes,
+    allConnections: allConnections,
+    topLevel: topLevel,
+    enclosedConnections: enclosedConnections,
+    enclosedElements: enclosedElements
+  };
+}
+
+/**
+ * Returns the surrounding bbox for all elements in
+ * the array or the element primitive.
+ *
+ * @param {Array<djs.model.Shape>|djs.model.Shape} elements
+ * @param {Boolean} stopRecursion
+ */
+function getBBox(elements, stopRecursion) {
+
+  stopRecursion = !!stopRecursion;
+  if (!isArray(elements)) {
+    elements = [elements];
+  }
+
+  var minX,
+      minY,
+      maxX,
+      maxY;
+
+  forEach(elements, function(element) {
+
+    // If element is a connection the bbox must be computed first
+    var bbox = element;
+    if (element.waypoints && !stopRecursion) {
+      bbox = getBBox(element.waypoints, true);
+    }
+
+    var x = bbox.x,
+        y = bbox.y,
+        height = bbox.height || 0,
+        width  = bbox.width  || 0;
+
+    if (x < minX || minX === undefined) {
+      minX = x;
+    }
+    if (y < minY || minY === undefined) {
+      minY = y;
+    }
+
+    if ((x + width) > maxX || maxX === undefined) {
+      maxX = x + width;
+    }
+    if ((y + height) > maxY || maxY === undefined) {
+      maxY = y + height;
+    }
+  });
+
+  return {
+    x: minX,
+    y: minY,
+    height: maxY - minY,
+    width: maxX - minX
+  };
+}
+
+
+/**
+ * Returns all elements that are enclosed from the bounding box.
+ *
+ *   * If bbox.(width|height) is not specified the method returns
+ *     all elements with element.x/y > bbox.x/y
+ *   * If only bbox.x or bbox.y is specified, method return all elements with
+ *     e.x > bbox.x or e.y > bbox.y
+ *
+ * @param {Array<djs.model.Shape>} elements List of Elements to search through
+ * @param {djs.model.Shape} bbox the enclosing bbox.
+ *
+ * @return {Array<djs.model.Shape>} enclosed elements
+ */
+function getEnclosedElements(elements, bbox) {
+
+  var filteredElements = {};
+
+  forEach(elements, function(element) {
+
+    var e = element;
+
+    if (e.waypoints) {
+      e = getBBox(e);
+    }
+
+    if (!isNumber(bbox.y) && (e.x > bbox.x)) {
+      filteredElements[element.id] = element;
+    }
+    if (!isNumber(bbox.x) && (e.y > bbox.y)) {
+      filteredElements[element.id] = element;
+    }
+    if (e.x > bbox.x && e.y > bbox.y) {
+      if (isNumber(bbox.width) && isNumber(bbox.height) &&
+          e.width  + e.x < bbox.width  + bbox.x &&
+          e.height + e.y < bbox.height + bbox.y) {
+
+        filteredElements[element.id] = element;
+      } else if (!isNumber(bbox.width) || !isNumber(bbox.height)) {
+        filteredElements[element.id] = element;
+      }
+    }
+  });
+
+  return filteredElements;
+}
+
+
+module.exports.add = add;
+module.exports.eachElement = eachElement;
+module.exports.selfAndDirectChildren = selfAndDirectChildren;
+module.exports.selfAndAllChildren = selfAndAllChildren;
+module.exports.getBBox = getBBox;
+module.exports.getEnclosedElements = getEnclosedElements;
+
+module.exports.getClosure = getClosure;
+
+
+function getElementType(element) {
+
+  if ('waypoints' in element) {
+    return 'connection';
+  }
+
+  if ('x' in element) {
+    return 'shape';
+  }
+
+  return 'root';
+}
+
+module.exports.getType = getElementType;
+},{"181":181,"184":184,"76":76,"77":77}],56:[function(_dereq_,module,exports){
+'use strict';
+
+function __preventDefault(event) {
+  return event && event.preventDefault();
+}
+
+function __stopPropagation(event, immediate) {
+  if (!event) {
+    return;
+  }
+
+  if (event.stopPropagation) {
+    event.stopPropagation();
+  }
+
+  if (immediate && event.stopImmediatePropagation) {
+    event.stopImmediatePropagation();
+  }
+}
+
+
+function getOriginal(event) {
+  return event.originalEvent || event.srcEvent;
+}
+
+module.exports.getOriginal = getOriginal;
+
+
+function stopEvent(event, immediate) {
+  stopPropagation(event, immediate);
+  preventDefault(event);
+}
+
+module.exports.stopEvent = stopEvent;
+
+
+function preventDefault(event) {
+  __preventDefault(event);
+  __preventDefault(getOriginal(event));
+}
+
+module.exports.preventDefault = preventDefault;
+
+
+function stopPropagation(event, immediate) {
+  __stopPropagation(event, immediate);
+  __stopPropagation(getOriginal(event), immediate);
+}
+
+module.exports.stopPropagation = stopPropagation;
+
+
+function toPoint(event) {
+
+  if (event.pointers && event.pointers.length) {
+    event = event.pointers[0];
+  }
+
+  if (event.touches && event.touches.length) {
+    event = event.touches[0];
+  }
+
+  return event ? {
+    x: event.clientX,
+    y: event.clientY
+  } : null;
+}
+
+module.exports.toPoint = toPoint;
+
+},{}],57:[function(_dereq_,module,exports){
+'use strict';
+
+/**
+ * SVGs for elements are generated by the {@link GraphicsFactory}.
+ *
+ * This utility gives quick access to the important semantic
+ * parts of an element.
+ */
+
+/**
+ * Returns the visual part of a diagram element
+ *
+ * @param {Snap<SVGElement>} gfx
+ *
+ * @return {Snap<SVGElement>}
+ */
+function getVisual(gfx) {
+  return gfx.select('.djs-visual');
+}
+
+/**
+ * Returns the children for a given diagram element.
+ *
+ * @param {Snap<SVGElement>} gfx
+ * @return {Snap<SVGElement>}
+ */
+function getChildren(gfx) {
+  return gfx.parent().children()[1];
+}
+
+/**
+ * Returns the visual bbox of an element
+ *
+ * @param {Snap<SVGElement>} gfx
+ *
+ * @return {Bounds}
+ */
+function getBBox(gfx) {
+  return getVisual(gfx).select('*').getBBox();
+}
+
+
+module.exports.getVisual = getVisual;
+module.exports.getChildren = getChildren;
+module.exports.getBBox = getBBox;
+},{}],58:[function(_dereq_,module,exports){
+'use strict';
+
+/**
+ * Util that provides unique IDs.
+ *
+ * @class djs.util.IdGenerator
+ * @constructor
+ * @memberOf djs.util
+ *
+ * The ids can be customized via a given prefix and contain a random value to avoid collisions.
+ *
+ * @param {String} prefix a prefix to prepend to generated ids (for better readability)
+ */
+function IdGenerator(prefix) {
+
+  this._counter = 0;
+  this._prefix = (prefix ? prefix + '-' : '') + Math.floor(Math.random() * 1000000000) + '-';
+}
+
+module.exports = IdGenerator;
+
+/**
+ * Returns a next unique ID.
+ *
+ * @method djs.util.IdGenerator#next
+ *
+ * @returns {String} the id
+ */
+IdGenerator.prototype.next = function() {
+  return this._prefix + (++this._counter);
+};
+
+},{}],59:[function(_dereq_,module,exports){
+'use strict';
+
+var getOriginalEvent = _dereq_(56).getOriginal;
+
+var isMac = _dereq_(60).isMac;
+
+
+function isPrimaryButton(event) {
+  // button === 0 -> left áka primary mouse button
+  return !(getOriginalEvent(event) || event).button;
+}
+
+module.exports.isPrimaryButton = isPrimaryButton;
+
+module.exports.isMac = isMac;
+
+module.exports.hasPrimaryModifier = function(event) {
+  var originalEvent = getOriginalEvent(event) || event;
+
+  if (!isPrimaryButton(event)) {
+    return false;
+  }
+
+  // Use alt as primary modifier key for mac OS
+  if (isMac()) {
+    return originalEvent.metaKey;
+  } else {
+    return originalEvent.ctrlKey;
+  }
+};
+
+
+module.exports.hasSecondaryModifier = function(event) {
+  var originalEvent = getOriginalEvent(event) || event;
+
+  return isPrimaryButton(event) && originalEvent.shiftKey;
+};
+
+},{"56":56,"60":60}],60:[function(_dereq_,module,exports){
+'use strict';
+
+module.exports.isMac = function isMac() {
+  return (/mac/i).test(navigator.platform);
+};
+},{}],61:[function(_dereq_,module,exports){
+'use strict';
+
+var Snap = _dereq_(63);
+
+
+module.exports.componentsToPath = function(elements) {
+  return elements.join(',').replace(/,?([A-z]),?/g, '$1');
+};
+
+function toSVGPoints(points) {
+  var result = '';
+
+  for (var i = 0, p; (p = points[i]); i++) {
+    result += p.x + ',' + p.y + ' ';
+  }
+
+  return result;
+}
+
+module.exports.toSVGPoints = toSVGPoints;
+
+module.exports.createLine = function(points, attrs) {
+  return Snap.create('polyline', { points: toSVGPoints(points) }).attr(attrs || {});
+};
+
+module.exports.updateLine = function(gfx, points) {
+  return gfx.attr({ points: toSVGPoints(points) });
+};
+
+},{"63":63}],62:[function(_dereq_,module,exports){
+'use strict';
+
+var isObject = _dereq_(185),
+    assign = _dereq_(190),
+    pick = _dereq_(196),
+    forEach = _dereq_(76),
+    reduce = _dereq_(80),
+    merge = _dereq_(193);
+
+var Snap = _dereq_(63);
+
+var DEFAULT_BOX_PADDING = 0;
+
+var DEFAULT_LABEL_SIZE = {
+  width: 150,
+  height: 50
+};
+
+
+function parseAlign(align) {
+
+  var parts = align.split('-');
+
+  return {
+    horizontal: parts[0] || 'center',
+    vertical: parts[1] || 'top'
+  };
+}
+
+function parsePadding(padding) {
+
+  if (isObject(padding)) {
+    return assign({ top: 0, left: 0, right: 0, bottom: 0 }, padding);
+  } else {
+    return {
+      top: padding,
+      left: padding,
+      right: padding,
+      bottom: padding
+    };
+  }
+}
+
+function getTextBBox(text, fakeText) {
+  fakeText.textContent = text;
+  return pick(fakeText.getBBox(), [ 'width', 'height' ]);
+}
+
+
+/**
+ * Layout the next line and return the layouted element.
+ *
+ * Alters the lines passed.
+ *
+ * @param  {Array<String>} lines
+ * @return {Object} the line descriptor, an object { width, height, text }
+ */
+function layoutNext(lines, maxWidth, fakeText) {
+
+  var originalLine = lines.shift(),
+      fitLine = originalLine;
+
+  var textBBox;
+
+  for (;;) {
+    textBBox = getTextBBox(fitLine, fakeText);
+
+    textBBox.width = fitLine ? textBBox.width : 0;
+
+    // try to fit
+    if (fitLine === ' ' || fitLine === '' || textBBox.width < Math.round(maxWidth) || fitLine.length < 4) {
+      return fit(lines, fitLine, originalLine, textBBox);
+    }
+
+    fitLine = shortenLine(fitLine, textBBox.width, maxWidth);
+  }
+}
+
+function fit(lines, fitLine, originalLine, textBBox) {
+  if (fitLine.length < originalLine.length) {
+    var nextLine = lines[0] || '',
+        remainder = originalLine.slice(fitLine.length).trim();
+
+    if (/-\s*$/.test(remainder)) {
+      nextLine = remainder + nextLine.replace(/^\s+/, '');
+    } else {
+      nextLine = remainder + ' ' + nextLine;
+    }
+
+    lines[0] = nextLine;
+  }
+  return { width: textBBox.width, height: textBBox.height, text: fitLine };
+}
+
+
+/**
+ * Shortens a line based on spacing and hyphens.
+ * Returns the shortened result on success.
+ *
+ * @param  {String} line
+ * @param  {Number} maxLength the maximum characters of the string
+ * @return {String} the shortened string
+ */
+function semanticShorten(line, maxLength) {
+  var parts = line.split(/(\s|-)/g),
+      part,
+      shortenedParts = [],
+      length = 0;
+
+  // try to shorten via spaces + hyphens
+  if (parts.length > 1) {
+    while ((part = parts.shift())) {
+      if (part.length + length < maxLength) {
+        shortenedParts.push(part);
+        length += part.length;
+      } else {
+        // remove previous part, too if hyphen does not fit anymore
+        if (part === '-') {
+          shortenedParts.pop();
+        }
+
+        break;
+      }
+    }
+  }
+
+  return shortenedParts.join('');
+}
+
+
+function shortenLine(line, width, maxWidth) {
+  var length = Math.max(line.length * (maxWidth / width), 1);
+
+  // try to shorten semantically (i.e. based on spaces and hyphens)
+  var shortenedLine = semanticShorten(line, length);
+
+  if (!shortenedLine) {
+
+    // force shorten by cutting the long word
+    shortenedLine = line.slice(0, Math.max(Math.round(length - 1), 1));
+  }
+
+  return shortenedLine;
+}
+
+
+/**
+ * Creates a new label utility
+ *
+ * @param {Object} config
+ * @param {Dimensions} config.size
+ * @param {Number} config.padding
+ * @param {Object} config.style
+ * @param {String} config.align
+ */
+function Text(config) {
+
+  this._config = assign({}, {
+    size: DEFAULT_LABEL_SIZE,
+    padding: DEFAULT_BOX_PADDING,
+    style: {},
+    align: 'center-top'
+  }, config || {});
+}
+
+
+/**
+ * Create a label in the parent node.
+ *
+ * @method Text#createText
+ *
+ * @param {SVGElement} parent the parent to draw the label on
+ * @param {String} text the text to render on the label
+ * @param {Object} options
+ * @param {String} options.align how to align in the bounding box.
+ *                             Any of { 'center-middle', 'center-top' }, defaults to 'center-top'.
+ * @param {String} options.style style to be applied to the text
+ *
+ * @return {SVGText} the text element created
+ */
+Text.prototype.createText = function(parent, text, options) {
+
+  var box = merge({}, this._config.size, options.box || {}),
+      style = merge({}, this._config.style, options.style || {}),
+      align = parseAlign(options.align || this._config.align),
+      padding = parsePadding(options.padding !== undefined ? options.padding : this._config.padding);
+
+  var lines = text.split(/\r?\n/g),
+      layouted = [];
+
+  var maxWidth = box.width - padding.left - padding.right;
+
+  // FF regression: ensure text is shown during rendering
+  // by attaching it directly to the body
+  var fakeText = parent.paper.text(0, 0, '').attr(style).node;
+
+  while (lines.length) {
+    layouted.push(layoutNext(lines, maxWidth, fakeText));
+  }
+
+  var totalHeight = reduce(layouted, function(sum, line, idx) {
+    return sum + line.height;
+  }, 0);
+
+  // the y position of the next line
+  var y, x;
+
+  switch (align.vertical) {
+  case 'middle':
+    y = (box.height - totalHeight) / 2 - layouted[0].height / 4;
+    break;
+
+  default:
+    y = padding.top;
+  }
+
+  var textElement = parent.text().attr(style);
+
+  forEach(layouted, function(line) {
+    y += line.height;
+
+    switch (align.horizontal) {
+    case 'left':
+      x = padding.left;
+      break;
+
+    case 'right':
+      x = (maxWidth - padding.right - line.width);
+      break;
+
+    default:
+        // aka center
+      x = Math.max(((maxWidth - line.width) / 2 + padding.left), 0);
+    }
+
+
+    var tspan = Snap.create('tspan', { x: x, y: y }).node;
+    tspan.textContent = line.text;
+
+    textElement.append(tspan);
+  });
+
+  // remove fake text
+  fakeText.parentNode.removeChild(fakeText);
+
+  return textElement;
+};
+
+
+module.exports = Text;
+
+},{"185":185,"190":190,"193":193,"196":196,"63":63,"76":76,"80":80}],63:[function(_dereq_,module,exports){
+'use strict';
+
+var snapsvg = module.exports = _dereq_(225);
+
+snapsvg.plugin(function(Snap, Element) {
+
+  /*\
+   * Element.children
+   [ method ]
+   **
+   * Returns array of all the children of the element.
+   = (array) array of Elements
+  \*/
+  Element.prototype.children = function () {
+      var out = [],
+          ch = this.node.childNodes;
+      for (var i = 0, ii = ch.length; i < ii; i++) {
+          out[i] = new Snap(ch[i]);
+      }
+      return out;
+  };
+});
+
+
+/**
+ * @class ClassPlugin
+ *
+ * Extends snapsvg with methods to add and remove classes
+ */
+snapsvg.plugin(function (Snap, Element, Paper, global) {
+
+  function split(str) {
+    return str.split(/\s+/);
+  }
+
+  function join(array) {
+    return array.join(' ');
+  }
+
+  function getClasses(e) {
+    return split(e.attr('class') || '');
+  }
+
+  function setClasses(e, classes) {
+    e.attr('class', join(classes));
+  }
+
+  /**
+   * @method snapsvg.Element#addClass
+   *
+   * @example
+   *
+   * e.attr('class', 'selector');
+   *
+   * e.addClass('foo bar'); // adds classes foo and bar
+   * e.attr('class'); // -> 'selector foo bar'
+   *
+   * e.addClass('fooBar');
+   * e.attr('class'); // -> 'selector foo bar fooBar'
+   *
+   * @param {String} cls classes to be added to the element
+   *
+   * @return {snapsvg.Element} the element (this)
+   */
+  Element.prototype.addClass = function(cls) {
+    var current = getClasses(this),
+        add = split(cls),
+        i, e;
+
+    for (i = 0, e; !!(e = add[i]); i++) {
+      if (current.indexOf(e) === -1) {
+        current.push(e);
+      }
+    }
+
+    setClasses(this, current);
+
+    return this;
+  };
+
+  /**
+   * @method snapsvg.Element#hasClass
+   *
+   * @param  {String}  cls the class to query for
+   * @return {Boolean} returns true if the element has the given class
+   */
+  Element.prototype.hasClass = function(cls) {
+    if (!cls) {
+      throw new Error('[snapsvg] syntax: hasClass(clsStr)');
+    }
+
+    return getClasses(this).indexOf(cls) !== -1;
+  };
+
+  /**
+   * @method snapsvg.Element#removeClass
+   *
+   * @example
+   *
+   * e.attr('class', 'foo bar');
+   *
+   * e.removeClass('foo');
+   * e.attr('class'); // -> 'bar'
+   *
+   * e.removeClass('foo bar'); // removes classes foo and bar
+   * e.attr('class'); // -> ''
+   *
+   * @param {String} cls classes to be removed from element
+   *
+   * @return {snapsvg.Element} the element (this)
+   */
+  Element.prototype.removeClass = function(cls) {
+    var current = getClasses(this),
+        remove = split(cls),
+        i, e, idx;
+
+    for (i = 0, e; !!(e = remove[i]); i++) {
+      idx = current.indexOf(e);
+
+      if (idx !== -1) {
+        // remove element from array
+        current.splice(idx, 1);
+      }
+    }
+
+    setClasses(this, current);
+
+    return this;
+  };
+
+});
+
+/**
+ * @class TranslatePlugin
+ *
+ * Extends snapsvg with methods to translate elements
+ */
+snapsvg.plugin(function (Snap, Element, Paper, global) {
+
+  /*
+   * @method snapsvg.Element#translate
+   *
+   * @example
+   *
+   * e.translate(10, 20);
+   *
+   * // sets transform matrix to translate(10, 20)
+   *
+   * @param {Number} x translation
+   * @param {Number} y translation
+   *
+   * @return {snapsvg.Element} the element (this)
+   */
+  Element.prototype.translate = function(x, y) {
+    var matrix = new Snap.Matrix();
+    matrix.translate(x, y);
+    return this.transform(matrix);
+  };
+});
+
+
+/**
+ * @class CreatePlugin
+ *
+ * Create an svg element without attaching it to the dom
+ */
+snapsvg.plugin(function(Snap) {
+
+  Snap.create = function(name, attrs) {
+    return Snap._.wrap(Snap._.$(name, attrs));
+  };
+});
+
+
+/**
+ * @class CreatSnapAtPlugin
+ *
+ * Extends snap.svg with a method to create a SVG element
+ * at a specific position in the DOM.
+ */
+snapsvg.plugin(function(Snap, Element, Paper, global) {
+
+  /*
+   * @method snapsvg.createSnapAt
+   *
+   * @example
+   *
+   * snapsvg.createSnapAt(parentNode, 200, 200);
+   *
+   * @param {Number} width of svg
+   * @param {Number} height of svg
+   * @param {Object} parentNode svg Element will be child of this
+   *
+   * @return {snapsvg.Element} the newly created wrapped SVG element instance
+   */
+  Snap.createSnapAt = function(width, height, parentNode) {
+
+    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('width', width);
+    svg.setAttribute('height', height);
+    if (!parentNode) {
+      parentNode = document.body;
+    }
+    parentNode.appendChild(svg);
+
+    return new Snap(svg);
+  };
+});
+},{"225":225}],64:[function(_dereq_,module,exports){
+
+var isArray = function(obj) {
+  return Object.prototype.toString.call(obj) === '[object Array]';
+};
+
+var annotate = function() {
+  var args = Array.prototype.slice.call(arguments);
+  
+  if (args.length === 1 && isArray(args[0])) {
+    args = args[0];
+  }
+
+  var fn = args.pop();
+
+  fn.$inject = args;
+
+  return fn;
+};
+
+
+// Current limitations:
+// - can't put into "function arg" comments
+// function /* (no parenthesis like this) */ (){}
+// function abc( /* xx (no parenthesis like this) */ a, b) {}
+//
+// Just put the comment before function or inside:
+// /* (((this is fine))) */ function(a, b) {}
+// function abc(a) { /* (((this is fine))) */}
+
+var FN_ARGS = /^function\s*[^\(]*\(\s*([^\)]*)\)/m;
+var FN_ARG = /\/\*([^\*]*)\*\//m;
+
+var parse = function(fn) {
+  if (typeof fn !== 'function') {
+    throw new Error('Cannot annotate "' + fn + '". Expected a function!');
+  }
+
+  var match = fn.toString().match(FN_ARGS);
+  return match[1] && match[1].split(',').map(function(arg) {
+    match = arg.match(FN_ARG);
+    return match ? match[1].trim() : arg.trim();
+  }) || [];
+};
+
+
+exports.annotate = annotate;
+exports.parse = parse;
+exports.isArray = isArray;
+
+},{}],65:[function(_dereq_,module,exports){
+module.exports = {
+  annotate: _dereq_(64).annotate,
+  Module: _dereq_(67),
+  Injector: _dereq_(66)
+};
+
+},{"64":64,"66":66,"67":67}],66:[function(_dereq_,module,exports){
+var Module = _dereq_(67);
+var autoAnnotate = _dereq_(64).parse;
+var annotate = _dereq_(64).annotate;
+var isArray = _dereq_(64).isArray;
+
+
+var Injector = function(modules, parent) {
+  parent = parent || {
+    get: function(name, strict) {
+      currentlyResolving.push(name);
+
+      if (strict === false) {
+        return null;
+      } else {
+        throw error('No provider for "' + name + '"!');
+      }
+    }
+  };
+
+  var currentlyResolving = [];
+  var providers = this._providers = Object.create(parent._providers || null);
+  var instances = this._instances = Object.create(null);
+
+  var self = instances.injector = this;
+
+  var error = function(msg) {
+    var stack = currentlyResolving.join(' -> ');
+    currentlyResolving.length = 0;
+    return new Error(stack ? msg + ' (Resolving: ' + stack + ')' : msg);
+  };
+
+  /**
+   * Return a named service.
+   *
+   * @param {String} name
+   * @param {Boolean} [strict=true] if false, resolve missing services to null
+   *
+   * @return {Object}
+   */
+  var get = function(name, strict) {
+    if (!providers[name] && name.indexOf('.') !== -1) {
+      var parts = name.split('.');
+      var pivot = get(parts.shift());
+
+      while(parts.length) {
+        pivot = pivot[parts.shift()];
+      }
+
+      return pivot;
+    }
+
+    if (Object.hasOwnProperty.call(instances, name)) {
+      return instances[name];
+    }
+
+    if (Object.hasOwnProperty.call(providers, name)) {
+      if (currentlyResolving.indexOf(name) !== -1) {
+        currentlyResolving.push(name);
+        throw error('Cannot resolve circular dependency!');
+      }
+
+      currentlyResolving.push(name);
+      instances[name] = providers[name][0](providers[name][1]);
+      currentlyResolving.pop();
+
+      return instances[name];
+    }
+
+    return parent.get(name, strict);
+  };
+
+  var instantiate = function(Type) {
+    var instance = Object.create(Type.prototype);
+    var returned = invoke(Type, instance);
+
+    return typeof returned === 'object' ? returned : instance;
+  };
+
+  var invoke = function(fn, context) {
+    if (typeof fn !== 'function') {
+      if (isArray(fn)) {
+        fn = annotate(fn.slice());
+      } else {
+        throw new Error('Cannot invoke "' + fn + '". Expected a function!');
+      }
+    }
+
+    var inject = fn.$inject && fn.$inject || autoAnnotate(fn);
+    var dependencies = inject.map(function(dep) {
+      return get(dep);
+    });
+
+    // TODO(vojta): optimize without apply
+    return fn.apply(context, dependencies);
+  };
+
+
+  var createPrivateInjectorFactory = function(privateChildInjector) {
+    return annotate(function(key) {
+      return privateChildInjector.get(key);
+    });
+  };
+
+  var createChild = function(modules, forceNewInstances) {
+    if (forceNewInstances && forceNewInstances.length) {
+      var fromParentModule = Object.create(null);
+      var matchedScopes = Object.create(null);
+
+      var privateInjectorsCache = [];
+      var privateChildInjectors = [];
+      var privateChildFactories = [];
+
+      var provider;
+      var cacheIdx;
+      var privateChildInjector;
+      var privateChildInjectorFactory;
+      for (var name in providers) {
+        provider = providers[name];
+
+        if (forceNewInstances.indexOf(name) !== -1) {
+          if (provider[2] === 'private') {
+            cacheIdx = privateInjectorsCache.indexOf(provider[3]);
+            if (cacheIdx === -1) {
+              privateChildInjector = provider[3].createChild([], forceNewInstances);
+              privateChildInjectorFactory = createPrivateInjectorFactory(privateChildInjector);
+              privateInjectorsCache.push(provider[3]);
+              privateChildInjectors.push(privateChildInjector);
+              privateChildFactories.push(privateChildInjectorFactory);
+              fromParentModule[name] = [privateChildInjectorFactory, name, 'private', privateChildInjector];
+            } else {
+              fromParentModule[name] = [privateChildFactories[cacheIdx], name, 'private', privateChildInjectors[cacheIdx]];
+            }
+          } else {
+            fromParentModule[name] = [provider[2], provider[1]];
+          }
+          matchedScopes[name] = true;
+        }
+
+        if ((provider[2] === 'factory' || provider[2] === 'type') && provider[1].$scope) {
+          /*jshint -W083 */
+          forceNewInstances.forEach(function(scope) {
+            if (provider[1].$scope.indexOf(scope) !== -1) {
+              fromParentModule[name] = [provider[2], provider[1]];
+              matchedScopes[scope] = true;
+            }
+          });
+        }
+      }
+
+      forceNewInstances.forEach(function(scope) {
+        if (!matchedScopes[scope]) {
+          throw new Error('No provider for "' + scope + '". Cannot use provider from the parent!');
+        }
+      });
+
+      modules.unshift(fromParentModule);
+    }
+
+    return new Injector(modules, self);
+  };
+
+  var factoryMap = {
+    factory: invoke,
+    type: instantiate,
+    value: function(value) {
+      return value;
+    }
+  };
+
+  modules.forEach(function(module) {
+
+    function arrayUnwrap(type, value) {
+      if (type !== 'value' && isArray(value)) {
+        value = annotate(value.slice());
+      }
+
+      return value;
+    }
+
+    // TODO(vojta): handle wrong inputs (modules)
+    if (module instanceof Module) {
+      module.forEach(function(provider) {
+        var name = provider[0];
+        var type = provider[1];
+        var value = provider[2];
+
+        providers[name] = [factoryMap[type], arrayUnwrap(type, value), type];
+      });
+    } else if (typeof module === 'object') {
+      if (module.__exports__) {
+        var clonedModule = Object.keys(module).reduce(function(m, key) {
+          if (key.substring(0, 2) !== '__') {
+            m[key] = module[key];
+          }
+          return m;
+        }, Object.create(null));
+
+        var privateInjector = new Injector((module.__modules__ || []).concat([clonedModule]), self);
+        var getFromPrivateInjector = annotate(function(key) {
+          return privateInjector.get(key);
+        });
+        module.__exports__.forEach(function(key) {
+          providers[key] = [getFromPrivateInjector, key, 'private', privateInjector];
+        });
+      } else {
+        Object.keys(module).forEach(function(name) {
+          if (module[name][2] === 'private') {
+            providers[name] = module[name];
+            return;
+          }
+
+          var type = module[name][0];
+          var value = module[name][1];
+
+          providers[name] = [factoryMap[type], arrayUnwrap(type, value), type];
+        });
+      }
+    }
+  });
+
+  // public API
+  this.get = get;
+  this.invoke = invoke;
+  this.instantiate = instantiate;
+  this.createChild = createChild;
+};
+
+module.exports = Injector;
+
+},{"64":64,"67":67}],67:[function(_dereq_,module,exports){
+var Module = function() {
+  var providers = [];
+
+  this.factory = function(name, factory) {
+    providers.push([name, 'factory', factory]);
+    return this;
+  };
+
+  this.value = function(name, value) {
+    providers.push([name, 'value', value]);
+    return this;
+  };
+
+  this.type = function(name, type) {
+    providers.push([name, 'type', type]);
+    return this;
+  };
+
+  this.forEach = function(iterator) {
+    providers.forEach(iterator);
+  };
+};
+
+module.exports = Module;
+
+},{}],68:[function(_dereq_,module,exports){
 
 /**
  * Expose `parse`.
@@ -7572,7 +12959,412 @@ function parse(html, doc) {
   return fragment;
 }
 
-},{}],28:[function(_dereq_,module,exports){
+},{}],69:[function(_dereq_,module,exports){
+// Copyright (c) 2013 Adobe Systems Incorporated. All rights reserved.
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+// http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// ┌────────────────────────────────────────────────────────────┐ \\
+// │ Eve 0.4.2 - JavaScript Events Library                      │ \\
+// ├────────────────────────────────────────────────────────────┤ \\
+// │ Author Dmitry Baranovskiy (http://dmitry.baranovskiy.com/) │ \\
+// └────────────────────────────────────────────────────────────┘ \\
+
+(function (glob) {
+    var version = "0.4.2",
+        has = "hasOwnProperty",
+        separator = /[\.\/]/,
+        comaseparator = /\s*,\s*/,
+        wildcard = "*",
+        fun = function () {},
+        numsort = function (a, b) {
+            return a - b;
+        },
+        current_event,
+        stop,
+        events = {n: {}},
+        firstDefined = function () {
+            for (var i = 0, ii = this.length; i < ii; i++) {
+                if (typeof this[i] != "undefined") {
+                    return this[i];
+                }
+            }
+        },
+        lastDefined = function () {
+            var i = this.length;
+            while (--i) {
+                if (typeof this[i] != "undefined") {
+                    return this[i];
+                }
+            }
+        },
+    /*\
+     * eve
+     [ method ]
+
+     * Fires event with given `name`, given scope and other parameters.
+
+     > Arguments
+
+     - name (string) name of the *event*, dot (`.`) or slash (`/`) separated
+     - scope (object) context for the event handlers
+     - varargs (...) the rest of arguments will be sent to event handlers
+
+     = (object) array of returned values from the listeners. Array has two methods `.firstDefined()` and `.lastDefined()` to get first or last not `undefined` value.
+    \*/
+        eve = function (name, scope) {
+            name = String(name);
+            var e = events,
+                oldstop = stop,
+                args = Array.prototype.slice.call(arguments, 2),
+                listeners = eve.listeners(name),
+                z = 0,
+                f = false,
+                l,
+                indexed = [],
+                queue = {},
+                out = [],
+                ce = current_event,
+                errors = [];
+            out.firstDefined = firstDefined;
+            out.lastDefined = lastDefined;
+            current_event = name;
+            stop = 0;
+            for (var i = 0, ii = listeners.length; i < ii; i++) if ("zIndex" in listeners[i]) {
+                indexed.push(listeners[i].zIndex);
+                if (listeners[i].zIndex < 0) {
+                    queue[listeners[i].zIndex] = listeners[i];
+                }
+            }
+            indexed.sort(numsort);
+            while (indexed[z] < 0) {
+                l = queue[indexed[z++]];
+                out.push(l.apply(scope, args));
+                if (stop) {
+                    stop = oldstop;
+                    return out;
+                }
+            }
+            for (i = 0; i < ii; i++) {
+                l = listeners[i];
+                if ("zIndex" in l) {
+                    if (l.zIndex == indexed[z]) {
+                        out.push(l.apply(scope, args));
+                        if (stop) {
+                            break;
+                        }
+                        do {
+                            z++;
+                            l = queue[indexed[z]];
+                            l && out.push(l.apply(scope, args));
+                            if (stop) {
+                                break;
+                            }
+                        } while (l)
+                    } else {
+                        queue[l.zIndex] = l;
+                    }
+                } else {
+                    out.push(l.apply(scope, args));
+                    if (stop) {
+                        break;
+                    }
+                }
+            }
+            stop = oldstop;
+            current_event = ce;
+            return out;
+        };
+        // Undocumented. Debug only.
+        eve._events = events;
+    /*\
+     * eve.listeners
+     [ method ]
+
+     * Internal method which gives you array of all event handlers that will be triggered by the given `name`.
+
+     > Arguments
+
+     - name (string) name of the event, dot (`.`) or slash (`/`) separated
+
+     = (array) array of event handlers
+    \*/
+    eve.listeners = function (name) {
+        var names = name.split(separator),
+            e = events,
+            item,
+            items,
+            k,
+            i,
+            ii,
+            j,
+            jj,
+            nes,
+            es = [e],
+            out = [];
+        for (i = 0, ii = names.length; i < ii; i++) {
+            nes = [];
+            for (j = 0, jj = es.length; j < jj; j++) {
+                e = es[j].n;
+                items = [e[names[i]], e[wildcard]];
+                k = 2;
+                while (k--) {
+                    item = items[k];
+                    if (item) {
+                        nes.push(item);
+                        out = out.concat(item.f || []);
+                    }
+                }
+            }
+            es = nes;
+        }
+        return out;
+    };
+    
+    /*\
+     * eve.on
+     [ method ]
+     **
+     * Binds given event handler with a given name. You can use wildcards “`*`” for the names:
+     | eve.on("*.under.*", f);
+     | eve("mouse.under.floor"); // triggers f
+     * Use @eve to trigger the listener.
+     **
+     > Arguments
+     **
+     - name (string) name of the event, dot (`.`) or slash (`/`) separated, with optional wildcards
+     - f (function) event handler function
+     **
+     = (function) returned function accepts a single numeric parameter that represents z-index of the handler. It is an optional feature and only used when you need to ensure that some subset of handlers will be invoked in a given order, despite of the order of assignment. 
+     > Example:
+     | eve.on("mouse", eatIt)(2);
+     | eve.on("mouse", scream);
+     | eve.on("mouse", catchIt)(1);
+     * This will ensure that `catchIt` function will be called before `eatIt`.
+     *
+     * If you want to put your handler before non-indexed handlers, specify a negative value.
+     * Note: I assume most of the time you don’t need to worry about z-index, but it’s nice to have this feature “just in case”.
+    \*/
+    eve.on = function (name, f) {
+        name = String(name);
+        if (typeof f != "function") {
+            return function () {};
+        }
+        var names = name.split(comaseparator);
+        for (var i = 0, ii = names.length; i < ii; i++) {
+            (function (name) {
+                var names = name.split(separator),
+                    e = events,
+                    exist;
+                for (var i = 0, ii = names.length; i < ii; i++) {
+                    e = e.n;
+                    e = e.hasOwnProperty(names[i]) && e[names[i]] || (e[names[i]] = {n: {}});
+                }
+                e.f = e.f || [];
+                for (i = 0, ii = e.f.length; i < ii; i++) if (e.f[i] == f) {
+                    exist = true;
+                    break;
+                }
+                !exist && e.f.push(f);
+            }(names[i]));
+        }
+        return function (zIndex) {
+            if (+zIndex == +zIndex) {
+                f.zIndex = +zIndex;
+            }
+        };
+    };
+    /*\
+     * eve.f
+     [ method ]
+     **
+     * Returns function that will fire given event with optional arguments.
+     * Arguments that will be passed to the result function will be also
+     * concated to the list of final arguments.
+     | el.onclick = eve.f("click", 1, 2);
+     | eve.on("click", function (a, b, c) {
+     |     console.log(a, b, c); // 1, 2, [event object]
+     | });
+     > Arguments
+     - event (string) event name
+     - varargs (…) and any other arguments
+     = (function) possible event handler function
+    \*/
+    eve.f = function (event) {
+        var attrs = [].slice.call(arguments, 1);
+        return function () {
+            eve.apply(null, [event, null].concat(attrs).concat([].slice.call(arguments, 0)));
+        };
+    };
+    /*\
+     * eve.stop
+     [ method ]
+     **
+     * Is used inside an event handler to stop the event, preventing any subsequent listeners from firing.
+    \*/
+    eve.stop = function () {
+        stop = 1;
+    };
+    /*\
+     * eve.nt
+     [ method ]
+     **
+     * Could be used inside event handler to figure out actual name of the event.
+     **
+     > Arguments
+     **
+     - subname (string) #optional subname of the event
+     **
+     = (string) name of the event, if `subname` is not specified
+     * or
+     = (boolean) `true`, if current event’s name contains `subname`
+    \*/
+    eve.nt = function (subname) {
+        if (subname) {
+            return new RegExp("(?:\\.|\\/|^)" + subname + "(?:\\.|\\/|$)").test(current_event);
+        }
+        return current_event;
+    };
+    /*\
+     * eve.nts
+     [ method ]
+     **
+     * Could be used inside event handler to figure out actual name of the event.
+     **
+     **
+     = (array) names of the event
+    \*/
+    eve.nts = function () {
+        return current_event.split(separator);
+    };
+    /*\
+     * eve.off
+     [ method ]
+     **
+     * Removes given function from the list of event listeners assigned to given name.
+     * If no arguments specified all the events will be cleared.
+     **
+     > Arguments
+     **
+     - name (string) name of the event, dot (`.`) or slash (`/`) separated, with optional wildcards
+     - f (function) event handler function
+    \*/
+    /*\
+     * eve.unbind
+     [ method ]
+     **
+     * See @eve.off
+    \*/
+    eve.off = eve.unbind = function (name, f) {
+        if (!name) {
+            eve._events = events = {n: {}};
+            return;
+        }
+        var names = name.split(comaseparator);
+        if (names.length > 1) {
+            for (var i = 0, ii = names.length; i < ii; i++) {
+                eve.off(names[i], f);
+            }
+            return;
+        }
+        names = name.split(separator);
+        var e,
+            key,
+            splice,
+            i, ii, j, jj,
+            cur = [events];
+        for (i = 0, ii = names.length; i < ii; i++) {
+            for (j = 0; j < cur.length; j += splice.length - 2) {
+                splice = [j, 1];
+                e = cur[j].n;
+                if (names[i] != wildcard) {
+                    if (e[names[i]]) {
+                        splice.push(e[names[i]]);
+                    }
+                } else {
+                    for (key in e) if (e[has](key)) {
+                        splice.push(e[key]);
+                    }
+                }
+                cur.splice.apply(cur, splice);
+            }
+        }
+        for (i = 0, ii = cur.length; i < ii; i++) {
+            e = cur[i];
+            while (e.n) {
+                if (f) {
+                    if (e.f) {
+                        for (j = 0, jj = e.f.length; j < jj; j++) if (e.f[j] == f) {
+                            e.f.splice(j, 1);
+                            break;
+                        }
+                        !e.f.length && delete e.f;
+                    }
+                    for (key in e.n) if (e.n[has](key) && e.n[key].f) {
+                        var funcs = e.n[key].f;
+                        for (j = 0, jj = funcs.length; j < jj; j++) if (funcs[j] == f) {
+                            funcs.splice(j, 1);
+                            break;
+                        }
+                        !funcs.length && delete e.n[key].f;
+                    }
+                } else {
+                    delete e.f;
+                    for (key in e.n) if (e.n[has](key) && e.n[key].f) {
+                        delete e.n[key].f;
+                    }
+                }
+                e = e.n;
+            }
+        }
+    };
+    /*\
+     * eve.once
+     [ method ]
+     **
+     * Binds given event handler with a given name to only run once then unbind itself.
+     | eve.once("login", f);
+     | eve("login"); // triggers f
+     | eve("login"); // no listeners
+     * Use @eve to trigger the listener.
+     **
+     > Arguments
+     **
+     - name (string) name of the event, dot (`.`) or slash (`/`) separated, with optional wildcards
+     - f (function) event handler function
+     **
+     = (function) same return function as @eve.on
+    \*/
+    eve.once = function (name, f) {
+        var f2 = function () {
+            eve.unbind(name, f2);
+            return f.apply(this, arguments);
+        };
+        return eve.on(name, f2);
+    };
+    /*\
+     * eve.version
+     [ property (string) ]
+     **
+     * Current version of the library.
+    \*/
+    eve.version = version;
+    eve.toString = function () {
+        return "You are running Eve " + version;
+    };
+    (typeof module != "undefined" && module.exports) ? (module.exports = eve) : (typeof define === "function" && define.amd ? (define("eve", [], function() { return eve; })) : (glob.eve = eve));
+})(this);
+
+},{}],70:[function(_dereq_,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -7597,7 +13389,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],29:[function(_dereq_,module,exports){
+},{}],71:[function(_dereq_,module,exports){
 /**
  * Gets the last element of `array`.
  *
@@ -7618,12 +13410,139 @@ function last(array) {
 
 module.exports = last;
 
-},{}],30:[function(_dereq_,module,exports){
-var arrayEvery = _dereq_(42),
-    baseCallback = _dereq_(50),
-    baseEvery = _dereq_(55),
-    isArray = _dereq_(108),
-    isIterateeCall = _dereq_(97);
+},{}],72:[function(_dereq_,module,exports){
+var LazyWrapper = _dereq_(87),
+    LodashWrapper = _dereq_(88),
+    baseLodash = _dereq_(119),
+    isArray = _dereq_(181),
+    isObjectLike = _dereq_(166),
+    wrapperClone = _dereq_(179);
+
+/** Used for native method references. */
+var objectProto = Object.prototype;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/**
+ * Creates a `lodash` object which wraps `value` to enable implicit chaining.
+ * Methods that operate on and return arrays, collections, and functions can
+ * be chained together. Methods that retrieve a single value or may return a
+ * primitive value will automatically end the chain returning the unwrapped
+ * value. Explicit chaining may be enabled using `_.chain`. The execution of
+ * chained methods is lazy, that is, execution is deferred until `_#value`
+ * is implicitly or explicitly called.
+ *
+ * Lazy evaluation allows several methods to support shortcut fusion. Shortcut
+ * fusion is an optimization strategy which merge iteratee calls; this can help
+ * to avoid the creation of intermediate data structures and greatly reduce the
+ * number of iteratee executions.
+ *
+ * Chaining is supported in custom builds as long as the `_#value` method is
+ * directly or indirectly included in the build.
+ *
+ * In addition to lodash methods, wrappers have `Array` and `String` methods.
+ *
+ * The wrapper `Array` methods are:
+ * `concat`, `join`, `pop`, `push`, `reverse`, `shift`, `slice`, `sort`,
+ * `splice`, and `unshift`
+ *
+ * The wrapper `String` methods are:
+ * `replace` and `split`
+ *
+ * The wrapper methods that support shortcut fusion are:
+ * `compact`, `drop`, `dropRight`, `dropRightWhile`, `dropWhile`, `filter`,
+ * `first`, `initial`, `last`, `map`, `pluck`, `reject`, `rest`, `reverse`,
+ * `slice`, `take`, `takeRight`, `takeRightWhile`, `takeWhile`, `toArray`,
+ * and `where`
+ *
+ * The chainable wrapper methods are:
+ * `after`, `ary`, `assign`, `at`, `before`, `bind`, `bindAll`, `bindKey`,
+ * `callback`, `chain`, `chunk`, `commit`, `compact`, `concat`, `constant`,
+ * `countBy`, `create`, `curry`, `debounce`, `defaults`, `defaultsDeep`,
+ * `defer`, `delay`, `difference`, `drop`, `dropRight`, `dropRightWhile`,
+ * `dropWhile`, `fill`, `filter`, `flatten`, `flattenDeep`, `flow`, `flowRight`,
+ * `forEach`, `forEachRight`, `forIn`, `forInRight`, `forOwn`, `forOwnRight`,
+ * `functions`, `groupBy`, `indexBy`, `initial`, `intersection`, `invert`,
+ * `invoke`, `keys`, `keysIn`, `map`, `mapKeys`, `mapValues`, `matches`,
+ * `matchesProperty`, `memoize`, `merge`, `method`, `methodOf`, `mixin`,
+ * `modArgs`, `negate`, `omit`, `once`, `pairs`, `partial`, `partialRight`,
+ * `partition`, `pick`, `plant`, `pluck`, `property`, `propertyOf`, `pull`,
+ * `pullAt`, `push`, `range`, `rearg`, `reject`, `remove`, `rest`, `restParam`,
+ * `reverse`, `set`, `shuffle`, `slice`, `sort`, `sortBy`, `sortByAll`,
+ * `sortByOrder`, `splice`, `spread`, `take`, `takeRight`, `takeRightWhile`,
+ * `takeWhile`, `tap`, `throttle`, `thru`, `times`, `toArray`, `toPlainObject`,
+ * `transform`, `union`, `uniq`, `unshift`, `unzip`, `unzipWith`, `values`,
+ * `valuesIn`, `where`, `without`, `wrap`, `xor`, `zip`, `zipObject`, `zipWith`
+ *
+ * The wrapper methods that are **not** chainable by default are:
+ * `add`, `attempt`, `camelCase`, `capitalize`, `ceil`, `clone`, `cloneDeep`,
+ * `deburr`, `endsWith`, `escape`, `escapeRegExp`, `every`, `find`, `findIndex`,
+ * `findKey`, `findLast`, `findLastIndex`, `findLastKey`, `findWhere`, `first`,
+ * `floor`, `get`, `gt`, `gte`, `has`, `identity`, `includes`, `indexOf`,
+ * `inRange`, `isArguments`, `isArray`, `isBoolean`, `isDate`, `isElement`,
+ * `isEmpty`, `isEqual`, `isError`, `isFinite` `isFunction`, `isMatch`,
+ * `isNative`, `isNaN`, `isNull`, `isNumber`, `isObject`, `isPlainObject`,
+ * `isRegExp`, `isString`, `isUndefined`, `isTypedArray`, `join`, `kebabCase`,
+ * `last`, `lastIndexOf`, `lt`, `lte`, `max`, `min`, `noConflict`, `noop`,
+ * `now`, `pad`, `padLeft`, `padRight`, `parseInt`, `pop`, `random`, `reduce`,
+ * `reduceRight`, `repeat`, `result`, `round`, `runInContext`, `shift`, `size`,
+ * `snakeCase`, `some`, `sortedIndex`, `sortedLastIndex`, `startCase`,
+ * `startsWith`, `sum`, `template`, `trim`, `trimLeft`, `trimRight`, `trunc`,
+ * `unescape`, `uniqueId`, `value`, and `words`
+ *
+ * The wrapper method `sample` will return a wrapped value when `n` is provided,
+ * otherwise an unwrapped value is returned.
+ *
+ * @name _
+ * @constructor
+ * @category Chain
+ * @param {*} value The value to wrap in a `lodash` instance.
+ * @returns {Object} Returns the new `lodash` wrapper instance.
+ * @example
+ *
+ * var wrapped = _([1, 2, 3]);
+ *
+ * // returns an unwrapped value
+ * wrapped.reduce(function(total, n) {
+ *   return total + n;
+ * });
+ * // => 6
+ *
+ * // returns a wrapped value
+ * var squares = wrapped.map(function(n) {
+ *   return n * n;
+ * });
+ *
+ * _.isArray(squares);
+ * // => false
+ *
+ * _.isArray(squares.value());
+ * // => true
+ */
+function lodash(value) {
+  if (isObjectLike(value) && !isArray(value) && !(value instanceof LazyWrapper)) {
+    if (value instanceof LodashWrapper) {
+      return value;
+    }
+    if (hasOwnProperty.call(value, '__chain__') && hasOwnProperty.call(value, '__wrapped__')) {
+      return wrapperClone(value);
+    }
+  }
+  return new LodashWrapper(value);
+}
+
+// Ensure wrappers are instances of `baseLodash`.
+lodash.prototype = baseLodash.prototype;
+
+module.exports = lodash;
+
+},{"119":119,"166":166,"179":179,"181":181,"87":87,"88":88}],73:[function(_dereq_,module,exports){
+var arrayEvery = _dereq_(92),
+    baseCallback = _dereq_(100),
+    baseEvery = _dereq_(106),
+    isArray = _dereq_(181),
+    isIterateeCall = _dereq_(162);
 
 /**
  * Checks if `predicate` returns truthy for **all** elements of `collection`.
@@ -7686,11 +13605,11 @@ function every(collection, predicate, thisArg) {
 
 module.exports = every;
 
-},{"108":108,"42":42,"50":50,"55":55,"97":97}],31:[function(_dereq_,module,exports){
-var arrayFilter = _dereq_(43),
-    baseCallback = _dereq_(50),
-    baseFilter = _dereq_(56),
-    isArray = _dereq_(108);
+},{"100":100,"106":106,"162":162,"181":181,"92":92}],74:[function(_dereq_,module,exports){
+var arrayFilter = _dereq_(93),
+    baseCallback = _dereq_(100),
+    baseFilter = _dereq_(107),
+    isArray = _dereq_(181);
 
 /**
  * Iterates over elements of `collection`, returning an array of all elements
@@ -7749,9 +13668,9 @@ function filter(collection, predicate, thisArg) {
 
 module.exports = filter;
 
-},{"108":108,"43":43,"50":50,"56":56}],32:[function(_dereq_,module,exports){
-var baseEach = _dereq_(54),
-    createFind = _dereq_(85);
+},{"100":100,"107":107,"181":181,"93":93}],75:[function(_dereq_,module,exports){
+var baseEach = _dereq_(105),
+    createFind = _dereq_(145);
 
 /**
  * Iterates over elements of `collection`, returning the first element
@@ -7807,10 +13726,10 @@ var find = createFind(baseEach);
 
 module.exports = find;
 
-},{"54":54,"85":85}],33:[function(_dereq_,module,exports){
-var arrayEach = _dereq_(41),
-    baseEach = _dereq_(54),
-    createForEach = _dereq_(86);
+},{"105":105,"145":145}],76:[function(_dereq_,module,exports){
+var arrayEach = _dereq_(91),
+    baseEach = _dereq_(105),
+    createForEach = _dereq_(146);
 
 /**
  * Iterates over elements of `collection` invoking `iteratee` for each element.
@@ -7846,14 +13765,75 @@ var forEach = createForEach(arrayEach, baseEach);
 
 module.exports = forEach;
 
-},{"41":41,"54":54,"86":86}],34:[function(_dereq_,module,exports){
-var baseIndexOf = _dereq_(64),
-    getLength = _dereq_(91),
-    isArray = _dereq_(108),
-    isIterateeCall = _dereq_(97),
-    isLength = _dereq_(99),
-    isString = _dereq_(113),
-    values = _dereq_(121);
+},{"105":105,"146":146,"91":91}],77:[function(_dereq_,module,exports){
+var createAggregator = _dereq_(138);
+
+/** Used for native method references. */
+var objectProto = Object.prototype;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/**
+ * Creates an object composed of keys generated from the results of running
+ * each element of `collection` through `iteratee`. The corresponding value
+ * of each key is an array of the elements responsible for generating the key.
+ * The `iteratee` is bound to `thisArg` and invoked with three arguments:
+ * (value, index|key, collection).
+ *
+ * If a property name is provided for `iteratee` the created `_.property`
+ * style callback returns the property value of the given element.
+ *
+ * If a value is also provided for `thisArg` the created `_.matchesProperty`
+ * style callback returns `true` for elements that have a matching property
+ * value, else `false`.
+ *
+ * If an object is provided for `iteratee` the created `_.matches` style
+ * callback returns `true` for elements that have the properties of the given
+ * object, else `false`.
+ *
+ * @static
+ * @memberOf _
+ * @category Collection
+ * @param {Array|Object|string} collection The collection to iterate over.
+ * @param {Function|Object|string} [iteratee=_.identity] The function invoked
+ *  per iteration.
+ * @param {*} [thisArg] The `this` binding of `iteratee`.
+ * @returns {Object} Returns the composed aggregate object.
+ * @example
+ *
+ * _.groupBy([4.2, 6.1, 6.4], function(n) {
+ *   return Math.floor(n);
+ * });
+ * // => { '4': [4.2], '6': [6.1, 6.4] }
+ *
+ * _.groupBy([4.2, 6.1, 6.4], function(n) {
+ *   return this.floor(n);
+ * }, Math);
+ * // => { '4': [4.2], '6': [6.1, 6.4] }
+ *
+ * // using the `_.property` callback shorthand
+ * _.groupBy(['one', 'two', 'three'], 'length');
+ * // => { '3': ['one', 'two'], '5': ['three'] }
+ */
+var groupBy = createAggregator(function(result, value, key) {
+  if (hasOwnProperty.call(result, key)) {
+    result[key].push(value);
+  } else {
+    result[key] = [value];
+  }
+});
+
+module.exports = groupBy;
+
+},{"138":138}],78:[function(_dereq_,module,exports){
+var baseIndexOf = _dereq_(115),
+    getLength = _dereq_(156),
+    isArray = _dereq_(181),
+    isIterateeCall = _dereq_(162),
+    isLength = _dereq_(165),
+    isString = _dereq_(187),
+    values = _dereq_(197);
 
 /* Native method references for those with the same name as other `lodash` methods. */
 var nativeMax = Math.max;
@@ -7905,11 +13885,11 @@ function includes(collection, target, fromIndex, guard) {
 
 module.exports = includes;
 
-},{"108":108,"113":113,"121":121,"64":64,"91":91,"97":97,"99":99}],35:[function(_dereq_,module,exports){
-var arrayMap = _dereq_(44),
-    baseCallback = _dereq_(50),
-    baseMap = _dereq_(68),
-    isArray = _dereq_(108);
+},{"115":115,"156":156,"162":162,"165":165,"181":181,"187":187,"197":197}],79:[function(_dereq_,module,exports){
+var arrayMap = _dereq_(94),
+    baseCallback = _dereq_(100),
+    baseMap = _dereq_(120),
+    isArray = _dereq_(181);
 
 /**
  * Creates an array of values by running each element in `collection` through
@@ -7975,10 +13955,10 @@ function map(collection, iteratee, thisArg) {
 
 module.exports = map;
 
-},{"108":108,"44":44,"50":50,"68":68}],36:[function(_dereq_,module,exports){
-var arrayReduce = _dereq_(46),
-    baseEach = _dereq_(54),
-    createReduce = _dereq_(87);
+},{"100":100,"120":120,"181":181,"94":94}],80:[function(_dereq_,module,exports){
+var arrayReduce = _dereq_(96),
+    baseEach = _dereq_(105),
+    createReduce = _dereq_(149);
 
 /**
  * Reduces `collection` to a value which is the accumulated result of running
@@ -8021,12 +14001,12 @@ var reduce = createReduce(arrayReduce, baseEach);
 
 module.exports = reduce;
 
-},{"46":46,"54":54,"87":87}],37:[function(_dereq_,module,exports){
-var arraySome = _dereq_(47),
-    baseCallback = _dereq_(50),
-    baseSome = _dereq_(75),
-    isArray = _dereq_(108),
-    isIterateeCall = _dereq_(97);
+},{"105":105,"149":149,"96":96}],81:[function(_dereq_,module,exports){
+var arraySome = _dereq_(97),
+    baseCallback = _dereq_(100),
+    baseSome = _dereq_(130),
+    isArray = _dereq_(181),
+    isIterateeCall = _dereq_(162);
 
 /**
  * Checks if `predicate` returns truthy for **any** element of `collection`.
@@ -8090,9 +14070,276 @@ function some(collection, predicate, thisArg) {
 
 module.exports = some;
 
-},{"108":108,"47":47,"50":50,"75":75,"97":97}],38:[function(_dereq_,module,exports){
-var baseDelay = _dereq_(52),
-    restParam = _dereq_(39);
+},{"100":100,"130":130,"162":162,"181":181,"97":97}],82:[function(_dereq_,module,exports){
+var getNative = _dereq_(158);
+
+/* Native method references for those with the same name as other `lodash` methods. */
+var nativeNow = getNative(Date, 'now');
+
+/**
+ * Gets the number of milliseconds that have elapsed since the Unix epoch
+ * (1 January 1970 00:00:00 UTC).
+ *
+ * @static
+ * @memberOf _
+ * @category Date
+ * @example
+ *
+ * _.defer(function(stamp) {
+ *   console.log(_.now() - stamp);
+ * }, _.now());
+ * // => logs the number of milliseconds it took for the deferred function to be invoked
+ */
+var now = nativeNow || function() {
+  return new Date().getTime();
+};
+
+module.exports = now;
+
+},{"158":158}],83:[function(_dereq_,module,exports){
+var createWrapper = _dereq_(150),
+    replaceHolders = _dereq_(174),
+    restParam = _dereq_(86);
+
+/** Used to compose bitmasks for wrapper metadata. */
+var BIND_FLAG = 1,
+    PARTIAL_FLAG = 32;
+
+/**
+ * Creates a function that invokes `func` with the `this` binding of `thisArg`
+ * and prepends any additional `_.bind` arguments to those provided to the
+ * bound function.
+ *
+ * The `_.bind.placeholder` value, which defaults to `_` in monolithic builds,
+ * may be used as a placeholder for partially applied arguments.
+ *
+ * **Note:** Unlike native `Function#bind` this method does not set the "length"
+ * property of bound functions.
+ *
+ * @static
+ * @memberOf _
+ * @category Function
+ * @param {Function} func The function to bind.
+ * @param {*} thisArg The `this` binding of `func`.
+ * @param {...*} [partials] The arguments to be partially applied.
+ * @returns {Function} Returns the new bound function.
+ * @example
+ *
+ * var greet = function(greeting, punctuation) {
+ *   return greeting + ' ' + this.user + punctuation;
+ * };
+ *
+ * var object = { 'user': 'fred' };
+ *
+ * var bound = _.bind(greet, object, 'hi');
+ * bound('!');
+ * // => 'hi fred!'
+ *
+ * // using placeholders
+ * var bound = _.bind(greet, object, _, '!');
+ * bound('hi');
+ * // => 'hi fred!'
+ */
+var bind = restParam(function(func, thisArg, partials) {
+  var bitmask = BIND_FLAG;
+  if (partials.length) {
+    var holders = replaceHolders(partials, bind.placeholder);
+    bitmask |= PARTIAL_FLAG;
+  }
+  return createWrapper(func, bitmask, thisArg, partials, holders);
+});
+
+// Assign default placeholders.
+bind.placeholder = {};
+
+module.exports = bind;
+
+},{"150":150,"174":174,"86":86}],84:[function(_dereq_,module,exports){
+var isObject = _dereq_(185),
+    now = _dereq_(82);
+
+/** Used as the `TypeError` message for "Functions" methods. */
+var FUNC_ERROR_TEXT = 'Expected a function';
+
+/* Native method references for those with the same name as other `lodash` methods. */
+var nativeMax = Math.max;
+
+/**
+ * Creates a debounced function that delays invoking `func` until after `wait`
+ * milliseconds have elapsed since the last time the debounced function was
+ * invoked. The debounced function comes with a `cancel` method to cancel
+ * delayed invocations. Provide an options object to indicate that `func`
+ * should be invoked on the leading and/or trailing edge of the `wait` timeout.
+ * Subsequent calls to the debounced function return the result of the last
+ * `func` invocation.
+ *
+ * **Note:** If `leading` and `trailing` options are `true`, `func` is invoked
+ * on the trailing edge of the timeout only if the the debounced function is
+ * invoked more than once during the `wait` timeout.
+ *
+ * See [David Corbacho's article](http://drupalmotion.com/article/debounce-and-throttle-visual-explanation)
+ * for details over the differences between `_.debounce` and `_.throttle`.
+ *
+ * @static
+ * @memberOf _
+ * @category Function
+ * @param {Function} func The function to debounce.
+ * @param {number} [wait=0] The number of milliseconds to delay.
+ * @param {Object} [options] The options object.
+ * @param {boolean} [options.leading=false] Specify invoking on the leading
+ *  edge of the timeout.
+ * @param {number} [options.maxWait] The maximum time `func` is allowed to be
+ *  delayed before it's invoked.
+ * @param {boolean} [options.trailing=true] Specify invoking on the trailing
+ *  edge of the timeout.
+ * @returns {Function} Returns the new debounced function.
+ * @example
+ *
+ * // avoid costly calculations while the window size is in flux
+ * jQuery(window).on('resize', _.debounce(calculateLayout, 150));
+ *
+ * // invoke `sendMail` when the click event is fired, debouncing subsequent calls
+ * jQuery('#postbox').on('click', _.debounce(sendMail, 300, {
+ *   'leading': true,
+ *   'trailing': false
+ * }));
+ *
+ * // ensure `batchLog` is invoked once after 1 second of debounced calls
+ * var source = new EventSource('/stream');
+ * jQuery(source).on('message', _.debounce(batchLog, 250, {
+ *   'maxWait': 1000
+ * }));
+ *
+ * // cancel a debounced call
+ * var todoChanges = _.debounce(batchLog, 1000);
+ * Object.observe(models.todo, todoChanges);
+ *
+ * Object.observe(models, function(changes) {
+ *   if (_.find(changes, { 'user': 'todo', 'type': 'delete'})) {
+ *     todoChanges.cancel();
+ *   }
+ * }, ['delete']);
+ *
+ * // ...at some point `models.todo` is changed
+ * models.todo.completed = true;
+ *
+ * // ...before 1 second has passed `models.todo` is deleted
+ * // which cancels the debounced `todoChanges` call
+ * delete models.todo;
+ */
+function debounce(func, wait, options) {
+  var args,
+      maxTimeoutId,
+      result,
+      stamp,
+      thisArg,
+      timeoutId,
+      trailingCall,
+      lastCalled = 0,
+      maxWait = false,
+      trailing = true;
+
+  if (typeof func != 'function') {
+    throw new TypeError(FUNC_ERROR_TEXT);
+  }
+  wait = wait < 0 ? 0 : (+wait || 0);
+  if (options === true) {
+    var leading = true;
+    trailing = false;
+  } else if (isObject(options)) {
+    leading = !!options.leading;
+    maxWait = 'maxWait' in options && nativeMax(+options.maxWait || 0, wait);
+    trailing = 'trailing' in options ? !!options.trailing : trailing;
+  }
+
+  function cancel() {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    if (maxTimeoutId) {
+      clearTimeout(maxTimeoutId);
+    }
+    lastCalled = 0;
+    maxTimeoutId = timeoutId = trailingCall = undefined;
+  }
+
+  function complete(isCalled, id) {
+    if (id) {
+      clearTimeout(id);
+    }
+    maxTimeoutId = timeoutId = trailingCall = undefined;
+    if (isCalled) {
+      lastCalled = now();
+      result = func.apply(thisArg, args);
+      if (!timeoutId && !maxTimeoutId) {
+        args = thisArg = undefined;
+      }
+    }
+  }
+
+  function delayed() {
+    var remaining = wait - (now() - stamp);
+    if (remaining <= 0 || remaining > wait) {
+      complete(trailingCall, maxTimeoutId);
+    } else {
+      timeoutId = setTimeout(delayed, remaining);
+    }
+  }
+
+  function maxDelayed() {
+    complete(trailing, timeoutId);
+  }
+
+  function debounced() {
+    args = arguments;
+    stamp = now();
+    thisArg = this;
+    trailingCall = trailing && (timeoutId || !leading);
+
+    if (maxWait === false) {
+      var leadingCall = leading && !timeoutId;
+    } else {
+      if (!maxTimeoutId && !leading) {
+        lastCalled = stamp;
+      }
+      var remaining = maxWait - (stamp - lastCalled),
+          isCalled = remaining <= 0 || remaining > maxWait;
+
+      if (isCalled) {
+        if (maxTimeoutId) {
+          maxTimeoutId = clearTimeout(maxTimeoutId);
+        }
+        lastCalled = stamp;
+        result = func.apply(thisArg, args);
+      }
+      else if (!maxTimeoutId) {
+        maxTimeoutId = setTimeout(maxDelayed, remaining);
+      }
+    }
+    if (isCalled && timeoutId) {
+      timeoutId = clearTimeout(timeoutId);
+    }
+    else if (!timeoutId && wait !== maxWait) {
+      timeoutId = setTimeout(delayed, wait);
+    }
+    if (leadingCall) {
+      isCalled = true;
+      result = func.apply(thisArg, args);
+    }
+    if (isCalled && !timeoutId && !maxTimeoutId) {
+      args = thisArg = undefined;
+    }
+    return result;
+  }
+  debounced.cancel = cancel;
+  return debounced;
+}
+
+module.exports = debounce;
+
+},{"185":185,"82":82}],85:[function(_dereq_,module,exports){
+var baseDelay = _dereq_(103),
+    restParam = _dereq_(86);
 
 /**
  * Defers invoking the `func` until the current call stack has cleared. Any
@@ -8117,7 +14364,7 @@ var defer = restParam(function(func, args) {
 
 module.exports = defer;
 
-},{"39":39,"52":52}],39:[function(_dereq_,module,exports){
+},{"103":103,"86":86}],86:[function(_dereq_,module,exports){
 /** Used as the `TypeError` message for "Functions" methods. */
 var FUNC_ERROR_TEXT = 'Expected a function';
 
@@ -8177,10 +14424,61 @@ function restParam(func, start) {
 
 module.exports = restParam;
 
-},{}],40:[function(_dereq_,module,exports){
+},{}],87:[function(_dereq_,module,exports){
+var baseCreate = _dereq_(102),
+    baseLodash = _dereq_(119);
+
+/** Used as references for `-Infinity` and `Infinity`. */
+var POSITIVE_INFINITY = Number.POSITIVE_INFINITY;
+
+/**
+ * Creates a lazy wrapper object which wraps `value` to enable lazy evaluation.
+ *
+ * @private
+ * @param {*} value The value to wrap.
+ */
+function LazyWrapper(value) {
+  this.__wrapped__ = value;
+  this.__actions__ = [];
+  this.__dir__ = 1;
+  this.__filtered__ = false;
+  this.__iteratees__ = [];
+  this.__takeCount__ = POSITIVE_INFINITY;
+  this.__views__ = [];
+}
+
+LazyWrapper.prototype = baseCreate(baseLodash.prototype);
+LazyWrapper.prototype.constructor = LazyWrapper;
+
+module.exports = LazyWrapper;
+
+},{"102":102,"119":119}],88:[function(_dereq_,module,exports){
+var baseCreate = _dereq_(102),
+    baseLodash = _dereq_(119);
+
+/**
+ * The base constructor for creating `lodash` wrapper objects.
+ *
+ * @private
+ * @param {*} value The value to wrap.
+ * @param {boolean} [chainAll] Enable chaining for all wrapper methods.
+ * @param {Array} [actions=[]] Actions to peform to resolve the unwrapped value.
+ */
+function LodashWrapper(value, chainAll, actions) {
+  this.__wrapped__ = value;
+  this.__actions__ = actions || [];
+  this.__chain__ = !!chainAll;
+}
+
+LodashWrapper.prototype = baseCreate(baseLodash.prototype);
+LodashWrapper.prototype.constructor = LodashWrapper;
+
+module.exports = LodashWrapper;
+
+},{"102":102,"119":119}],89:[function(_dereq_,module,exports){
 (function (global){
-var cachePush = _dereq_(80),
-    getNative = _dereq_(93);
+var cachePush = _dereq_(135),
+    getNative = _dereq_(158);
 
 /** Native method references. */
 var Set = getNative(global, 'Set');
@@ -8211,7 +14509,29 @@ module.exports = SetCache;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"80":80,"93":93}],41:[function(_dereq_,module,exports){
+},{"135":135,"158":158}],90:[function(_dereq_,module,exports){
+/**
+ * Copies the values of `source` to `array`.
+ *
+ * @private
+ * @param {Array} source The array to copy values from.
+ * @param {Array} [array=[]] The array to copy values to.
+ * @returns {Array} Returns `array`.
+ */
+function arrayCopy(source, array) {
+  var index = -1,
+      length = source.length;
+
+  array || (array = Array(length));
+  while (++index < length) {
+    array[index] = source[index];
+  }
+  return array;
+}
+
+module.exports = arrayCopy;
+
+},{}],91:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.forEach` for arrays without support for callback
  * shorthands and `this` binding.
@@ -8235,7 +14555,7 @@ function arrayEach(array, iteratee) {
 
 module.exports = arrayEach;
 
-},{}],42:[function(_dereq_,module,exports){
+},{}],92:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.every` for arrays without support for callback
  * shorthands and `this` binding.
@@ -8260,7 +14580,7 @@ function arrayEvery(array, predicate) {
 
 module.exports = arrayEvery;
 
-},{}],43:[function(_dereq_,module,exports){
+},{}],93:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.filter` for arrays without support for callback
  * shorthands and `this` binding.
@@ -8287,7 +14607,7 @@ function arrayFilter(array, predicate) {
 
 module.exports = arrayFilter;
 
-},{}],44:[function(_dereq_,module,exports){
+},{}],94:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.map` for arrays without support for callback
  * shorthands and `this` binding.
@@ -8310,7 +14630,7 @@ function arrayMap(array, iteratee) {
 
 module.exports = arrayMap;
 
-},{}],45:[function(_dereq_,module,exports){
+},{}],95:[function(_dereq_,module,exports){
 /**
  * Appends the elements of `values` to `array`.
  *
@@ -8332,7 +14652,7 @@ function arrayPush(array, values) {
 
 module.exports = arrayPush;
 
-},{}],46:[function(_dereq_,module,exports){
+},{}],96:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.reduce` for arrays without support for callback
  * shorthands and `this` binding.
@@ -8360,7 +14680,7 @@ function arrayReduce(array, iteratee, accumulator, initFromArray) {
 
 module.exports = arrayReduce;
 
-},{}],47:[function(_dereq_,module,exports){
+},{}],97:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.some` for arrays without support for callback
  * shorthands and `this` binding.
@@ -8385,8 +14705,8 @@ function arraySome(array, predicate) {
 
 module.exports = arraySome;
 
-},{}],48:[function(_dereq_,module,exports){
-var keys = _dereq_(116);
+},{}],98:[function(_dereq_,module,exports){
+var keys = _dereq_(191);
 
 /**
  * A specialized version of `_.assign` for customizing assigned values without
@@ -8419,9 +14739,9 @@ function assignWith(object, source, customizer) {
 
 module.exports = assignWith;
 
-},{"116":116}],49:[function(_dereq_,module,exports){
-var baseCopy = _dereq_(51),
-    keys = _dereq_(116);
+},{"191":191}],99:[function(_dereq_,module,exports){
+var baseCopy = _dereq_(101),
+    keys = _dereq_(191);
 
 /**
  * The base implementation of `_.assign` without support for argument juggling,
@@ -8440,12 +14760,12 @@ function baseAssign(object, source) {
 
 module.exports = baseAssign;
 
-},{"116":116,"51":51}],50:[function(_dereq_,module,exports){
-var baseMatches = _dereq_(69),
-    baseMatchesProperty = _dereq_(70),
-    bindCallback = _dereq_(78),
-    identity = _dereq_(122),
-    property = _dereq_(123);
+},{"101":101,"191":191}],100:[function(_dereq_,module,exports){
+var baseMatches = _dereq_(121),
+    baseMatchesProperty = _dereq_(122),
+    bindCallback = _dereq_(133),
+    identity = _dereq_(198),
+    property = _dereq_(200);
 
 /**
  * The base implementation of `_.callback` which supports specifying the
@@ -8477,7 +14797,7 @@ function baseCallback(func, thisArg, argCount) {
 
 module.exports = baseCallback;
 
-},{"122":122,"123":123,"69":69,"70":70,"78":78}],51:[function(_dereq_,module,exports){
+},{"121":121,"122":122,"133":133,"198":198,"200":200}],101:[function(_dereq_,module,exports){
 /**
  * Copies properties of `source` to `object`.
  *
@@ -8502,7 +14822,32 @@ function baseCopy(source, props, object) {
 
 module.exports = baseCopy;
 
-},{}],52:[function(_dereq_,module,exports){
+},{}],102:[function(_dereq_,module,exports){
+var isObject = _dereq_(185);
+
+/**
+ * The base implementation of `_.create` without support for assigning
+ * properties to the created object.
+ *
+ * @private
+ * @param {Object} prototype The object to inherit from.
+ * @returns {Object} Returns the new object.
+ */
+var baseCreate = (function() {
+  function object() {}
+  return function(prototype) {
+    if (isObject(prototype)) {
+      object.prototype = prototype;
+      var result = new object;
+      object.prototype = undefined;
+    }
+    return result || {};
+  };
+}());
+
+module.exports = baseCreate;
+
+},{"185":185}],103:[function(_dereq_,module,exports){
 /** Used as the `TypeError` message for "Functions" methods. */
 var FUNC_ERROR_TEXT = 'Expected a function';
 
@@ -8525,10 +14870,10 @@ function baseDelay(func, wait, args) {
 
 module.exports = baseDelay;
 
-},{}],53:[function(_dereq_,module,exports){
-var baseIndexOf = _dereq_(64),
-    cacheIndexOf = _dereq_(79),
-    createCache = _dereq_(84);
+},{}],104:[function(_dereq_,module,exports){
+var baseIndexOf = _dereq_(115),
+    cacheIndexOf = _dereq_(134),
+    createCache = _dereq_(143);
 
 /** Used as the size to enable large array optimizations. */
 var LARGE_ARRAY_SIZE = 200;
@@ -8582,9 +14927,9 @@ function baseDifference(array, values) {
 
 module.exports = baseDifference;
 
-},{"64":64,"79":79,"84":84}],54:[function(_dereq_,module,exports){
-var baseForOwn = _dereq_(62),
-    createBaseEach = _dereq_(82);
+},{"115":115,"134":134,"143":143}],105:[function(_dereq_,module,exports){
+var baseForOwn = _dereq_(113),
+    createBaseEach = _dereq_(140);
 
 /**
  * The base implementation of `_.forEach` without support for callback
@@ -8599,8 +14944,8 @@ var baseEach = createBaseEach(baseForOwn);
 
 module.exports = baseEach;
 
-},{"62":62,"82":82}],55:[function(_dereq_,module,exports){
-var baseEach = _dereq_(54);
+},{"113":113,"140":140}],106:[function(_dereq_,module,exports){
+var baseEach = _dereq_(105);
 
 /**
  * The base implementation of `_.every` without support for callback
@@ -8623,8 +14968,8 @@ function baseEvery(collection, predicate) {
 
 module.exports = baseEvery;
 
-},{"54":54}],56:[function(_dereq_,module,exports){
-var baseEach = _dereq_(54);
+},{"105":105}],107:[function(_dereq_,module,exports){
+var baseEach = _dereq_(105);
 
 /**
  * The base implementation of `_.filter` without support for callback
@@ -8647,7 +14992,7 @@ function baseFilter(collection, predicate) {
 
 module.exports = baseFilter;
 
-},{"54":54}],57:[function(_dereq_,module,exports){
+},{"105":105}],108:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.find`, `_.findLast`, `_.findKey`, and `_.findLastKey`,
  * without support for callback shorthands and `this` binding, which iterates
@@ -8674,7 +15019,7 @@ function baseFind(collection, predicate, eachFunc, retKey) {
 
 module.exports = baseFind;
 
-},{}],58:[function(_dereq_,module,exports){
+},{}],109:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.findIndex` and `_.findLastIndex` without
  * support for callback shorthands and `this` binding.
@@ -8699,12 +15044,12 @@ function baseFindIndex(array, predicate, fromRight) {
 
 module.exports = baseFindIndex;
 
-},{}],59:[function(_dereq_,module,exports){
-var arrayPush = _dereq_(45),
-    isArguments = _dereq_(107),
-    isArray = _dereq_(108),
-    isArrayLike = _dereq_(95),
-    isObjectLike = _dereq_(100);
+},{}],110:[function(_dereq_,module,exports){
+var arrayPush = _dereq_(95),
+    isArguments = _dereq_(180),
+    isArray = _dereq_(181),
+    isArrayLike = _dereq_(160),
+    isObjectLike = _dereq_(166);
 
 /**
  * The base implementation of `_.flatten` with added support for restricting
@@ -8742,8 +15087,8 @@ function baseFlatten(array, isDeep, isStrict, result) {
 
 module.exports = baseFlatten;
 
-},{"100":100,"107":107,"108":108,"45":45,"95":95}],60:[function(_dereq_,module,exports){
-var createBaseFor = _dereq_(83);
+},{"160":160,"166":166,"180":180,"181":181,"95":95}],111:[function(_dereq_,module,exports){
+var createBaseFor = _dereq_(141);
 
 /**
  * The base implementation of `baseForIn` and `baseForOwn` which iterates
@@ -8761,9 +15106,9 @@ var baseFor = createBaseFor();
 
 module.exports = baseFor;
 
-},{"83":83}],61:[function(_dereq_,module,exports){
-var baseFor = _dereq_(60),
-    keysIn = _dereq_(117);
+},{"141":141}],112:[function(_dereq_,module,exports){
+var baseFor = _dereq_(111),
+    keysIn = _dereq_(192);
 
 /**
  * The base implementation of `_.forIn` without support for callback
@@ -8780,9 +15125,9 @@ function baseForIn(object, iteratee) {
 
 module.exports = baseForIn;
 
-},{"117":117,"60":60}],62:[function(_dereq_,module,exports){
-var baseFor = _dereq_(60),
-    keys = _dereq_(116);
+},{"111":111,"192":192}],113:[function(_dereq_,module,exports){
+var baseFor = _dereq_(111),
+    keys = _dereq_(191);
 
 /**
  * The base implementation of `_.forOwn` without support for callback
@@ -8799,8 +15144,8 @@ function baseForOwn(object, iteratee) {
 
 module.exports = baseForOwn;
 
-},{"116":116,"60":60}],63:[function(_dereq_,module,exports){
-var toObject = _dereq_(105);
+},{"111":111,"191":191}],114:[function(_dereq_,module,exports){
+var toObject = _dereq_(177);
 
 /**
  * The base implementation of `get` without support for string paths
@@ -8830,8 +15175,8 @@ function baseGet(object, path, pathKey) {
 
 module.exports = baseGet;
 
-},{"105":105}],64:[function(_dereq_,module,exports){
-var indexOfNaN = _dereq_(94);
+},{"177":177}],115:[function(_dereq_,module,exports){
+var indexOfNaN = _dereq_(159);
 
 /**
  * The base implementation of `_.indexOf` without support for binary searches.
@@ -8859,10 +15204,10 @@ function baseIndexOf(array, value, fromIndex) {
 
 module.exports = baseIndexOf;
 
-},{"94":94}],65:[function(_dereq_,module,exports){
-var baseIsEqualDeep = _dereq_(66),
-    isObject = _dereq_(112),
-    isObjectLike = _dereq_(100);
+},{"159":159}],116:[function(_dereq_,module,exports){
+var baseIsEqualDeep = _dereq_(117),
+    isObject = _dereq_(185),
+    isObjectLike = _dereq_(166);
 
 /**
  * The base implementation of `_.isEqual` without support for `this` binding
@@ -8889,12 +15234,12 @@ function baseIsEqual(value, other, customizer, isLoose, stackA, stackB) {
 
 module.exports = baseIsEqual;
 
-},{"100":100,"112":112,"66":66}],66:[function(_dereq_,module,exports){
-var equalArrays = _dereq_(88),
-    equalByTag = _dereq_(89),
-    equalObjects = _dereq_(90),
-    isArray = _dereq_(108),
-    isTypedArray = _dereq_(114);
+},{"117":117,"166":166,"185":185}],117:[function(_dereq_,module,exports){
+var equalArrays = _dereq_(151),
+    equalByTag = _dereq_(152),
+    equalObjects = _dereq_(153),
+    isArray = _dereq_(181),
+    isTypedArray = _dereq_(188);
 
 /** `Object#toString` result references. */
 var argsTag = '[object Arguments]',
@@ -8993,9 +15338,9 @@ function baseIsEqualDeep(object, other, equalFunc, customizer, isLoose, stackA, 
 
 module.exports = baseIsEqualDeep;
 
-},{"108":108,"114":114,"88":88,"89":89,"90":90}],67:[function(_dereq_,module,exports){
-var baseIsEqual = _dereq_(65),
-    toObject = _dereq_(105);
+},{"151":151,"152":152,"153":153,"181":181,"188":188}],118:[function(_dereq_,module,exports){
+var baseIsEqual = _dereq_(116),
+    toObject = _dereq_(177);
 
 /**
  * The base implementation of `_.isMatch` without support for callback
@@ -9047,9 +15392,21 @@ function baseIsMatch(object, matchData, customizer) {
 
 module.exports = baseIsMatch;
 
-},{"105":105,"65":65}],68:[function(_dereq_,module,exports){
-var baseEach = _dereq_(54),
-    isArrayLike = _dereq_(95);
+},{"116":116,"177":177}],119:[function(_dereq_,module,exports){
+/**
+ * The function whose prototype all chaining wrappers inherit from.
+ *
+ * @private
+ */
+function baseLodash() {
+  // No operation performed.
+}
+
+module.exports = baseLodash;
+
+},{}],120:[function(_dereq_,module,exports){
+var baseEach = _dereq_(105),
+    isArrayLike = _dereq_(160);
 
 /**
  * The base implementation of `_.map` without support for callback shorthands
@@ -9072,10 +15429,10 @@ function baseMap(collection, iteratee) {
 
 module.exports = baseMap;
 
-},{"54":54,"95":95}],69:[function(_dereq_,module,exports){
-var baseIsMatch = _dereq_(67),
-    getMatchData = _dereq_(92),
-    toObject = _dereq_(105);
+},{"105":105,"160":160}],121:[function(_dereq_,module,exports){
+var baseIsMatch = _dereq_(118),
+    getMatchData = _dereq_(157),
+    toObject = _dereq_(177);
 
 /**
  * The base implementation of `_.matches` which does not clone `source`.
@@ -9104,16 +15461,16 @@ function baseMatches(source) {
 
 module.exports = baseMatches;
 
-},{"105":105,"67":67,"92":92}],70:[function(_dereq_,module,exports){
-var baseGet = _dereq_(63),
-    baseIsEqual = _dereq_(65),
-    baseSlice = _dereq_(74),
-    isArray = _dereq_(108),
-    isKey = _dereq_(98),
-    isStrictComparable = _dereq_(101),
-    last = _dereq_(29),
-    toObject = _dereq_(105),
-    toPath = _dereq_(106);
+},{"118":118,"157":157,"177":177}],122:[function(_dereq_,module,exports){
+var baseGet = _dereq_(114),
+    baseIsEqual = _dereq_(116),
+    baseSlice = _dereq_(129),
+    isArray = _dereq_(181),
+    isKey = _dereq_(163),
+    isStrictComparable = _dereq_(167),
+    last = _dereq_(71),
+    toObject = _dereq_(177),
+    toPath = _dereq_(178);
 
 /**
  * The base implementation of `_.matchesProperty` which does not clone `srcValue`.
@@ -9151,7 +15508,134 @@ function baseMatchesProperty(path, srcValue) {
 
 module.exports = baseMatchesProperty;
 
-},{"101":101,"105":105,"106":106,"108":108,"29":29,"63":63,"65":65,"74":74,"98":98}],71:[function(_dereq_,module,exports){
+},{"114":114,"116":116,"129":129,"163":163,"167":167,"177":177,"178":178,"181":181,"71":71}],123:[function(_dereq_,module,exports){
+var arrayEach = _dereq_(91),
+    baseMergeDeep = _dereq_(124),
+    isArray = _dereq_(181),
+    isArrayLike = _dereq_(160),
+    isObject = _dereq_(185),
+    isObjectLike = _dereq_(166),
+    isTypedArray = _dereq_(188),
+    keys = _dereq_(191);
+
+/**
+ * The base implementation of `_.merge` without support for argument juggling,
+ * multiple sources, and `this` binding `customizer` functions.
+ *
+ * @private
+ * @param {Object} object The destination object.
+ * @param {Object} source The source object.
+ * @param {Function} [customizer] The function to customize merged values.
+ * @param {Array} [stackA=[]] Tracks traversed source objects.
+ * @param {Array} [stackB=[]] Associates values with source counterparts.
+ * @returns {Object} Returns `object`.
+ */
+function baseMerge(object, source, customizer, stackA, stackB) {
+  if (!isObject(object)) {
+    return object;
+  }
+  var isSrcArr = isArrayLike(source) && (isArray(source) || isTypedArray(source)),
+      props = isSrcArr ? undefined : keys(source);
+
+  arrayEach(props || source, function(srcValue, key) {
+    if (props) {
+      key = srcValue;
+      srcValue = source[key];
+    }
+    if (isObjectLike(srcValue)) {
+      stackA || (stackA = []);
+      stackB || (stackB = []);
+      baseMergeDeep(object, source, key, baseMerge, customizer, stackA, stackB);
+    }
+    else {
+      var value = object[key],
+          result = customizer ? customizer(value, srcValue, key, object, source) : undefined,
+          isCommon = result === undefined;
+
+      if (isCommon) {
+        result = srcValue;
+      }
+      if ((result !== undefined || (isSrcArr && !(key in object))) &&
+          (isCommon || (result === result ? (result !== value) : (value === value)))) {
+        object[key] = result;
+      }
+    }
+  });
+  return object;
+}
+
+module.exports = baseMerge;
+
+},{"124":124,"160":160,"166":166,"181":181,"185":185,"188":188,"191":191,"91":91}],124:[function(_dereq_,module,exports){
+var arrayCopy = _dereq_(90),
+    isArguments = _dereq_(180),
+    isArray = _dereq_(181),
+    isArrayLike = _dereq_(160),
+    isPlainObject = _dereq_(186),
+    isTypedArray = _dereq_(188),
+    toPlainObject = _dereq_(189);
+
+/**
+ * A specialized version of `baseMerge` for arrays and objects which performs
+ * deep merges and tracks traversed objects enabling objects with circular
+ * references to be merged.
+ *
+ * @private
+ * @param {Object} object The destination object.
+ * @param {Object} source The source object.
+ * @param {string} key The key of the value to merge.
+ * @param {Function} mergeFunc The function to merge values.
+ * @param {Function} [customizer] The function to customize merged values.
+ * @param {Array} [stackA=[]] Tracks traversed source objects.
+ * @param {Array} [stackB=[]] Associates values with source counterparts.
+ * @returns {boolean} Returns `true` if the objects are equivalent, else `false`.
+ */
+function baseMergeDeep(object, source, key, mergeFunc, customizer, stackA, stackB) {
+  var length = stackA.length,
+      srcValue = source[key];
+
+  while (length--) {
+    if (stackA[length] == srcValue) {
+      object[key] = stackB[length];
+      return;
+    }
+  }
+  var value = object[key],
+      result = customizer ? customizer(value, srcValue, key, object, source) : undefined,
+      isCommon = result === undefined;
+
+  if (isCommon) {
+    result = srcValue;
+    if (isArrayLike(srcValue) && (isArray(srcValue) || isTypedArray(srcValue))) {
+      result = isArray(value)
+        ? value
+        : (isArrayLike(value) ? arrayCopy(value) : []);
+    }
+    else if (isPlainObject(srcValue) || isArguments(srcValue)) {
+      result = isArguments(value)
+        ? toPlainObject(value)
+        : (isPlainObject(value) ? value : {});
+    }
+    else {
+      isCommon = false;
+    }
+  }
+  // Add the source value to the stack of traversed objects and associate
+  // it with its merged value.
+  stackA.push(srcValue);
+  stackB.push(result);
+
+  if (isCommon) {
+    // Recursively merge objects and arrays (susceptible to call stack limits).
+    object[key] = mergeFunc(result, srcValue, customizer, stackA, stackB);
+  } else if (result === result ? (result !== value) : (value === value)) {
+    object[key] = result;
+  }
+}
+
+module.exports = baseMergeDeep;
+
+},{"160":160,"180":180,"181":181,"186":186,"188":188,"189":189,"90":90}],125:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.property` without support for deep paths.
  *
@@ -9167,9 +15651,9 @@ function baseProperty(key) {
 
 module.exports = baseProperty;
 
-},{}],72:[function(_dereq_,module,exports){
-var baseGet = _dereq_(63),
-    toPath = _dereq_(106);
+},{}],126:[function(_dereq_,module,exports){
+var baseGet = _dereq_(114),
+    toPath = _dereq_(178);
 
 /**
  * A specialized version of `baseProperty` which supports deep paths.
@@ -9188,7 +15672,7 @@ function basePropertyDeep(path) {
 
 module.exports = basePropertyDeep;
 
-},{"106":106,"63":63}],73:[function(_dereq_,module,exports){
+},{"114":114,"178":178}],127:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.reduce` and `_.reduceRight` without support
  * for callback shorthands and `this` binding, which iterates over `collection`
@@ -9214,7 +15698,26 @@ function baseReduce(collection, iteratee, accumulator, initFromCollection, eachF
 
 module.exports = baseReduce;
 
-},{}],74:[function(_dereq_,module,exports){
+},{}],128:[function(_dereq_,module,exports){
+var identity = _dereq_(198),
+    metaMap = _dereq_(169);
+
+/**
+ * The base implementation of `setData` without support for hot loop detection.
+ *
+ * @private
+ * @param {Function} func The function to associate metadata with.
+ * @param {*} data The metadata.
+ * @returns {Function} Returns `func`.
+ */
+var baseSetData = !metaMap ? identity : function(func, data) {
+  metaMap.set(func, data);
+  return func;
+};
+
+module.exports = baseSetData;
+
+},{"169":169,"198":198}],129:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.slice` without an iteratee call guard.
  *
@@ -9248,8 +15751,8 @@ function baseSlice(array, start, end) {
 
 module.exports = baseSlice;
 
-},{}],75:[function(_dereq_,module,exports){
-var baseEach = _dereq_(54);
+},{}],130:[function(_dereq_,module,exports){
+var baseEach = _dereq_(105);
 
 /**
  * The base implementation of `_.some` without support for callback shorthands
@@ -9273,7 +15776,7 @@ function baseSome(collection, predicate) {
 
 module.exports = baseSome;
 
-},{"54":54}],76:[function(_dereq_,module,exports){
+},{"105":105}],131:[function(_dereq_,module,exports){
 /**
  * Converts `value` to a string if it's not one. An empty string is returned
  * for `null` or `undefined` values.
@@ -9288,7 +15791,7 @@ function baseToString(value) {
 
 module.exports = baseToString;
 
-},{}],77:[function(_dereq_,module,exports){
+},{}],132:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.values` and `_.valuesIn` which creates an
  * array of `object` property values corresponding to the property names
@@ -9312,8 +15815,8 @@ function baseValues(object, props) {
 
 module.exports = baseValues;
 
-},{}],78:[function(_dereq_,module,exports){
-var identity = _dereq_(122);
+},{}],133:[function(_dereq_,module,exports){
+var identity = _dereq_(198);
 
 /**
  * A specialized version of `baseCallback` which only supports `this` binding
@@ -9353,8 +15856,8 @@ function bindCallback(func, thisArg, argCount) {
 
 module.exports = bindCallback;
 
-},{"122":122}],79:[function(_dereq_,module,exports){
-var isObject = _dereq_(112);
+},{"198":198}],134:[function(_dereq_,module,exports){
+var isObject = _dereq_(185);
 
 /**
  * Checks if `value` is in `cache` mimicking the return signature of
@@ -9374,8 +15877,8 @@ function cacheIndexOf(cache, value) {
 
 module.exports = cacheIndexOf;
 
-},{"112":112}],80:[function(_dereq_,module,exports){
-var isObject = _dereq_(112);
+},{"185":185}],135:[function(_dereq_,module,exports){
+var isObject = _dereq_(185);
 
 /**
  * Adds `value` to the cache.
@@ -9396,10 +15899,121 @@ function cachePush(value) {
 
 module.exports = cachePush;
 
-},{"112":112}],81:[function(_dereq_,module,exports){
-var bindCallback = _dereq_(78),
-    isIterateeCall = _dereq_(97),
-    restParam = _dereq_(39);
+},{"185":185}],136:[function(_dereq_,module,exports){
+/* Native method references for those with the same name as other `lodash` methods. */
+var nativeMax = Math.max;
+
+/**
+ * Creates an array that is the composition of partially applied arguments,
+ * placeholders, and provided arguments into a single array of arguments.
+ *
+ * @private
+ * @param {Array|Object} args The provided arguments.
+ * @param {Array} partials The arguments to prepend to those provided.
+ * @param {Array} holders The `partials` placeholder indexes.
+ * @returns {Array} Returns the new array of composed arguments.
+ */
+function composeArgs(args, partials, holders) {
+  var holdersLength = holders.length,
+      argsIndex = -1,
+      argsLength = nativeMax(args.length - holdersLength, 0),
+      leftIndex = -1,
+      leftLength = partials.length,
+      result = Array(leftLength + argsLength);
+
+  while (++leftIndex < leftLength) {
+    result[leftIndex] = partials[leftIndex];
+  }
+  while (++argsIndex < holdersLength) {
+    result[holders[argsIndex]] = args[argsIndex];
+  }
+  while (argsLength--) {
+    result[leftIndex++] = args[argsIndex++];
+  }
+  return result;
+}
+
+module.exports = composeArgs;
+
+},{}],137:[function(_dereq_,module,exports){
+/* Native method references for those with the same name as other `lodash` methods. */
+var nativeMax = Math.max;
+
+/**
+ * This function is like `composeArgs` except that the arguments composition
+ * is tailored for `_.partialRight`.
+ *
+ * @private
+ * @param {Array|Object} args The provided arguments.
+ * @param {Array} partials The arguments to append to those provided.
+ * @param {Array} holders The `partials` placeholder indexes.
+ * @returns {Array} Returns the new array of composed arguments.
+ */
+function composeArgsRight(args, partials, holders) {
+  var holdersIndex = -1,
+      holdersLength = holders.length,
+      argsIndex = -1,
+      argsLength = nativeMax(args.length - holdersLength, 0),
+      rightIndex = -1,
+      rightLength = partials.length,
+      result = Array(argsLength + rightLength);
+
+  while (++argsIndex < argsLength) {
+    result[argsIndex] = args[argsIndex];
+  }
+  var offset = argsIndex;
+  while (++rightIndex < rightLength) {
+    result[offset + rightIndex] = partials[rightIndex];
+  }
+  while (++holdersIndex < holdersLength) {
+    result[offset + holders[holdersIndex]] = args[argsIndex++];
+  }
+  return result;
+}
+
+module.exports = composeArgsRight;
+
+},{}],138:[function(_dereq_,module,exports){
+var baseCallback = _dereq_(100),
+    baseEach = _dereq_(105),
+    isArray = _dereq_(181);
+
+/**
+ * Creates a `_.countBy`, `_.groupBy`, `_.indexBy`, or `_.partition` function.
+ *
+ * @private
+ * @param {Function} setter The function to set keys and values of the accumulator object.
+ * @param {Function} [initializer] The function to initialize the accumulator object.
+ * @returns {Function} Returns the new aggregator function.
+ */
+function createAggregator(setter, initializer) {
+  return function(collection, iteratee, thisArg) {
+    var result = initializer ? initializer() : {};
+    iteratee = baseCallback(iteratee, thisArg, 3);
+
+    if (isArray(collection)) {
+      var index = -1,
+          length = collection.length;
+
+      while (++index < length) {
+        var value = collection[index];
+        setter(result, value, iteratee(value, index, collection), collection);
+      }
+    } else {
+      baseEach(collection, function(value, key, collection) {
+        setter(result, value, iteratee(value, key, collection), collection);
+      });
+    }
+    return result;
+  };
+}
+
+module.exports = createAggregator;
+
+},{"100":100,"105":105,"181":181}],139:[function(_dereq_,module,exports){
+var bindCallback = _dereq_(133),
+    isIterateeCall = _dereq_(162),
+    restParam = _dereq_(86);
 
 /**
  * Creates a `_.assign`, `_.defaults`, or `_.merge` function.
@@ -9439,10 +16053,10 @@ function createAssigner(assigner) {
 
 module.exports = createAssigner;
 
-},{"39":39,"78":78,"97":97}],82:[function(_dereq_,module,exports){
-var getLength = _dereq_(91),
-    isLength = _dereq_(99),
-    toObject = _dereq_(105);
+},{"133":133,"162":162,"86":86}],140:[function(_dereq_,module,exports){
+var getLength = _dereq_(156),
+    isLength = _dereq_(165),
+    toObject = _dereq_(177);
 
 /**
  * Creates a `baseEach` or `baseEachRight` function.
@@ -9472,8 +16086,8 @@ function createBaseEach(eachFunc, fromRight) {
 
 module.exports = createBaseEach;
 
-},{"105":105,"91":91,"99":99}],83:[function(_dereq_,module,exports){
-var toObject = _dereq_(105);
+},{"156":156,"165":165,"177":177}],141:[function(_dereq_,module,exports){
+var toObject = _dereq_(177);
 
 /**
  * Creates a base function for `_.forIn` or `_.forInRight`.
@@ -9501,10 +16115,37 @@ function createBaseFor(fromRight) {
 
 module.exports = createBaseFor;
 
-},{"105":105}],84:[function(_dereq_,module,exports){
+},{"177":177}],142:[function(_dereq_,module,exports){
 (function (global){
-var SetCache = _dereq_(40),
-    getNative = _dereq_(93);
+var createCtorWrapper = _dereq_(144);
+
+/**
+ * Creates a function that wraps `func` and invokes it with the `this`
+ * binding of `thisArg`.
+ *
+ * @private
+ * @param {Function} func The function to bind.
+ * @param {*} [thisArg] The `this` binding of `func`.
+ * @returns {Function} Returns the new bound function.
+ */
+function createBindWrapper(func, thisArg) {
+  var Ctor = createCtorWrapper(func);
+
+  function wrapper() {
+    var fn = (this && this !== global && this instanceof wrapper) ? Ctor : func;
+    return fn.apply(thisArg, arguments);
+  }
+  return wrapper;
+}
+
+module.exports = createBindWrapper;
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
+},{"144":144}],143:[function(_dereq_,module,exports){
+(function (global){
+var SetCache = _dereq_(89),
+    getNative = _dereq_(158);
 
 /** Native method references. */
 var Set = getNative(global, 'Set');
@@ -9527,11 +16168,50 @@ module.exports = createCache;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"40":40,"93":93}],85:[function(_dereq_,module,exports){
-var baseCallback = _dereq_(50),
-    baseFind = _dereq_(57),
-    baseFindIndex = _dereq_(58),
-    isArray = _dereq_(108);
+},{"158":158,"89":89}],144:[function(_dereq_,module,exports){
+var baseCreate = _dereq_(102),
+    isObject = _dereq_(185);
+
+/**
+ * Creates a function that produces an instance of `Ctor` regardless of
+ * whether it was invoked as part of a `new` expression or by `call` or `apply`.
+ *
+ * @private
+ * @param {Function} Ctor The constructor to wrap.
+ * @returns {Function} Returns the new wrapped function.
+ */
+function createCtorWrapper(Ctor) {
+  return function() {
+    // Use a `switch` statement to work with class constructors.
+    // See http://ecma-international.org/ecma-262/6.0/#sec-ecmascript-function-objects-call-thisargument-argumentslist
+    // for more details.
+    var args = arguments;
+    switch (args.length) {
+      case 0: return new Ctor;
+      case 1: return new Ctor(args[0]);
+      case 2: return new Ctor(args[0], args[1]);
+      case 3: return new Ctor(args[0], args[1], args[2]);
+      case 4: return new Ctor(args[0], args[1], args[2], args[3]);
+      case 5: return new Ctor(args[0], args[1], args[2], args[3], args[4]);
+      case 6: return new Ctor(args[0], args[1], args[2], args[3], args[4], args[5]);
+      case 7: return new Ctor(args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
+    }
+    var thisBinding = baseCreate(Ctor.prototype),
+        result = Ctor.apply(thisBinding, args);
+
+    // Mimic the constructor's `return` behavior.
+    // See https://es5.github.io/#x13.2.2 for more details.
+    return isObject(result) ? result : thisBinding;
+  };
+}
+
+module.exports = createCtorWrapper;
+
+},{"102":102,"185":185}],145:[function(_dereq_,module,exports){
+var baseCallback = _dereq_(100),
+    baseFind = _dereq_(108),
+    baseFindIndex = _dereq_(109),
+    isArray = _dereq_(181);
 
 /**
  * Creates a `_.find` or `_.findLast` function.
@@ -9554,9 +16234,9 @@ function createFind(eachFunc, fromRight) {
 
 module.exports = createFind;
 
-},{"108":108,"50":50,"57":57,"58":58}],86:[function(_dereq_,module,exports){
-var bindCallback = _dereq_(78),
-    isArray = _dereq_(108);
+},{"100":100,"108":108,"109":109,"181":181}],146:[function(_dereq_,module,exports){
+var bindCallback = _dereq_(133),
+    isArray = _dereq_(181);
 
 /**
  * Creates a function for `_.forEach` or `_.forEachRight`.
@@ -9576,10 +16256,174 @@ function createForEach(arrayFunc, eachFunc) {
 
 module.exports = createForEach;
 
-},{"108":108,"78":78}],87:[function(_dereq_,module,exports){
-var baseCallback = _dereq_(50),
-    baseReduce = _dereq_(73),
-    isArray = _dereq_(108);
+},{"133":133,"181":181}],147:[function(_dereq_,module,exports){
+(function (global){
+var arrayCopy = _dereq_(90),
+    composeArgs = _dereq_(136),
+    composeArgsRight = _dereq_(137),
+    createCtorWrapper = _dereq_(144),
+    isLaziable = _dereq_(164),
+    reorder = _dereq_(173),
+    replaceHolders = _dereq_(174),
+    setData = _dereq_(175);
+
+/** Used to compose bitmasks for wrapper metadata. */
+var BIND_FLAG = 1,
+    BIND_KEY_FLAG = 2,
+    CURRY_BOUND_FLAG = 4,
+    CURRY_FLAG = 8,
+    CURRY_RIGHT_FLAG = 16,
+    PARTIAL_FLAG = 32,
+    PARTIAL_RIGHT_FLAG = 64,
+    ARY_FLAG = 128;
+
+/* Native method references for those with the same name as other `lodash` methods. */
+var nativeMax = Math.max;
+
+/**
+ * Creates a function that wraps `func` and invokes it with optional `this`
+ * binding of, partial application, and currying.
+ *
+ * @private
+ * @param {Function|string} func The function or method name to reference.
+ * @param {number} bitmask The bitmask of flags. See `createWrapper` for more details.
+ * @param {*} [thisArg] The `this` binding of `func`.
+ * @param {Array} [partials] The arguments to prepend to those provided to the new function.
+ * @param {Array} [holders] The `partials` placeholder indexes.
+ * @param {Array} [partialsRight] The arguments to append to those provided to the new function.
+ * @param {Array} [holdersRight] The `partialsRight` placeholder indexes.
+ * @param {Array} [argPos] The argument positions of the new function.
+ * @param {number} [ary] The arity cap of `func`.
+ * @param {number} [arity] The arity of `func`.
+ * @returns {Function} Returns the new wrapped function.
+ */
+function createHybridWrapper(func, bitmask, thisArg, partials, holders, partialsRight, holdersRight, argPos, ary, arity) {
+  var isAry = bitmask & ARY_FLAG,
+      isBind = bitmask & BIND_FLAG,
+      isBindKey = bitmask & BIND_KEY_FLAG,
+      isCurry = bitmask & CURRY_FLAG,
+      isCurryBound = bitmask & CURRY_BOUND_FLAG,
+      isCurryRight = bitmask & CURRY_RIGHT_FLAG,
+      Ctor = isBindKey ? undefined : createCtorWrapper(func);
+
+  function wrapper() {
+    // Avoid `arguments` object use disqualifying optimizations by
+    // converting it to an array before providing it to other functions.
+    var length = arguments.length,
+        index = length,
+        args = Array(length);
+
+    while (index--) {
+      args[index] = arguments[index];
+    }
+    if (partials) {
+      args = composeArgs(args, partials, holders);
+    }
+    if (partialsRight) {
+      args = composeArgsRight(args, partialsRight, holdersRight);
+    }
+    if (isCurry || isCurryRight) {
+      var placeholder = wrapper.placeholder,
+          argsHolders = replaceHolders(args, placeholder);
+
+      length -= argsHolders.length;
+      if (length < arity) {
+        var newArgPos = argPos ? arrayCopy(argPos) : undefined,
+            newArity = nativeMax(arity - length, 0),
+            newsHolders = isCurry ? argsHolders : undefined,
+            newHoldersRight = isCurry ? undefined : argsHolders,
+            newPartials = isCurry ? args : undefined,
+            newPartialsRight = isCurry ? undefined : args;
+
+        bitmask |= (isCurry ? PARTIAL_FLAG : PARTIAL_RIGHT_FLAG);
+        bitmask &= ~(isCurry ? PARTIAL_RIGHT_FLAG : PARTIAL_FLAG);
+
+        if (!isCurryBound) {
+          bitmask &= ~(BIND_FLAG | BIND_KEY_FLAG);
+        }
+        var newData = [func, bitmask, thisArg, newPartials, newsHolders, newPartialsRight, newHoldersRight, newArgPos, ary, newArity],
+            result = createHybridWrapper.apply(undefined, newData);
+
+        if (isLaziable(func)) {
+          setData(result, newData);
+        }
+        result.placeholder = placeholder;
+        return result;
+      }
+    }
+    var thisBinding = isBind ? thisArg : this,
+        fn = isBindKey ? thisBinding[func] : func;
+
+    if (argPos) {
+      args = reorder(args, argPos);
+    }
+    if (isAry && ary < args.length) {
+      args.length = ary;
+    }
+    if (this && this !== global && this instanceof wrapper) {
+      fn = Ctor || createCtorWrapper(func);
+    }
+    return fn.apply(thisBinding, args);
+  }
+  return wrapper;
+}
+
+module.exports = createHybridWrapper;
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
+},{"136":136,"137":137,"144":144,"164":164,"173":173,"174":174,"175":175,"90":90}],148:[function(_dereq_,module,exports){
+(function (global){
+var createCtorWrapper = _dereq_(144);
+
+/** Used to compose bitmasks for wrapper metadata. */
+var BIND_FLAG = 1;
+
+/**
+ * Creates a function that wraps `func` and invokes it with the optional `this`
+ * binding of `thisArg` and the `partials` prepended to those provided to
+ * the wrapper.
+ *
+ * @private
+ * @param {Function} func The function to partially apply arguments to.
+ * @param {number} bitmask The bitmask of flags. See `createWrapper` for more details.
+ * @param {*} thisArg The `this` binding of `func`.
+ * @param {Array} partials The arguments to prepend to those provided to the new function.
+ * @returns {Function} Returns the new bound function.
+ */
+function createPartialWrapper(func, bitmask, thisArg, partials) {
+  var isBind = bitmask & BIND_FLAG,
+      Ctor = createCtorWrapper(func);
+
+  function wrapper() {
+    // Avoid `arguments` object use disqualifying optimizations by
+    // converting it to an array before providing it `func`.
+    var argsIndex = -1,
+        argsLength = arguments.length,
+        leftIndex = -1,
+        leftLength = partials.length,
+        args = Array(leftLength + argsLength);
+
+    while (++leftIndex < leftLength) {
+      args[leftIndex] = partials[leftIndex];
+    }
+    while (argsLength--) {
+      args[leftIndex++] = arguments[++argsIndex];
+    }
+    var fn = (this && this !== global && this instanceof wrapper) ? Ctor : func;
+    return fn.apply(isBind ? thisArg : this, args);
+  }
+  return wrapper;
+}
+
+module.exports = createPartialWrapper;
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
+},{"144":144}],149:[function(_dereq_,module,exports){
+var baseCallback = _dereq_(100),
+    baseReduce = _dereq_(127),
+    isArray = _dereq_(181);
 
 /**
  * Creates a function for `_.reduce` or `_.reduceRight`.
@@ -9600,8 +16444,96 @@ function createReduce(arrayFunc, eachFunc) {
 
 module.exports = createReduce;
 
-},{"108":108,"50":50,"73":73}],88:[function(_dereq_,module,exports){
-var arraySome = _dereq_(47);
+},{"100":100,"127":127,"181":181}],150:[function(_dereq_,module,exports){
+var baseSetData = _dereq_(128),
+    createBindWrapper = _dereq_(142),
+    createHybridWrapper = _dereq_(147),
+    createPartialWrapper = _dereq_(148),
+    getData = _dereq_(154),
+    mergeData = _dereq_(168),
+    setData = _dereq_(175);
+
+/** Used to compose bitmasks for wrapper metadata. */
+var BIND_FLAG = 1,
+    BIND_KEY_FLAG = 2,
+    PARTIAL_FLAG = 32,
+    PARTIAL_RIGHT_FLAG = 64;
+
+/** Used as the `TypeError` message for "Functions" methods. */
+var FUNC_ERROR_TEXT = 'Expected a function';
+
+/* Native method references for those with the same name as other `lodash` methods. */
+var nativeMax = Math.max;
+
+/**
+ * Creates a function that either curries or invokes `func` with optional
+ * `this` binding and partially applied arguments.
+ *
+ * @private
+ * @param {Function|string} func The function or method name to reference.
+ * @param {number} bitmask The bitmask of flags.
+ *  The bitmask may be composed of the following flags:
+ *     1 - `_.bind`
+ *     2 - `_.bindKey`
+ *     4 - `_.curry` or `_.curryRight` of a bound function
+ *     8 - `_.curry`
+ *    16 - `_.curryRight`
+ *    32 - `_.partial`
+ *    64 - `_.partialRight`
+ *   128 - `_.rearg`
+ *   256 - `_.ary`
+ * @param {*} [thisArg] The `this` binding of `func`.
+ * @param {Array} [partials] The arguments to be partially applied.
+ * @param {Array} [holders] The `partials` placeholder indexes.
+ * @param {Array} [argPos] The argument positions of the new function.
+ * @param {number} [ary] The arity cap of `func`.
+ * @param {number} [arity] The arity of `func`.
+ * @returns {Function} Returns the new wrapped function.
+ */
+function createWrapper(func, bitmask, thisArg, partials, holders, argPos, ary, arity) {
+  var isBindKey = bitmask & BIND_KEY_FLAG;
+  if (!isBindKey && typeof func != 'function') {
+    throw new TypeError(FUNC_ERROR_TEXT);
+  }
+  var length = partials ? partials.length : 0;
+  if (!length) {
+    bitmask &= ~(PARTIAL_FLAG | PARTIAL_RIGHT_FLAG);
+    partials = holders = undefined;
+  }
+  length -= (holders ? holders.length : 0);
+  if (bitmask & PARTIAL_RIGHT_FLAG) {
+    var partialsRight = partials,
+        holdersRight = holders;
+
+    partials = holders = undefined;
+  }
+  var data = isBindKey ? undefined : getData(func),
+      newData = [func, bitmask, thisArg, partials, holders, partialsRight, holdersRight, argPos, ary, arity];
+
+  if (data) {
+    mergeData(newData, data);
+    bitmask = newData[1];
+    arity = newData[9];
+  }
+  newData[9] = arity == null
+    ? (isBindKey ? 0 : func.length)
+    : (nativeMax(arity - length, 0) || 0);
+
+  if (bitmask == BIND_FLAG) {
+    var result = createBindWrapper(newData[0], newData[2]);
+  } else if ((bitmask == PARTIAL_FLAG || bitmask == (BIND_FLAG | PARTIAL_FLAG)) && !newData[4].length) {
+    result = createPartialWrapper.apply(undefined, newData);
+  } else {
+    result = createHybridWrapper.apply(undefined, newData);
+  }
+  var setter = data ? baseSetData : setData;
+  return setter(result, newData);
+}
+
+module.exports = createWrapper;
+
+},{"128":128,"142":142,"147":147,"148":148,"154":154,"168":168,"175":175}],151:[function(_dereq_,module,exports){
+var arraySome = _dereq_(97);
 
 /**
  * A specialized version of `baseIsEqualDeep` for arrays with support for
@@ -9653,7 +16585,7 @@ function equalArrays(array, other, equalFunc, customizer, isLoose, stackA, stack
 
 module.exports = equalArrays;
 
-},{"47":47}],89:[function(_dereq_,module,exports){
+},{"97":97}],152:[function(_dereq_,module,exports){
 /** `Object#toString` result references. */
 var boolTag = '[object Boolean]',
     dateTag = '[object Date]',
@@ -9703,8 +16635,8 @@ function equalByTag(object, other, tag) {
 
 module.exports = equalByTag;
 
-},{}],90:[function(_dereq_,module,exports){
-var keys = _dereq_(116);
+},{}],153:[function(_dereq_,module,exports){
+var keys = _dereq_(191);
 
 /** Used for native method references. */
 var objectProto = Object.prototype;
@@ -9772,8 +16704,52 @@ function equalObjects(object, other, equalFunc, customizer, isLoose, stackA, sta
 
 module.exports = equalObjects;
 
-},{"116":116}],91:[function(_dereq_,module,exports){
-var baseProperty = _dereq_(71);
+},{"191":191}],154:[function(_dereq_,module,exports){
+var metaMap = _dereq_(169),
+    noop = _dereq_(199);
+
+/**
+ * Gets metadata for `func`.
+ *
+ * @private
+ * @param {Function} func The function to query.
+ * @returns {*} Returns the metadata for `func`.
+ */
+var getData = !metaMap ? noop : function(func) {
+  return metaMap.get(func);
+};
+
+module.exports = getData;
+
+},{"169":169,"199":199}],155:[function(_dereq_,module,exports){
+var realNames = _dereq_(172);
+
+/**
+ * Gets the name of `func`.
+ *
+ * @private
+ * @param {Function} func The function to query.
+ * @returns {string} Returns the function name.
+ */
+function getFuncName(func) {
+  var result = (func.name + ''),
+      array = realNames[result],
+      length = array ? array.length : 0;
+
+  while (length--) {
+    var data = array[length],
+        otherFunc = data.func;
+    if (otherFunc == null || otherFunc == func) {
+      return data.name;
+    }
+  }
+  return result;
+}
+
+module.exports = getFuncName;
+
+},{"172":172}],156:[function(_dereq_,module,exports){
+var baseProperty = _dereq_(125);
 
 /**
  * Gets the "length" property value of `object`.
@@ -9789,9 +16765,9 @@ var getLength = baseProperty('length');
 
 module.exports = getLength;
 
-},{"71":71}],92:[function(_dereq_,module,exports){
-var isStrictComparable = _dereq_(101),
-    pairs = _dereq_(119);
+},{"125":125}],157:[function(_dereq_,module,exports){
+var isStrictComparable = _dereq_(167),
+    pairs = _dereq_(195);
 
 /**
  * Gets the propery names, values, and compare flags of `object`.
@@ -9812,8 +16788,8 @@ function getMatchData(object) {
 
 module.exports = getMatchData;
 
-},{"101":101,"119":119}],93:[function(_dereq_,module,exports){
-var isNative = _dereq_(110);
+},{"167":167,"195":195}],158:[function(_dereq_,module,exports){
+var isNative = _dereq_(183);
 
 /**
  * Gets the native function at `key` of `object`.
@@ -9830,7 +16806,7 @@ function getNative(object, key) {
 
 module.exports = getNative;
 
-},{"110":110}],94:[function(_dereq_,module,exports){
+},{"183":183}],159:[function(_dereq_,module,exports){
 /**
  * Gets the index at which the first occurrence of `NaN` is found in `array`.
  *
@@ -9855,9 +16831,9 @@ function indexOfNaN(array, fromIndex, fromRight) {
 
 module.exports = indexOfNaN;
 
-},{}],95:[function(_dereq_,module,exports){
-var getLength = _dereq_(91),
-    isLength = _dereq_(99);
+},{}],160:[function(_dereq_,module,exports){
+var getLength = _dereq_(156),
+    isLength = _dereq_(165);
 
 /**
  * Checks if `value` is array-like.
@@ -9872,7 +16848,7 @@ function isArrayLike(value) {
 
 module.exports = isArrayLike;
 
-},{"91":91,"99":99}],96:[function(_dereq_,module,exports){
+},{"156":156,"165":165}],161:[function(_dereq_,module,exports){
 /** Used to detect unsigned integer values. */
 var reIsUint = /^\d+$/;
 
@@ -9898,10 +16874,10 @@ function isIndex(value, length) {
 
 module.exports = isIndex;
 
-},{}],97:[function(_dereq_,module,exports){
-var isArrayLike = _dereq_(95),
-    isIndex = _dereq_(96),
-    isObject = _dereq_(112);
+},{}],162:[function(_dereq_,module,exports){
+var isArrayLike = _dereq_(160),
+    isIndex = _dereq_(161),
+    isObject = _dereq_(185);
 
 /**
  * Checks if the provided arguments are from an iteratee call.
@@ -9928,9 +16904,9 @@ function isIterateeCall(value, index, object) {
 
 module.exports = isIterateeCall;
 
-},{"112":112,"95":95,"96":96}],98:[function(_dereq_,module,exports){
-var isArray = _dereq_(108),
-    toObject = _dereq_(105);
+},{"160":160,"161":161,"185":185}],163:[function(_dereq_,module,exports){
+var isArray = _dereq_(181),
+    toObject = _dereq_(177);
 
 /** Used to match property names within property paths. */
 var reIsDeepProp = /\.|\[(?:[^[\]]*|(["'])(?:(?!\1)[^\n\\]|\\.)*?\1)\]/,
@@ -9958,7 +16934,36 @@ function isKey(value, object) {
 
 module.exports = isKey;
 
-},{"105":105,"108":108}],99:[function(_dereq_,module,exports){
+},{"177":177,"181":181}],164:[function(_dereq_,module,exports){
+var LazyWrapper = _dereq_(87),
+    getData = _dereq_(154),
+    getFuncName = _dereq_(155),
+    lodash = _dereq_(72);
+
+/**
+ * Checks if `func` has a lazy counterpart.
+ *
+ * @private
+ * @param {Function} func The function to check.
+ * @returns {boolean} Returns `true` if `func` has a lazy counterpart, else `false`.
+ */
+function isLaziable(func) {
+  var funcName = getFuncName(func),
+      other = lodash[funcName];
+
+  if (typeof other != 'function' || !(funcName in LazyWrapper.prototype)) {
+    return false;
+  }
+  if (func === other) {
+    return true;
+  }
+  var data = getData(other);
+  return !!data && func === data[0];
+}
+
+module.exports = isLaziable;
+
+},{"154":154,"155":155,"72":72,"87":87}],165:[function(_dereq_,module,exports){
 /**
  * Used as the [maximum length](http://ecma-international.org/ecma-262/6.0/#sec-number.max_safe_integer)
  * of an array-like value.
@@ -9980,7 +16985,7 @@ function isLength(value) {
 
 module.exports = isLength;
 
-},{}],100:[function(_dereq_,module,exports){
+},{}],166:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is object-like.
  *
@@ -9994,8 +16999,8 @@ function isObjectLike(value) {
 
 module.exports = isObjectLike;
 
-},{}],101:[function(_dereq_,module,exports){
-var isObject = _dereq_(112);
+},{}],167:[function(_dereq_,module,exports){
+var isObject = _dereq_(185);
 
 /**
  * Checks if `value` is suitable for strict equality comparisons, i.e. `===`.
@@ -10011,8 +17016,113 @@ function isStrictComparable(value) {
 
 module.exports = isStrictComparable;
 
-},{"112":112}],102:[function(_dereq_,module,exports){
-var toObject = _dereq_(105);
+},{"185":185}],168:[function(_dereq_,module,exports){
+var arrayCopy = _dereq_(90),
+    composeArgs = _dereq_(136),
+    composeArgsRight = _dereq_(137),
+    replaceHolders = _dereq_(174);
+
+/** Used to compose bitmasks for wrapper metadata. */
+var BIND_FLAG = 1,
+    CURRY_BOUND_FLAG = 4,
+    CURRY_FLAG = 8,
+    ARY_FLAG = 128,
+    REARG_FLAG = 256;
+
+/** Used as the internal argument placeholder. */
+var PLACEHOLDER = '__lodash_placeholder__';
+
+/* Native method references for those with the same name as other `lodash` methods. */
+var nativeMin = Math.min;
+
+/**
+ * Merges the function metadata of `source` into `data`.
+ *
+ * Merging metadata reduces the number of wrappers required to invoke a function.
+ * This is possible because methods like `_.bind`, `_.curry`, and `_.partial`
+ * may be applied regardless of execution order. Methods like `_.ary` and `_.rearg`
+ * augment function arguments, making the order in which they are executed important,
+ * preventing the merging of metadata. However, we make an exception for a safe
+ * common case where curried functions have `_.ary` and or `_.rearg` applied.
+ *
+ * @private
+ * @param {Array} data The destination metadata.
+ * @param {Array} source The source metadata.
+ * @returns {Array} Returns `data`.
+ */
+function mergeData(data, source) {
+  var bitmask = data[1],
+      srcBitmask = source[1],
+      newBitmask = bitmask | srcBitmask,
+      isCommon = newBitmask < ARY_FLAG;
+
+  var isCombo =
+    (srcBitmask == ARY_FLAG && bitmask == CURRY_FLAG) ||
+    (srcBitmask == ARY_FLAG && bitmask == REARG_FLAG && data[7].length <= source[8]) ||
+    (srcBitmask == (ARY_FLAG | REARG_FLAG) && bitmask == CURRY_FLAG);
+
+  // Exit early if metadata can't be merged.
+  if (!(isCommon || isCombo)) {
+    return data;
+  }
+  // Use source `thisArg` if available.
+  if (srcBitmask & BIND_FLAG) {
+    data[2] = source[2];
+    // Set when currying a bound function.
+    newBitmask |= (bitmask & BIND_FLAG) ? 0 : CURRY_BOUND_FLAG;
+  }
+  // Compose partial arguments.
+  var value = source[3];
+  if (value) {
+    var partials = data[3];
+    data[3] = partials ? composeArgs(partials, value, source[4]) : arrayCopy(value);
+    data[4] = partials ? replaceHolders(data[3], PLACEHOLDER) : arrayCopy(source[4]);
+  }
+  // Compose partial right arguments.
+  value = source[5];
+  if (value) {
+    partials = data[5];
+    data[5] = partials ? composeArgsRight(partials, value, source[6]) : arrayCopy(value);
+    data[6] = partials ? replaceHolders(data[5], PLACEHOLDER) : arrayCopy(source[6]);
+  }
+  // Use source `argPos` if available.
+  value = source[7];
+  if (value) {
+    data[7] = arrayCopy(value);
+  }
+  // Use source `ary` if it's smaller.
+  if (srcBitmask & ARY_FLAG) {
+    data[8] = data[8] == null ? source[8] : nativeMin(data[8], source[8]);
+  }
+  // Use source `arity` if one is not provided.
+  if (data[9] == null) {
+    data[9] = source[9];
+  }
+  // Use source `func` and merge bitmasks.
+  data[0] = source[0];
+  data[1] = newBitmask;
+
+  return data;
+}
+
+module.exports = mergeData;
+
+},{"136":136,"137":137,"174":174,"90":90}],169:[function(_dereq_,module,exports){
+(function (global){
+var getNative = _dereq_(158);
+
+/** Native method references. */
+var WeakMap = getNative(global, 'WeakMap');
+
+/** Used to store function metadata. */
+var metaMap = WeakMap && new WeakMap;
+
+module.exports = metaMap;
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
+},{"158":158}],170:[function(_dereq_,module,exports){
+var toObject = _dereq_(177);
 
 /**
  * A specialized version of `_.pick` which picks `object` properties specified
@@ -10041,8 +17151,8 @@ function pickByArray(object, props) {
 
 module.exports = pickByArray;
 
-},{"105":105}],103:[function(_dereq_,module,exports){
-var baseForIn = _dereq_(61);
+},{"177":177}],171:[function(_dereq_,module,exports){
+var baseForIn = _dereq_(112);
 
 /**
  * A specialized version of `_.pick` which picks `object` properties `predicate`
@@ -10065,12 +17175,122 @@ function pickByCallback(object, predicate) {
 
 module.exports = pickByCallback;
 
-},{"61":61}],104:[function(_dereq_,module,exports){
-var isArguments = _dereq_(107),
-    isArray = _dereq_(108),
-    isIndex = _dereq_(96),
-    isLength = _dereq_(99),
-    keysIn = _dereq_(117);
+},{"112":112}],172:[function(_dereq_,module,exports){
+/** Used to lookup unminified function names. */
+var realNames = {};
+
+module.exports = realNames;
+
+},{}],173:[function(_dereq_,module,exports){
+var arrayCopy = _dereq_(90),
+    isIndex = _dereq_(161);
+
+/* Native method references for those with the same name as other `lodash` methods. */
+var nativeMin = Math.min;
+
+/**
+ * Reorder `array` according to the specified indexes where the element at
+ * the first index is assigned as the first element, the element at
+ * the second index is assigned as the second element, and so on.
+ *
+ * @private
+ * @param {Array} array The array to reorder.
+ * @param {Array} indexes The arranged array indexes.
+ * @returns {Array} Returns `array`.
+ */
+function reorder(array, indexes) {
+  var arrLength = array.length,
+      length = nativeMin(indexes.length, arrLength),
+      oldArray = arrayCopy(array);
+
+  while (length--) {
+    var index = indexes[length];
+    array[length] = isIndex(index, arrLength) ? oldArray[index] : undefined;
+  }
+  return array;
+}
+
+module.exports = reorder;
+
+},{"161":161,"90":90}],174:[function(_dereq_,module,exports){
+/** Used as the internal argument placeholder. */
+var PLACEHOLDER = '__lodash_placeholder__';
+
+/**
+ * Replaces all `placeholder` elements in `array` with an internal placeholder
+ * and returns an array of their indexes.
+ *
+ * @private
+ * @param {Array} array The array to modify.
+ * @param {*} placeholder The placeholder to replace.
+ * @returns {Array} Returns the new array of placeholder indexes.
+ */
+function replaceHolders(array, placeholder) {
+  var index = -1,
+      length = array.length,
+      resIndex = -1,
+      result = [];
+
+  while (++index < length) {
+    if (array[index] === placeholder) {
+      array[index] = PLACEHOLDER;
+      result[++resIndex] = index;
+    }
+  }
+  return result;
+}
+
+module.exports = replaceHolders;
+
+},{}],175:[function(_dereq_,module,exports){
+var baseSetData = _dereq_(128),
+    now = _dereq_(82);
+
+/** Used to detect when a function becomes hot. */
+var HOT_COUNT = 150,
+    HOT_SPAN = 16;
+
+/**
+ * Sets metadata for `func`.
+ *
+ * **Note:** If this function becomes hot, i.e. is invoked a lot in a short
+ * period of time, it will trip its breaker and transition to an identity function
+ * to avoid garbage collection pauses in V8. See [V8 issue 2070](https://code.google.com/p/v8/issues/detail?id=2070)
+ * for more details.
+ *
+ * @private
+ * @param {Function} func The function to associate metadata with.
+ * @param {*} data The metadata.
+ * @returns {Function} Returns `func`.
+ */
+var setData = (function() {
+  var count = 0,
+      lastCalled = 0;
+
+  return function(key, value) {
+    var stamp = now(),
+        remaining = HOT_SPAN - (stamp - lastCalled);
+
+    lastCalled = stamp;
+    if (remaining > 0) {
+      if (++count >= HOT_COUNT) {
+        return key;
+      }
+    } else {
+      count = 0;
+    }
+    return baseSetData(key, value);
+  };
+}());
+
+module.exports = setData;
+
+},{"128":128,"82":82}],176:[function(_dereq_,module,exports){
+var isArguments = _dereq_(180),
+    isArray = _dereq_(181),
+    isIndex = _dereq_(161),
+    isLength = _dereq_(165),
+    keysIn = _dereq_(192);
 
 /** Used for native method references. */
 var objectProto = Object.prototype;
@@ -10108,8 +17328,8 @@ function shimKeys(object) {
 
 module.exports = shimKeys;
 
-},{"107":107,"108":108,"117":117,"96":96,"99":99}],105:[function(_dereq_,module,exports){
-var isObject = _dereq_(112);
+},{"161":161,"165":165,"180":180,"181":181,"192":192}],177:[function(_dereq_,module,exports){
+var isObject = _dereq_(185);
 
 /**
  * Converts `value` to an object if it's not one.
@@ -10124,9 +17344,9 @@ function toObject(value) {
 
 module.exports = toObject;
 
-},{"112":112}],106:[function(_dereq_,module,exports){
-var baseToString = _dereq_(76),
-    isArray = _dereq_(108);
+},{"185":185}],178:[function(_dereq_,module,exports){
+var baseToString = _dereq_(131),
+    isArray = _dereq_(181);
 
 /** Used to match property names within property paths. */
 var rePropName = /[^.[\]]+|\[(?:(-?\d+(?:\.\d+)?)|(["'])((?:(?!\2)[^\n\\]|\\.)*?)\2)\]/g;
@@ -10154,9 +17374,29 @@ function toPath(value) {
 
 module.exports = toPath;
 
-},{"108":108,"76":76}],107:[function(_dereq_,module,exports){
-var isArrayLike = _dereq_(95),
-    isObjectLike = _dereq_(100);
+},{"131":131,"181":181}],179:[function(_dereq_,module,exports){
+var LazyWrapper = _dereq_(87),
+    LodashWrapper = _dereq_(88),
+    arrayCopy = _dereq_(90);
+
+/**
+ * Creates a clone of `wrapper`.
+ *
+ * @private
+ * @param {Object} wrapper The wrapper to clone.
+ * @returns {Object} Returns the cloned wrapper.
+ */
+function wrapperClone(wrapper) {
+  return wrapper instanceof LazyWrapper
+    ? wrapper.clone()
+    : new LodashWrapper(wrapper.__wrapped__, wrapper.__chain__, arrayCopy(wrapper.__actions__));
+}
+
+module.exports = wrapperClone;
+
+},{"87":87,"88":88,"90":90}],180:[function(_dereq_,module,exports){
+var isArrayLike = _dereq_(160),
+    isObjectLike = _dereq_(166);
 
 /** Used for native method references. */
 var objectProto = Object.prototype;
@@ -10190,10 +17430,10 @@ function isArguments(value) {
 
 module.exports = isArguments;
 
-},{"100":100,"95":95}],108:[function(_dereq_,module,exports){
-var getNative = _dereq_(93),
-    isLength = _dereq_(99),
-    isObjectLike = _dereq_(100);
+},{"160":160,"166":166}],181:[function(_dereq_,module,exports){
+var getNative = _dereq_(158),
+    isLength = _dereq_(165),
+    isObjectLike = _dereq_(166);
 
 /** `Object#toString` result references. */
 var arrayTag = '[object Array]';
@@ -10232,8 +17472,8 @@ var isArray = nativeIsArray || function(value) {
 
 module.exports = isArray;
 
-},{"100":100,"93":93,"99":99}],109:[function(_dereq_,module,exports){
-var isObject = _dereq_(112);
+},{"158":158,"165":165,"166":166}],182:[function(_dereq_,module,exports){
+var isObject = _dereq_(185);
 
 /** `Object#toString` result references. */
 var funcTag = '[object Function]';
@@ -10272,9 +17512,9 @@ function isFunction(value) {
 
 module.exports = isFunction;
 
-},{"112":112}],110:[function(_dereq_,module,exports){
-var isFunction = _dereq_(109),
-    isObjectLike = _dereq_(100);
+},{"185":185}],183:[function(_dereq_,module,exports){
+var isFunction = _dereq_(182),
+    isObjectLike = _dereq_(166);
 
 /** Used to detect host constructors (Safari > 5). */
 var reIsHostCtor = /^\[object .+?Constructor\]$/;
@@ -10322,8 +17562,8 @@ function isNative(value) {
 
 module.exports = isNative;
 
-},{"100":100,"109":109}],111:[function(_dereq_,module,exports){
-var isObjectLike = _dereq_(100);
+},{"166":166,"182":182}],184:[function(_dereq_,module,exports){
+var isObjectLike = _dereq_(166);
 
 /** `Object#toString` result references. */
 var numberTag = '[object Number]';
@@ -10365,7 +17605,7 @@ function isNumber(value) {
 
 module.exports = isNumber;
 
-},{"100":100}],112:[function(_dereq_,module,exports){
+},{"166":166}],185:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is the [language type](https://es5.github.io/#x8) of `Object`.
  * (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
@@ -10395,8 +17635,81 @@ function isObject(value) {
 
 module.exports = isObject;
 
-},{}],113:[function(_dereq_,module,exports){
-var isObjectLike = _dereq_(100);
+},{}],186:[function(_dereq_,module,exports){
+var baseForIn = _dereq_(112),
+    isArguments = _dereq_(180),
+    isObjectLike = _dereq_(166);
+
+/** `Object#toString` result references. */
+var objectTag = '[object Object]';
+
+/** Used for native method references. */
+var objectProto = Object.prototype;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/**
+ * Used to resolve the [`toStringTag`](http://ecma-international.org/ecma-262/6.0/#sec-object.prototype.tostring)
+ * of values.
+ */
+var objToString = objectProto.toString;
+
+/**
+ * Checks if `value` is a plain object, that is, an object created by the
+ * `Object` constructor or one with a `[[Prototype]]` of `null`.
+ *
+ * **Note:** This method assumes objects created by the `Object` constructor
+ * have no inherited enumerable properties.
+ *
+ * @static
+ * @memberOf _
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a plain object, else `false`.
+ * @example
+ *
+ * function Foo() {
+ *   this.a = 1;
+ * }
+ *
+ * _.isPlainObject(new Foo);
+ * // => false
+ *
+ * _.isPlainObject([1, 2, 3]);
+ * // => false
+ *
+ * _.isPlainObject({ 'x': 0, 'y': 0 });
+ * // => true
+ *
+ * _.isPlainObject(Object.create(null));
+ * // => true
+ */
+function isPlainObject(value) {
+  var Ctor;
+
+  // Exit early for non `Object` objects.
+  if (!(isObjectLike(value) && objToString.call(value) == objectTag && !isArguments(value)) ||
+      (!hasOwnProperty.call(value, 'constructor') && (Ctor = value.constructor, typeof Ctor == 'function' && !(Ctor instanceof Ctor)))) {
+    return false;
+  }
+  // IE < 9 iterates inherited properties before own properties. If the first
+  // iterated property is an object's own property then there are no inherited
+  // enumerable properties.
+  var result;
+  // In most environments an object's own properties are iterated before
+  // its inherited properties. If the last iterated property is an object's
+  // own property then there are no inherited enumerable properties.
+  baseForIn(value, function(subValue, key) {
+    result = key;
+  });
+  return result === undefined || hasOwnProperty.call(value, result);
+}
+
+module.exports = isPlainObject;
+
+},{"112":112,"166":166,"180":180}],187:[function(_dereq_,module,exports){
+var isObjectLike = _dereq_(166);
 
 /** `Object#toString` result references. */
 var stringTag = '[object String]';
@@ -10432,9 +17745,9 @@ function isString(value) {
 
 module.exports = isString;
 
-},{"100":100}],114:[function(_dereq_,module,exports){
-var isLength = _dereq_(99),
-    isObjectLike = _dereq_(100);
+},{"166":166}],188:[function(_dereq_,module,exports){
+var isLength = _dereq_(165),
+    isObjectLike = _dereq_(166);
 
 /** `Object#toString` result references. */
 var argsTag = '[object Arguments]',
@@ -10508,10 +17821,43 @@ function isTypedArray(value) {
 
 module.exports = isTypedArray;
 
-},{"100":100,"99":99}],115:[function(_dereq_,module,exports){
-var assignWith = _dereq_(48),
-    baseAssign = _dereq_(49),
-    createAssigner = _dereq_(81);
+},{"165":165,"166":166}],189:[function(_dereq_,module,exports){
+var baseCopy = _dereq_(101),
+    keysIn = _dereq_(192);
+
+/**
+ * Converts `value` to a plain object flattening inherited enumerable
+ * properties of `value` to own properties of the plain object.
+ *
+ * @static
+ * @memberOf _
+ * @category Lang
+ * @param {*} value The value to convert.
+ * @returns {Object} Returns the converted plain object.
+ * @example
+ *
+ * function Foo() {
+ *   this.b = 2;
+ * }
+ *
+ * Foo.prototype.c = 3;
+ *
+ * _.assign({ 'a': 1 }, new Foo);
+ * // => { 'a': 1, 'b': 2 }
+ *
+ * _.assign({ 'a': 1 }, _.toPlainObject(new Foo));
+ * // => { 'a': 1, 'b': 2, 'c': 3 }
+ */
+function toPlainObject(value) {
+  return baseCopy(value, keysIn(value));
+}
+
+module.exports = toPlainObject;
+
+},{"101":101,"192":192}],190:[function(_dereq_,module,exports){
+var assignWith = _dereq_(98),
+    baseAssign = _dereq_(99),
+    createAssigner = _dereq_(139);
 
 /**
  * Assigns own enumerable properties of source object(s) to the destination
@@ -10553,11 +17899,11 @@ var assign = createAssigner(function(object, source, customizer) {
 
 module.exports = assign;
 
-},{"48":48,"49":49,"81":81}],116:[function(_dereq_,module,exports){
-var getNative = _dereq_(93),
-    isArrayLike = _dereq_(95),
-    isObject = _dereq_(112),
-    shimKeys = _dereq_(104);
+},{"139":139,"98":98,"99":99}],191:[function(_dereq_,module,exports){
+var getNative = _dereq_(158),
+    isArrayLike = _dereq_(160),
+    isObject = _dereq_(185),
+    shimKeys = _dereq_(176);
 
 /* Native method references for those with the same name as other `lodash` methods. */
 var nativeKeys = getNative(Object, 'keys');
@@ -10600,12 +17946,12 @@ var keys = !nativeKeys ? shimKeys : function(object) {
 
 module.exports = keys;
 
-},{"104":104,"112":112,"93":93,"95":95}],117:[function(_dereq_,module,exports){
-var isArguments = _dereq_(107),
-    isArray = _dereq_(108),
-    isIndex = _dereq_(96),
-    isLength = _dereq_(99),
-    isObject = _dereq_(112);
+},{"158":158,"160":160,"176":176,"185":185}],192:[function(_dereq_,module,exports){
+var isArguments = _dereq_(180),
+    isArray = _dereq_(181),
+    isIndex = _dereq_(161),
+    isLength = _dereq_(165),
+    isObject = _dereq_(185);
 
 /** Used for native method references. */
 var objectProto = Object.prototype;
@@ -10666,15 +18012,71 @@ function keysIn(object) {
 
 module.exports = keysIn;
 
-},{"107":107,"108":108,"112":112,"96":96,"99":99}],118:[function(_dereq_,module,exports){
-var arrayMap = _dereq_(44),
-    baseDifference = _dereq_(53),
-    baseFlatten = _dereq_(59),
-    bindCallback = _dereq_(78),
-    keysIn = _dereq_(117),
-    pickByArray = _dereq_(102),
-    pickByCallback = _dereq_(103),
-    restParam = _dereq_(39);
+},{"161":161,"165":165,"180":180,"181":181,"185":185}],193:[function(_dereq_,module,exports){
+var baseMerge = _dereq_(123),
+    createAssigner = _dereq_(139);
+
+/**
+ * Recursively merges own enumerable properties of the source object(s), that
+ * don't resolve to `undefined` into the destination object. Subsequent sources
+ * overwrite property assignments of previous sources. If `customizer` is
+ * provided it's invoked to produce the merged values of the destination and
+ * source properties. If `customizer` returns `undefined` merging is handled
+ * by the method instead. The `customizer` is bound to `thisArg` and invoked
+ * with five arguments: (objectValue, sourceValue, key, object, source).
+ *
+ * @static
+ * @memberOf _
+ * @category Object
+ * @param {Object} object The destination object.
+ * @param {...Object} [sources] The source objects.
+ * @param {Function} [customizer] The function to customize assigned values.
+ * @param {*} [thisArg] The `this` binding of `customizer`.
+ * @returns {Object} Returns `object`.
+ * @example
+ *
+ * var users = {
+ *   'data': [{ 'user': 'barney' }, { 'user': 'fred' }]
+ * };
+ *
+ * var ages = {
+ *   'data': [{ 'age': 36 }, { 'age': 40 }]
+ * };
+ *
+ * _.merge(users, ages);
+ * // => { 'data': [{ 'user': 'barney', 'age': 36 }, { 'user': 'fred', 'age': 40 }] }
+ *
+ * // using a customizer callback
+ * var object = {
+ *   'fruits': ['apple'],
+ *   'vegetables': ['beet']
+ * };
+ *
+ * var other = {
+ *   'fruits': ['banana'],
+ *   'vegetables': ['carrot']
+ * };
+ *
+ * _.merge(object, other, function(a, b) {
+ *   if (_.isArray(a)) {
+ *     return a.concat(b);
+ *   }
+ * });
+ * // => { 'fruits': ['apple', 'banana'], 'vegetables': ['beet', 'carrot'] }
+ */
+var merge = createAssigner(baseMerge);
+
+module.exports = merge;
+
+},{"123":123,"139":139}],194:[function(_dereq_,module,exports){
+var arrayMap = _dereq_(94),
+    baseDifference = _dereq_(104),
+    baseFlatten = _dereq_(110),
+    bindCallback = _dereq_(133),
+    keysIn = _dereq_(192),
+    pickByArray = _dereq_(170),
+    pickByCallback = _dereq_(171),
+    restParam = _dereq_(86);
 
 /**
  * The opposite of `_.pick`; this method creates an object composed of the
@@ -10715,9 +18117,9 @@ var omit = restParam(function(object, props) {
 
 module.exports = omit;
 
-},{"102":102,"103":103,"117":117,"39":39,"44":44,"53":53,"59":59,"78":78}],119:[function(_dereq_,module,exports){
-var keys = _dereq_(116),
-    toObject = _dereq_(105);
+},{"104":104,"110":110,"133":133,"170":170,"171":171,"192":192,"86":86,"94":94}],195:[function(_dereq_,module,exports){
+var keys = _dereq_(191),
+    toObject = _dereq_(177);
 
 /**
  * Creates a two dimensional array of the key-value pairs for `object`,
@@ -10750,12 +18152,12 @@ function pairs(object) {
 
 module.exports = pairs;
 
-},{"105":105,"116":116}],120:[function(_dereq_,module,exports){
-var baseFlatten = _dereq_(59),
-    bindCallback = _dereq_(78),
-    pickByArray = _dereq_(102),
-    pickByCallback = _dereq_(103),
-    restParam = _dereq_(39);
+},{"177":177,"191":191}],196:[function(_dereq_,module,exports){
+var baseFlatten = _dereq_(110),
+    bindCallback = _dereq_(133),
+    pickByArray = _dereq_(170),
+    pickByCallback = _dereq_(171),
+    restParam = _dereq_(86);
 
 /**
  * Creates an object composed of the picked `object` properties. Property
@@ -10794,9 +18196,9 @@ var pick = restParam(function(object, props) {
 
 module.exports = pick;
 
-},{"102":102,"103":103,"39":39,"59":59,"78":78}],121:[function(_dereq_,module,exports){
-var baseValues = _dereq_(77),
-    keys = _dereq_(116);
+},{"110":110,"133":133,"170":170,"171":171,"86":86}],197:[function(_dereq_,module,exports){
+var baseValues = _dereq_(132),
+    keys = _dereq_(191);
 
 /**
  * Creates an array of the own enumerable property values of `object`.
@@ -10829,7 +18231,7 @@ function values(object) {
 
 module.exports = values;
 
-},{"116":116,"77":77}],122:[function(_dereq_,module,exports){
+},{"132":132,"191":191}],198:[function(_dereq_,module,exports){
 /**
  * This method returns the first argument provided to it.
  *
@@ -10851,10 +18253,31 @@ function identity(value) {
 
 module.exports = identity;
 
-},{}],123:[function(_dereq_,module,exports){
-var baseProperty = _dereq_(71),
-    basePropertyDeep = _dereq_(72),
-    isKey = _dereq_(98);
+},{}],199:[function(_dereq_,module,exports){
+/**
+ * A no-operation function that returns `undefined` regardless of the
+ * arguments it receives.
+ *
+ * @static
+ * @memberOf _
+ * @category Utility
+ * @example
+ *
+ * var object = { 'user': 'fred' };
+ *
+ * _.noop(object) === undefined;
+ * // => true
+ */
+function noop() {
+  // No operation performed.
+}
+
+module.exports = noop;
+
+},{}],200:[function(_dereq_,module,exports){
+var baseProperty = _dereq_(125),
+    basePropertyDeep = _dereq_(126),
+    isKey = _dereq_(163);
 
 /**
  * Creates a function that returns the property value at `path` on a
@@ -10884,19 +18307,59 @@ function property(path) {
 
 module.exports = property;
 
-},{"71":71,"72":72,"98":98}],124:[function(_dereq_,module,exports){
-module.exports = _dereq_(23);
-},{"23":23}],125:[function(_dereq_,module,exports){
-module.exports = _dereq_(27);
-},{"27":27}],126:[function(_dereq_,module,exports){
+},{"125":125,"126":126,"163":163}],201:[function(_dereq_,module,exports){
+/**
+ * Set attribute `name` to `val`, or get attr `name`.
+ *
+ * @param {Element} el
+ * @param {String} name
+ * @param {String} [val]
+ * @api public
+ */
+
+module.exports = function(el, name, val) {
+  // get
+  if (arguments.length == 2) {
+    return el.getAttribute(name);
+  }
+
+  // remove
+  if (val === null) {
+    return el.removeAttribute(name);
+  }
+
+  // set
+  el.setAttribute(name, val);
+
+  return el;
+};
+},{}],202:[function(_dereq_,module,exports){
+module.exports = _dereq_(22);
+},{"22":22}],203:[function(_dereq_,module,exports){
+module.exports = function(el) {
+
+  var c;
+
+  while (el.childNodes.length) {
+    c = el.childNodes[0];
+    el.removeChild(c);
+  }
+
+  return el;
+};
+},{}],204:[function(_dereq_,module,exports){
 module.exports = _dereq_(24);
-},{"24":24}],127:[function(_dereq_,module,exports){
-module.exports = _dereq_(26);
-},{"26":26}],128:[function(_dereq_,module,exports){
+},{"24":24}],205:[function(_dereq_,module,exports){
+module.exports = _dereq_(68);
+},{"68":68}],206:[function(_dereq_,module,exports){
+module.exports = _dereq_(25);
+},{"25":25}],207:[function(_dereq_,module,exports){
+module.exports = _dereq_(28);
+},{"28":28}],208:[function(_dereq_,module,exports){
 module.exports = function(el) {
   el.parentNode && el.parentNode.removeChild(el);
 };
-},{}],129:[function(_dereq_,module,exports){
+},{}],209:[function(_dereq_,module,exports){
 'use strict';
 
 function capitalize(string) {
@@ -10945,23 +18408,23 @@ module.exports.serializeAsType = function(element) {
 module.exports.serializeAsProperty = function(element) {
   return serializeFormat(element) === 'property';
 };
-},{}],130:[function(_dereq_,module,exports){
+},{}],210:[function(_dereq_,module,exports){
 'use strict';
 
-var reduce = _dereq_(36),
-    forEach = _dereq_(33),
-    find = _dereq_(32),
-    assign = _dereq_(115),
-    defer = _dereq_(38);
+var reduce = _dereq_(80),
+    forEach = _dereq_(76),
+    find = _dereq_(75),
+    assign = _dereq_(190),
+    defer = _dereq_(85);
 
-var Stack = _dereq_(145),
-    SaxParser = _dereq_(144).parser,
-    Moddle = _dereq_(132),
-    parseNameNs = _dereq_(137).parseName,
-    Types = _dereq_(140),
+var Stack = _dereq_(226),
+    SaxParser = _dereq_(224).parser,
+    Moddle = _dereq_(212),
+    parseNameNs = _dereq_(217).parseName,
+    Types = _dereq_(220),
     coerceType = Types.coerceType,
     isSimpleType = Types.isSimple,
-    common = _dereq_(129),
+    common = _dereq_(209),
     XSI_TYPE = common.XSI_TYPE,
     XSI_URI = common.DEFAULT_NS_MAP.xsi,
     serializeAsType = common.serializeAsType,
@@ -11103,6 +18566,8 @@ function Context(options) {
       throw error('expected element');
     }
 
+    var elementsById = this.elementsById;
+
     var descriptor = getModdleDescriptor(element);
 
     var idProperty = descriptor.idProperty,
@@ -11112,7 +18577,12 @@ function Context(options) {
       id = element.get(idProperty.name);
 
       if (id) {
-        this.elementsById[id] = element;
+
+        if (elementsById[id]) {
+          throw error('duplicate ID <' + id + '>');
+        }
+
+        elementsById[id] = element;
       }
     }
   };
@@ -11668,18 +19138,18 @@ XMLReader.prototype.handler = function(name) {
 
 module.exports = XMLReader;
 module.exports.ElementHandler = ElementHandler;
-},{"115":115,"129":129,"132":132,"137":137,"140":140,"144":144,"145":145,"32":32,"33":33,"36":36,"38":38}],131:[function(_dereq_,module,exports){
+},{"190":190,"209":209,"212":212,"217":217,"220":220,"224":224,"226":226,"75":75,"76":76,"80":80,"85":85}],211:[function(_dereq_,module,exports){
 'use strict';
 
-var map = _dereq_(35),
-    forEach = _dereq_(33),
-    isString = _dereq_(113),
-    filter = _dereq_(31),
-    assign = _dereq_(115);
+var map = _dereq_(79),
+    forEach = _dereq_(76),
+    isString = _dereq_(187),
+    filter = _dereq_(74),
+    assign = _dereq_(190);
 
-var Types = _dereq_(140),
-    parseNameNs = _dereq_(137).parseName,
-    common = _dereq_(129),
+var Types = _dereq_(220),
+    parseNameNs = _dereq_(217).parseName,
+    common = _dereq_(209),
     nameToAlias = common.nameToAlias,
     serializeAsType = common.serializeAsType,
     serializeAsProperty = common.serializeAsProperty;
@@ -11745,6 +19215,11 @@ function getSerializableProperties(element) {
 
     // do not serialize default equals
     if (value === p.default) {
+      return false;
+    }
+
+    // do not serialize null properties
+    if (value === null) {
       return false;
     }
 
@@ -12347,9 +19822,9 @@ function XMLWriter(options) {
 
 module.exports = XMLWriter;
 
-},{"113":113,"115":115,"129":129,"137":137,"140":140,"31":31,"33":33,"35":35}],132:[function(_dereq_,module,exports){
-module.exports = _dereq_(136);
-},{"136":136}],133:[function(_dereq_,module,exports){
+},{"187":187,"190":190,"209":209,"217":217,"220":220,"74":74,"76":76,"79":79}],212:[function(_dereq_,module,exports){
+module.exports = _dereq_(216);
+},{"216":216}],213:[function(_dereq_,module,exports){
 'use strict';
 
 function Base() { }
@@ -12364,14 +19839,14 @@ Base.prototype.set = function(name, value) {
 
 
 module.exports = Base;
-},{}],134:[function(_dereq_,module,exports){
+},{}],214:[function(_dereq_,module,exports){
 'use strict';
 
-var pick = _dereq_(120),
-    assign = _dereq_(115),
-    forEach = _dereq_(33);
+var pick = _dereq_(196),
+    assign = _dereq_(190),
+    forEach = _dereq_(76);
 
-var parseNameNs = _dereq_(137).parseName;
+var parseNameNs = _dereq_(217).parseName;
 
 
 function DescriptorBuilder(nameNs) {
@@ -12589,12 +20064,12 @@ DescriptorBuilder.prototype.addTrait = function(t, inherited) {
   allTypes.push(t);
 };
 
-},{"115":115,"120":120,"137":137,"33":33}],135:[function(_dereq_,module,exports){
+},{"190":190,"196":196,"217":217,"76":76}],215:[function(_dereq_,module,exports){
 'use strict';
 
-var forEach = _dereq_(33);
+var forEach = _dereq_(76);
 
-var Base = _dereq_(133);
+var Base = _dereq_(213);
 
 
 function Factory(model, properties) {
@@ -12647,20 +20122,20 @@ Factory.prototype.createType = function(descriptor) {
 
   return ModdleElement;
 };
-},{"133":133,"33":33}],136:[function(_dereq_,module,exports){
+},{"213":213,"76":76}],216:[function(_dereq_,module,exports){
 'use strict';
 
-var isString = _dereq_(113),
-    isObject = _dereq_(112),
-    forEach = _dereq_(33),
-    find = _dereq_(32);
+var isString = _dereq_(187),
+    isObject = _dereq_(185),
+    forEach = _dereq_(76),
+    find = _dereq_(75);
 
 
-var Factory = _dereq_(135),
-    Registry = _dereq_(139),
-    Properties = _dereq_(138);
+var Factory = _dereq_(215),
+    Registry = _dereq_(219),
+    Properties = _dereq_(218);
 
-var parseNameNs = _dereq_(137).parseName;
+var parseNameNs = _dereq_(217).parseName;
 
 
 //// Moddle implementation /////////////////////////////////////////////////
@@ -12866,7 +20341,7 @@ Moddle.prototype.getPropertyDescriptor = function(element, property) {
   return this.getElementDescriptor(element).propertiesByName[property];
 };
 
-},{"112":112,"113":113,"135":135,"137":137,"138":138,"139":139,"32":32,"33":33}],137:[function(_dereq_,module,exports){
+},{"185":185,"187":187,"215":215,"217":217,"218":218,"219":219,"75":75,"76":76}],217:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -12903,7 +20378,7 @@ module.exports.parseName = function(name, defaultPrefix) {
     localName: localName
   };
 };
-},{}],138:[function(_dereq_,module,exports){
+},{}],218:[function(_dereq_,module,exports){
 'use strict';
 
 
@@ -13022,16 +20497,16 @@ function defineProperty(target, property, value) {
     configurable: true
   });
 }
-},{}],139:[function(_dereq_,module,exports){
+},{}],219:[function(_dereq_,module,exports){
 'use strict';
 
-var assign = _dereq_(115),
-    forEach = _dereq_(33);
+var assign = _dereq_(190),
+    forEach = _dereq_(76);
 
-var Types = _dereq_(140),
-    DescriptorBuilder = _dereq_(134);
+var Types = _dereq_(220),
+    DescriptorBuilder = _dereq_(214);
 
-var parseNameNs = _dereq_(137).parseName,
+var parseNameNs = _dereq_(217).parseName,
     isBuiltInType = Types.isBuiltIn;
 
 
@@ -13207,7 +20682,7 @@ Registry.prototype.getEffectiveDescriptor = function(name) {
 Registry.prototype.definePackage = function(target, pkg) {
   this.properties.define(target, '$pkg', { value: pkg });
 };
-},{"115":115,"134":134,"137":137,"140":140,"33":33}],140:[function(_dereq_,module,exports){
+},{"190":190,"214":214,"217":217,"220":220,"76":76}],220:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -13258,11 +20733,11 @@ module.exports.isBuiltIn = function(type) {
 module.exports.isSimple = function(type) {
   return !!TYPE_CONVERTERS[type];
 };
-},{}],141:[function(_dereq_,module,exports){
-module.exports = _dereq_(143);
+},{}],221:[function(_dereq_,module,exports){
+module.exports = _dereq_(223);
 
-module.exports.Collection = _dereq_(142);
-},{"142":142,"143":143}],142:[function(_dereq_,module,exports){
+module.exports.Collection = _dereq_(222);
+},{"222":222,"223":223}],222:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -13359,10 +20834,10 @@ function isExtended(collection) {
 module.exports.extend = extend;
 
 module.exports.isExtended = isExtended;
-},{}],143:[function(_dereq_,module,exports){
+},{}],223:[function(_dereq_,module,exports){
 'use strict';
 
-var Collection = _dereq_(142);
+var Collection = _dereq_(222);
 
 function hasOwnProperty(e, property) {
   return Object.prototype.hasOwnProperty.call(e, property.name || property);
@@ -13551,7 +21026,7 @@ module.exports = Refs;
  * @property {boolean} [collection=false]
  * @property {boolean} [enumerable=false]
  */
-},{"142":142}],144:[function(_dereq_,module,exports){
+},{"222":222}],224:[function(_dereq_,module,exports){
 (function (Buffer){
 // wrapper for non-node envs
 ;(function (sax) {
@@ -14966,7558 +22441,7 @@ if (!String.fromCodePoint) {
 
 }).call(this,undefined)
 
-},{"undefined":undefined}],145:[function(_dereq_,module,exports){
-/**
- * Tiny stack for browser or server
- *
- * @author Jason Mulligan <jason.mulligan@avoidwork.com>
- * @copyright 2014 Jason Mulligan
- * @license BSD-3 <https://raw.github.com/avoidwork/tiny-stack/master/LICENSE>
- * @link http://avoidwork.github.io/tiny-stack
- * @module tiny-stack
- * @version 0.1.0
- */
-
-( function ( global ) {
-
-"use strict";
-
-/**
- * TinyStack
- *
- * @constructor
- */
-function TinyStack () {
-	this.data = [null];
-	this.top  = 0;
-}
-
-/**
- * Clears the stack
- *
- * @method clear
- * @memberOf TinyStack
- * @return {Object} {@link TinyStack}
- */
-TinyStack.prototype.clear = function clear () {
-	this.data = [null];
-	this.top  = 0;
-
-	return this;
-};
-
-/**
- * Gets the size of the stack
- *
- * @method length
- * @memberOf TinyStack
- * @return {Number} Size of stack
- */
-TinyStack.prototype.length = function length () {
-	return this.top;
-};
-
-/**
- * Gets the item at the top of the stack
- *
- * @method peek
- * @memberOf TinyStack
- * @return {Mixed} Item at the top of the stack
- */
-TinyStack.prototype.peek = function peek () {
-	return this.data[this.top];
-};
-
-/**
- * Gets & removes the item at the top of the stack
- *
- * @method pop
- * @memberOf TinyStack
- * @return {Mixed} Item at the top of the stack
- */
-TinyStack.prototype.pop = function pop () {
-	if ( this.top > 0 ) {
-		this.top--;
-
-		return this.data.pop();
-	}
-	else {
-		return undefined;
-	}
-};
-
-/**
- * Pushes an item onto the stack
- *
- * @method push
- * @memberOf TinyStack
- * @return {Object} {@link TinyStack}
- */
-TinyStack.prototype.push = function push ( arg ) {
-	this.data[++this.top] = arg;
-
-	return this;
-};
-
-/**
- * TinyStack factory
- *
- * @method factory
- * @return {Object} {@link TinyStack}
- */
-function factory () {
-	return new TinyStack();
-}
-
-// Node, AMD & window supported
-if ( typeof exports != "undefined" ) {
-	module.exports = factory;
-}
-else if ( typeof define == "function" ) {
-	define( function () {
-		return factory;
-	} );
-}
-else {
-	global.stack = factory;
-}
-} )( this );
-
-},{}],146:[function(_dereq_,module,exports){
-module.exports = _dereq_(147);
-},{"147":147}],147:[function(_dereq_,module,exports){
-'use strict';
-
-var di = _dereq_(188);
-
-
-/**
- * Bootstrap an injector from a list of modules, instantiating a number of default components
- *
- * @ignore
- * @param {Array<didi.Module>} bootstrapModules
- *
- * @return {didi.Injector} a injector to use to access the components
- */
-function bootstrap(bootstrapModules) {
-
-  var modules = [],
-      components = [];
-
-  function hasModule(m) {
-    return modules.indexOf(m) >= 0;
-  }
-
-  function addModule(m) {
-    modules.push(m);
-  }
-
-  function visit(m) {
-    if (hasModule(m)) {
-      return;
-    }
-
-    (m.__depends__ || []).forEach(visit);
-
-    if (hasModule(m)) {
-      return;
-    }
-
-    addModule(m);
-
-    (m.__init__ || []).forEach(function(c) {
-      components.push(c);
-    });
-  }
-
-  bootstrapModules.forEach(visit);
-
-  var injector = new di.Injector(modules);
-
-  components.forEach(function(c) {
-
-    try {
-      // eagerly resolve component (fn or string)
-      injector[typeof c === 'string' ? 'get' : 'invoke'](c);
-    } catch (e) {
-      console.error('Failed to instantiate component');
-      console.error(e.stack);
-
-      throw e;
-    }
-  });
-
-  return injector;
-}
-
-/**
- * Creates an injector from passed options.
- *
- * @ignore
- * @param  {Object} options
- * @return {didi.Injector}
- */
-function createInjector(options) {
-
-  options = options || {};
-
-  var configModule = {
-    'config': ['value', options]
-  };
-
-  var coreModule = _dereq_(153);
-
-  var modules = [ configModule, coreModule ].concat(options.modules || []);
-
-  return bootstrap(modules);
-}
-
-
-/**
- * The main diagram-js entry point that bootstraps the diagram with the given
- * configuration.
- *
- * To register extensions with the diagram, pass them as Array<didi.Module> to the constructor.
- *
- * @class djs.Diagram
- * @memberOf djs
- * @constructor
- *
- * @example
- *
- * <caption>Creating a plug-in that logs whenever a shape is added to the canvas.</caption>
- *
- * // plug-in implemenentation
- * function MyLoggingPlugin(eventBus) {
- *   eventBus.on('shape.added', function(event) {
- *     console.log('shape ', event.shape, ' was added to the diagram');
- *   });
- * }
- *
- * // export as module
- * module.exports = {
- *   __init__: [ 'myLoggingPlugin' ],
- *     myLoggingPlugin: [ 'type', MyLoggingPlugin ]
- * };
- *
- *
- * // instantiate the diagram with the new plug-in
- *
- * var diagram = new Diagram({ modules: [ require('path-to-my-logging-plugin') ] });
- *
- * diagram.invoke([ 'canvas', function(canvas) {
- *   // add shape to drawing canvas
- *   canvas.addShape({ x: 10, y: 10 });
- * });
- *
- * // 'shape ... was added to the diagram' logged to console
- *
- * @param {Object} options
- * @param {Array<didi.Module>} [options.modules] external modules to instantiate with the diagram
- * @param {didi.Injector} [injector] an (optional) injector to bootstrap the diagram with
- */
-function Diagram(options, injector) {
-
-  // create injector unless explicitly specified
-  this.injector = injector = injector || createInjector(options);
-
-  // API
-
-  /**
-   * Resolves a diagram service
-   *
-   * @method Diagram#get
-   *
-   * @param {String} name the name of the diagram service to be retrieved
-   * @param {Boolean} [strict=true] if false, resolve missing services to null
-   */
-  this.get = injector.get;
-
-  /**
-   * Executes a function into which diagram services are injected
-   *
-   * @method Diagram#invoke
-   *
-   * @param {Function|Object[]} fn the function to resolve
-   * @param {Object} locals a number of locals to use to resolve certain dependencies
-   */
-  this.invoke = injector.invoke;
-
-  // init
-
-  // indicate via event
-
-
-  /**
-   * An event indicating that all plug-ins are loaded.
-   *
-   * Use this event to fire other events to interested plug-ins
-   *
-   * @memberOf Diagram
-   *
-   * @event diagram.init
-   *
-   * @example
-   *
-   * eventBus.on('diagram.init', function() {
-   *   eventBus.fire('my-custom-event', { foo: 'BAR' });
-   * });
-   *
-   * @type {Object}
-   */
-  this.get('eventBus').fire('diagram.init');
-}
-
-module.exports = Diagram;
-
-
-/**
- * Destroys the diagram
- *
- * @method  Diagram#destroy
- */
-Diagram.prototype.destroy = function() {
-  this.get('eventBus').fire('diagram.destroy');
-};
-
-/**
- * Clear the diagram, removing all contents.
- */
-Diagram.prototype.clear = function() {
-  this.get('eventBus').fire('diagram.clear');
-};
-},{"153":153,"188":188}],148:[function(_dereq_,module,exports){
-'use strict';
-
-var isNumber = _dereq_(291),
-    assign = _dereq_(297),
-    forEach = _dereq_(199),
-    every = _dereq_(196),
-    debounce = _dereq_(204);
-
-var Collections = _dereq_(171),
-    Elements = _dereq_(172);
-
-var Snap = _dereq_(316);
-
-function round(number, resolution) {
-  return Math.round(number * resolution) / resolution;
-}
-
-function ensurePx(number) {
-  return isNumber(number) ? number + 'px' : number;
-}
-
-/**
- * Creates a HTML container element for a SVG element with
- * the given configuration
- *
- * @param  {Object} options
- * @return {HTMLElement} the container element
- */
-function createContainer(options) {
-
-  options = assign({}, { width: '100%', height: '100%' }, options);
-
-  var container = options.container || document.body;
-
-  // create a <div> around the svg element with the respective size
-  // this way we can always get the correct container size
-  // (this is impossible for <svg> elements at the moment)
-  var parent = document.createElement('div');
-  parent.setAttribute('class', 'djs-container');
-
-  assign(parent.style, {
-    position: 'relative',
-    overflow: 'hidden',
-    width: ensurePx(options.width),
-    height: ensurePx(options.height)
-  });
-
-  container.appendChild(parent);
-
-  return parent;
-}
-
-function createGroup(parent, cls) {
-  return parent.group().attr({ 'class' : cls });
-}
-
-var BASE_LAYER = 'base';
-
-
-var REQUIRED_MODEL_ATTRS = {
-  shape: [ 'x', 'y', 'width', 'height' ],
-  connection: [ 'waypoints' ]
-};
-
-/**
- * The main drawing canvas.
- *
- * @class
- * @constructor
- *
- * @emits Canvas#canvas.init
- *
- * @param {Object} config
- * @param {EventBus} eventBus
- * @param {GraphicsFactory} graphicsFactory
- * @param {ElementRegistry} elementRegistry
- */
-function Canvas(config, eventBus, graphicsFactory, elementRegistry) {
-
-  this._eventBus = eventBus;
-  this._elementRegistry = elementRegistry;
-  this._graphicsFactory = graphicsFactory;
-
-  this._init(config || {});
-}
-
-Canvas.$inject = [ 'config.canvas', 'eventBus', 'graphicsFactory', 'elementRegistry' ];
-
-module.exports = Canvas;
-
-
-Canvas.prototype._init = function(config) {
-
-  var eventBus = this._eventBus;
-
-  // Creates a <svg> element that is wrapped into a <div>.
-  // This way we are always able to correctly figure out the size of the svg element
-  // by querying the parent node.
-  //
-  // (It is not possible to get the size of a svg element cross browser @ 2014-04-01)
-  //
-  // <div class="djs-container" style="width: {desired-width}, height: {desired-height}">
-  //   <svg width="100%" height="100%">
-  //    ...
-  //   </svg>
-  // </div>
-
-  // html container
-  var container = this._container = createContainer(config),
-      svg = this._svg = Snap.createSnapAt('100%', '100%', container),
-      viewport = this._viewport = createGroup(svg, 'viewport');
-
-  this._layers = {};
-
-  // debounce canvas.viewbox.changed events
-  // for smoother diagram interaction
-  if (config.deferUpdate !== false) {
-    this._viewboxChanged = debounce(this._viewboxChanged, 300);
-  }
-
-  eventBus.on('diagram.init', function() {
-
-    /**
-     * An event indicating that the canvas is ready to be drawn on.
-     *
-     * @memberOf Canvas
-     *
-     * @event canvas.init
-     *
-     * @type {Object}
-     * @property {Snap<SVGSVGElement>} svg the created svg element
-     * @property {Snap<SVGGroup>} viewport the direct parent of diagram elements and shapes
-     */
-    eventBus.fire('canvas.init', {
-      svg: svg,
-      viewport: viewport
-    });
-
-    // fire this in order for certain components to check
-    // if they need to be adjusted due the canvas size
-    this.resized();
-
-  }, this);
-
-  eventBus.on('diagram.destroy', 500, this._destroy, this);
-  eventBus.on('diagram.clear', 500, this._clear, this);
-};
-
-Canvas.prototype._destroy = function(emit) {
-  this._eventBus.fire('canvas.destroy', {
-    svg: this._svg,
-    viewport: this._viewport
-  });
-
-  var parent = this._container.parentNode;
-
-  if (parent) {
-    parent.removeChild(this._container);
-  }
-
-  delete this._svg;
-  delete this._container;
-  delete this._layers;
-  delete this._rootElement;
-  delete this._viewport;
-};
-
-Canvas.prototype._clear = function() {
-
-  var self = this;
-
-  var allElements = this._elementRegistry.getAll();
-
-  // remove all elements
-  allElements.forEach(function(element) {
-    var type = Elements.getType(element);
-
-    if (type === 'root') {
-      self.setRootElement(null, true);
-    } else {
-      self._removeElement(element, type);
-    }
-  });
-
-  // force recomputation of view box
-  delete this._cachedViewbox;
-};
-
-/**
- * Returns the default layer on which
- * all elements are drawn.
- *
- * @returns {Snap<SVGGroup>}
- */
-Canvas.prototype.getDefaultLayer = function() {
-  return this.getLayer(BASE_LAYER);
-};
-
-/**
- * Returns a layer that is used to draw elements
- * or annotations on it.
- *
- * @param  {String} name
- *
- * @returns {Snap<SVGGroup>}
- */
-Canvas.prototype.getLayer = function(name) {
-
-  if (!name) {
-    throw new Error('must specify a name');
-  }
-
-  var layer = this._layers[name];
-  if (!layer) {
-    layer = this._layers[name] = createGroup(this._viewport, 'layer-' + name);
-  }
-
-  return layer;
-};
-
-
-/**
- * Returns the html element that encloses the
- * drawing canvas.
- *
- * @return {DOMNode}
- */
-Canvas.prototype.getContainer = function() {
-  return this._container;
-};
-
-
-/////////////// markers ///////////////////////////////////
-
-Canvas.prototype._updateMarker = function(element, marker, add) {
-  var container;
-
-  if (!element.id) {
-    element = this._elementRegistry.get(element);
-  }
-
-  // we need to access all
-  container = this._elementRegistry._elements[element.id];
-
-  if (!container) {
-    return;
-  }
-
-  forEach([ container.gfx, container.secondaryGfx ], function(gfx) {
-    if (gfx) {
-      // invoke either addClass or removeClass based on mode
-      gfx[add ? 'addClass' : 'removeClass'](marker);
-    }
-  });
-
-  /**
-   * An event indicating that a marker has been updated for an element
-   *
-   * @event element.marker.update
-   * @type {Object}
-   * @property {djs.model.Element} element the shape
-   * @property {Object} gfx the graphical representation of the shape
-   * @property {String} marker
-   * @property {Boolean} add true if the marker was added, false if it got removed
-   */
-  this._eventBus.fire('element.marker.update', { element: element, gfx: container.gfx, marker: marker, add: !!add });
-};
-
-
-/**
- * Adds a marker to an element (basically a css class).
- *
- * Fires the element.marker.update event, making it possible to
- * integrate extension into the marker life-cycle, too.
- *
- * @example
- * canvas.addMarker('foo', 'some-marker');
- *
- * var fooGfx = canvas.getGraphics('foo');
- *
- * fooGfx; // <g class="... some-marker"> ... </g>
- *
- * @param {String|djs.model.Base} element
- * @param {String} marker
- */
-Canvas.prototype.addMarker = function(element, marker) {
-  this._updateMarker(element, marker, true);
-};
-
-
-/**
- * Remove a marker from an element.
- *
- * Fires the element.marker.update event, making it possible to
- * integrate extension into the marker life-cycle, too.
- *
- * @param  {String|djs.model.Base} element
- * @param  {String} marker
- */
-Canvas.prototype.removeMarker = function(element, marker) {
-  this._updateMarker(element, marker, false);
-};
-
-/**
- * Check the existence of a marker on element.
- *
- * @param  {String|djs.model.Base} element
- * @param  {String} marker
- */
-Canvas.prototype.hasMarker = function(element, marker) {
-  if (!element.id) {
-    element = this._elementRegistry.get(element);
-  }
-
-  var gfx = this.getGraphics(element);
-
-  return gfx && gfx.hasClass(marker);
-};
-
-/**
- * Toggles a marker on an element.
- *
- * Fires the element.marker.update event, making it possible to
- * integrate extension into the marker life-cycle, too.
- *
- * @param  {String|djs.model.Base} element
- * @param  {String} marker
- */
-Canvas.prototype.toggleMarker = function(element, marker) {
-  if (this.hasMarker(element, marker)) {
-    this.removeMarker(element, marker);
-  } else {
-    this.addMarker(element, marker);
-  }
-};
-
-Canvas.prototype.getRootElement = function() {
-  if (!this._rootElement) {
-    this.setRootElement({ id: '__implicitroot', children: [] });
-  }
-
-  return this._rootElement;
-};
-
-
-
-//////////////// root element handling ///////////////////////////
-
-/**
- * Sets a given element as the new root element for the canvas
- * and returns the new root element.
- *
- * @param {Object|djs.model.Root} element
- * @param {Boolean} [override] whether to override the current root element, if any
- *
- * @return {Object|djs.model.Root} new root element
- */
-Canvas.prototype.setRootElement = function(element, override) {
-
-  if (element) {
-    this._ensureValid('root', element);
-  }
-
-  var currentRoot = this._rootElement,
-      elementRegistry = this._elementRegistry,
-      eventBus = this._eventBus;
-
-  if (currentRoot) {
-    if (!override) {
-      throw new Error('rootElement already set, need to specify override');
-    }
-
-    // simulate element remove event sequence
-    eventBus.fire('root.remove', { element: currentRoot });
-    eventBus.fire('root.removed', { element: currentRoot });
-
-    elementRegistry.remove(currentRoot);
-  }
-
-  if (element) {
-    var gfx = this.getDefaultLayer();
-
-    // resemble element add event sequence
-    eventBus.fire('root.add', { element: element });
-
-    elementRegistry.add(element, gfx, this._svg);
-
-    eventBus.fire('root.added', { element: element, gfx: gfx });
-  }
-
-  this._rootElement = element;
-
-  return element;
-};
-
-
-
-///////////// add functionality ///////////////////////////////
-
-Canvas.prototype._ensureValid = function(type, element) {
-  if (!element.id) {
-    throw new Error('element must have an id');
-  }
-
-  if (this._elementRegistry.get(element.id)) {
-    throw new Error('element with id ' + element.id + ' already exists');
-  }
-
-  var requiredAttrs = REQUIRED_MODEL_ATTRS[type];
-
-  var valid = every(requiredAttrs, function(attr) {
-    return typeof element[attr] !== 'undefined';
-  });
-
-  if (!valid) {
-    throw new Error(
-      'must supply { ' + requiredAttrs.join(', ') + ' } with ' + type);
-  }
-};
-
-Canvas.prototype._setParent = function(element, parent, parentIndex) {
-  Collections.add(parent.children, element, parentIndex);
-  element.parent = parent;
-};
-
-/**
- * Adds an element to the canvas.
- *
- * This wires the parent <-> child relationship between the element and
- * a explicitly specified parent or an implicit root element.
- *
- * During add it emits the events
- *
- *  * <{type}.add> (element, parent)
- *  * <{type}.added> (element, gfx)
- *
- * Extensions may hook into these events to perform their magic.
- *
- * @param {String} type
- * @param {Object|djs.model.Base} element
- * @param {Object|djs.model.Base} [parent]
- * @param {Number} [parentIndex]
- *
- * @return {Object|djs.model.Base} the added element
- */
-Canvas.prototype._addElement = function(type, element, parent, parentIndex) {
-
-  parent = parent || this.getRootElement();
-
-  var eventBus = this._eventBus,
-      graphicsFactory = this._graphicsFactory;
-
-  this._ensureValid(type, element);
-
-  eventBus.fire(type + '.add', { element: element, parent: parent });
-
-  this._setParent(element, parent, parentIndex);
-
-  // create graphics
-  var gfx = graphicsFactory.create(type, element);
-
-  this._elementRegistry.add(element, gfx);
-
-  // update its visual
-  graphicsFactory.update(type, element, gfx);
-
-  eventBus.fire(type + '.added', { element: element, gfx: gfx });
-
-  return element;
-};
-
-/**
- * Adds a shape to the canvas
- *
- * @param {Object|djs.model.Shape} shape to add to the diagram
- * @param {djs.model.Base} [parent]
- * @param {Number} [parentIndex]
- *
- * @return {djs.model.Shape} the added shape
- */
-Canvas.prototype.addShape = function(shape, parent, parentIndex) {
-  return this._addElement('shape', shape, parent, parentIndex);
-};
-
-/**
- * Adds a connection to the canvas
- *
- * @param {Object|djs.model.Connection} connection to add to the diagram
- * @param {djs.model.Base} [parent]
- * @param {Number} [parentIndex]
- *
- * @return {djs.model.Connection} the added connection
- */
-Canvas.prototype.addConnection = function(connection, parent, parentIndex) {
-  return this._addElement('connection', connection, parent, parentIndex);
-};
-
-
-/**
- * Internal remove element
- */
-Canvas.prototype._removeElement = function(element, type) {
-
-  var elementRegistry = this._elementRegistry,
-      graphicsFactory = this._graphicsFactory,
-      eventBus = this._eventBus;
-
-  element = elementRegistry.get(element.id || element);
-
-  if (!element) {
-    // element was removed already
-    return;
-  }
-
-  eventBus.fire(type + '.remove', { element: element });
-
-  graphicsFactory.remove(element);
-
-  // unset parent <-> child relationship
-  Collections.remove(element.parent && element.parent.children, element);
-  element.parent = null;
-
-  eventBus.fire(type + '.removed', { element: element });
-
-  elementRegistry.remove(element);
-
-  return element;
-};
-
-
-/**
- * Removes a shape from the canvas
- *
- * @param {String|djs.model.Shape} shape or shape id to be removed
- *
- * @return {djs.model.Shape} the removed shape
- */
-Canvas.prototype.removeShape = function(shape) {
-
-  /**
-   * An event indicating that a shape is about to be removed from the canvas.
-   *
-   * @memberOf Canvas
-   *
-   * @event shape.remove
-   * @type {Object}
-   * @property {djs.model.Shape} element the shape descriptor
-   * @property {Object} gfx the graphical representation of the shape
-   */
-
-  /**
-   * An event indicating that a shape has been removed from the canvas.
-   *
-   * @memberOf Canvas
-   *
-   * @event shape.removed
-   * @type {Object}
-   * @property {djs.model.Shape} element the shape descriptor
-   * @property {Object} gfx the graphical representation of the shape
-   */
-  return this._removeElement(shape, 'shape');
-};
-
-
-/**
- * Removes a connection from the canvas
- *
- * @param {String|djs.model.Connection} connection or connection id to be removed
- *
- * @return {djs.model.Connection} the removed connection
- */
-Canvas.prototype.removeConnection = function(connection) {
-
-  /**
-   * An event indicating that a connection is about to be removed from the canvas.
-   *
-   * @memberOf Canvas
-   *
-   * @event connection.remove
-   * @type {Object}
-   * @property {djs.model.Connection} element the connection descriptor
-   * @property {Object} gfx the graphical representation of the connection
-   */
-
-  /**
-   * An event indicating that a connection has been removed from the canvas.
-   *
-   * @memberOf Canvas
-   *
-   * @event connection.removed
-   * @type {Object}
-   * @property {djs.model.Connection} element the connection descriptor
-   * @property {Object} gfx the graphical representation of the connection
-   */
-  return this._removeElement(connection, 'connection');
-};
-
-
-/**
- * Return the graphical object underlaying a certain diagram element
- *
- * @param {String|djs.model.Base} element descriptor of the element
- * @param {Boolean} [secondary=false] whether to return the secondary connected element
- *
- * @return {SVGElement}
- */
-Canvas.prototype.getGraphics = function(element, secondary) {
-  return this._elementRegistry.getGraphics(element, secondary);
-};
-
-
-/**
- * Perform a viewbox update via a given change function.
- *
- * @param {Function} changeFn
- */
-Canvas.prototype._changeViewbox = function(changeFn) {
-
-  // notify others of the upcoming viewbox change
-  this._eventBus.fire('canvas.viewbox.changing');
-
-  // perform actual change
-  changeFn.apply(this);
-
-  // reset the cached viewbox so that
-  // a new get operation on viewbox or zoom
-  // triggers a viewbox re-computation
-  this._cachedViewbox = null;
-
-  // notify others of the change; this step
-  // may or may not be debounced
-  this._viewboxChanged();
-};
-
-Canvas.prototype._viewboxChanged = function() {
-  this._eventBus.fire('canvas.viewbox.changed', { viewbox: this.viewbox() });
-};
-
-
-/**
- * Gets or sets the view box of the canvas, i.e. the
- * area that is currently displayed.
- *
- * The getter may return a cached viewbox (if it is currently
- * changing). To force a recomputation, pass `false` as the first argument.
- *
- * @example
- *
- * canvas.viewbox({ x: 100, y: 100, width: 500, height: 500 })
- *
- * // sets the visible area of the diagram to (100|100) -> (600|100)
- * // and and scales it according to the diagram width
- *
- * var viewbox = canvas.viewbox(); // pass `false` to force recomputing the box.
- *
- * console.log(viewbox);
- * // {
- * //   inner: Dimensions,
- * //   outer: Dimensions,
- * //   scale,
- * //   x, y,
- * //   width, height
- * // }
- *
- * @param  {Object} [box] the new view box to set
- * @param  {Number} box.x the top left X coordinate of the canvas visible in view box
- * @param  {Number} box.y the top left Y coordinate of the canvas visible in view box
- * @param  {Number} box.width the visible width
- * @param  {Number} box.height
- *
- * @return {Object} the current view box
- */
-Canvas.prototype.viewbox = function(box) {
-
-  if (box === undefined && this._cachedViewbox) {
-    return this._cachedViewbox;
-  }
-
-  var viewport = this._viewport,
-      innerBox,
-      outerBox = this.getSize(),
-      matrix,
-      scale,
-      x, y;
-
-  if (!box) {
-    // compute the inner box based on the
-    // diagrams default layer. This allows us to exclude
-    // external components, such as overlays
-    innerBox = this.getDefaultLayer().getBBox(true);
-
-    matrix = viewport.transform().localMatrix;
-    scale = round(matrix.a, 1000);
-
-    x = round(-matrix.e || 0, 1000);
-    y = round(-matrix.f || 0, 1000);
-
-    box = this._cachedViewbox = {
-      x: x ? x / scale : 0,
-      y: y ? y / scale : 0,
-      width: outerBox.width / scale,
-      height: outerBox.height / scale,
-      scale: scale,
-      inner: {
-        width: innerBox.width,
-        height: innerBox.height,
-        x: innerBox.x,
-        y: innerBox.y
-      },
-      outer: outerBox
-    };
-
-    return box;
-  } else {
-
-    this._changeViewbox(function() {
-      scale = Math.min(outerBox.width / box.width, outerBox.height / box.height);
-
-      matrix = new Snap.Matrix().scale(scale).translate(-box.x, -box.y);
-      viewport.transform(matrix);
-    });
-  }
-
-  return box;
-};
-
-
-/**
- * Gets or sets the scroll of the canvas.
- *
- * @param {Object} [delta] the new scroll to apply.
- *
- * @param {Number} [delta.dx]
- * @param {Number} [delta.dy]
- */
-Canvas.prototype.scroll = function(delta) {
-
-  var node = this._viewport.node;
-  var matrix = node.getCTM();
-
-  if (delta) {
-    this._changeViewbox(function() {
-      delta = assign({ dx: 0, dy: 0 }, delta || {});
-
-      matrix = this._svg.node.createSVGMatrix().translate(delta.dx, delta.dy).multiply(matrix);
-
-      setCTM(node, matrix);
-    });
-  }
-
-  return { x: matrix.e, y: matrix.f };
-};
-
-
-/**
- * Gets or sets the current zoom of the canvas, optionally zooming
- * to the specified position.
- *
- * The getter may return a cached zoom level. Call it with `false` as
- * the first argument to force recomputation of the current level.
- *
- * @param {String|Number} [newScale] the new zoom level, either a number, i.e. 0.9,
- *                                   or `fit-viewport` to adjust the size to fit the current viewport
- * @param {String|Point} [center] the reference point { x: .., y: ..} to zoom to, 'auto' to zoom into mid or null
- *
- * @return {Number} the current scale
- */
-Canvas.prototype.zoom = function(newScale, center) {
-
-  if (!newScale) {
-    return this.viewbox(newScale).scale;
-  }
-
-  if (newScale === 'fit-viewport') {
-    return this._fitViewport(center);
-  }
-
-  var outer,
-      matrix;
-
-  this._changeViewbox(function() {
-
-    if (typeof center !== 'object') {
-      outer = this.viewbox().outer;
-
-      center = {
-        x: outer.width / 2,
-        y: outer.height / 2
-      };
-    }
-
-    matrix = this._setZoom(newScale, center);
-  });
-
-  return round(matrix.a, 1000);
-};
-
-function setCTM(node, m) {
-  var mstr = 'matrix(' + m.a + ',' + m.b + ',' + m.c + ',' + m.d + ',' + m.e + ',' + m.f + ')';
-  node.setAttribute('transform', mstr);
-}
-
-Canvas.prototype._fitViewport = function(center) {
-
-  var vbox = this.viewbox(),
-      outer = vbox.outer,
-      inner = vbox.inner,
-      newScale,
-      newViewbox;
-
-  // display the complete diagram without zooming in.
-  // instead of relying on internal zoom, we perform a
-  // hard reset on the canvas viewbox to realize this
-  //
-  // if diagram does not need to be zoomed in, we focus it around
-  // the diagram origin instead
-
-  if (inner.x >= 0 &&
-      inner.y >= 0 &&
-      inner.x + inner.width <= outer.width &&
-      inner.y + inner.height <= outer.height &&
-      !center) {
-
-    newViewbox = {
-      x: 0,
-      y: 0,
-      width: Math.max(inner.width + inner.x, outer.width),
-      height: Math.max(inner.height + inner.y, outer.height)
-    };
-  } else {
-
-    newScale = Math.min(1, outer.width / inner.width, outer.height / inner.height);
-    newViewbox = {
-      x: inner.x + (center ? inner.width / 2 - outer.width / newScale / 2 : 0),
-      y: inner.y + (center ? inner.height / 2 - outer.height / newScale / 2 : 0),
-      width: outer.width / newScale,
-      height: outer.height / newScale
-    };
-  }
-
-  this.viewbox(newViewbox);
-
-  return this.viewbox(false).scale;
-};
-
-
-Canvas.prototype._setZoom = function(scale, center) {
-
-  var svg = this._svg.node,
-      viewport = this._viewport.node;
-
-  var matrix = svg.createSVGMatrix();
-  var point = svg.createSVGPoint();
-
-  var centerPoint,
-      originalPoint,
-      currentMatrix,
-      scaleMatrix,
-      newMatrix;
-
-  currentMatrix = viewport.getCTM();
-
-
-  var currentScale = currentMatrix.a;
-
-  if (center) {
-    centerPoint = assign(point, center);
-
-    // revert applied viewport transformations
-    originalPoint = centerPoint.matrixTransform(currentMatrix.inverse());
-
-    // create scale matrix
-    scaleMatrix = matrix
-                    .translate(originalPoint.x, originalPoint.y)
-                    .scale(1 / currentScale * scale)
-                    .translate(-originalPoint.x, -originalPoint.y);
-
-    newMatrix = currentMatrix.multiply(scaleMatrix);
-  } else {
-    newMatrix = matrix.scale(scale);
-  }
-
-  setCTM(this._viewport.node, newMatrix);
-
-  return newMatrix;
-};
-
-
-/**
- * Returns the size of the canvas
- *
- * @return {Dimensions}
- */
-Canvas.prototype.getSize = function() {
-  return {
-    width: this._container.clientWidth,
-    height: this._container.clientHeight
-  };
-};
-
-
-/**
- * Return the absolute bounding box for the given element
- *
- * The absolute bounding box may be used to display overlays in the
- * callers (browser) coordinate system rather than the zoomed in/out
- * canvas coordinates.
- *
- * @param  {ElementDescriptor} element
- * @return {Bounds} the absolute bounding box
- */
-Canvas.prototype.getAbsoluteBBox = function(element) {
-  var vbox = this.viewbox();
-  var bbox;
-
-  // connection
-  // use svg bbox
-  if (element.waypoints) {
-    var gfx = this.getGraphics(element);
-
-    var transformBBox = gfx.getBBox(true);
-    bbox = gfx.getBBox();
-
-    bbox.x -= transformBBox.x;
-    bbox.y -= transformBBox.y;
-
-    bbox.width += 2 * transformBBox.x;
-    bbox.height +=  2 * transformBBox.y;
-  }
-  // shapes
-  // use data
-  else {
-    bbox = element;
-  }
-
-  var x = bbox.x * vbox.scale - vbox.x * vbox.scale;
-  var y = bbox.y * vbox.scale - vbox.y * vbox.scale;
-
-  var width = bbox.width * vbox.scale;
-  var height = bbox.height * vbox.scale;
-
-  return {
-    x: x,
-    y: y,
-    width: width,
-    height: height
-  };
-};
-
-/**
- * Fires an event in order other modules can react to the
- * canvas resizing
- */
-Canvas.prototype.resized = function() {
-
-  // force recomputation of view box
-  delete this._cachedViewbox;
-
-  this._eventBus.fire('canvas.resized');
-};
-
-},{"171":171,"172":172,"196":196,"199":199,"204":204,"291":291,"297":297,"316":316}],149:[function(_dereq_,module,exports){
-'use strict';
-
-var Model = _dereq_(170);
-
-var assign = _dereq_(297);
-
-/**
- * A factory for diagram-js shapes
- */
-function ElementFactory() {
-  this._uid = 12;
-}
-
-module.exports = ElementFactory;
-
-
-ElementFactory.prototype.createRoot = function(attrs) {
-  return this.create('root', attrs);
-};
-
-ElementFactory.prototype.createLabel = function(attrs) {
-  return this.create('label', attrs);
-};
-
-ElementFactory.prototype.createShape = function(attrs) {
-  return this.create('shape', attrs);
-};
-
-ElementFactory.prototype.createConnection = function(attrs) {
-  return this.create('connection', attrs);
-};
-
-/**
- * Create a model element with the given type and
- * a number of pre-set attributes.
- *
- * @param  {String} type
- * @param  {Object} attrs
- * @return {djs.model.Base} the newly created model instance
- */
-ElementFactory.prototype.create = function(type, attrs) {
-
-  attrs = assign({}, attrs || {});
-
-  if (!attrs.id) {
-    attrs.id = type + '_' + (this._uid++);
-  }
-
-  return Model.create(type, attrs);
-};
-},{"170":170,"297":297}],150:[function(_dereq_,module,exports){
-'use strict';
-
-var ELEMENT_ID = 'data-element-id';
-
-
-/**
- * @class
- *
- * A registry that keeps track of all shapes in the diagram.
- */
-function ElementRegistry() {
-  this._elements = {};
-}
-
-module.exports = ElementRegistry;
-
-/**
- * Register a pair of (element, gfx, (secondaryGfx)).
- *
- * @param {djs.model.Base} element
- * @param {Snap<SVGElement>} gfx
- * @param {Snap<SVGElement>} [secondaryGfx] optional other element to register, too
- */
-ElementRegistry.prototype.add = function(element, gfx, secondaryGfx) {
-
-  var id = element.id;
-
-  this._validateId(id);
-
-  // associate dom node with element
-  gfx.attr(ELEMENT_ID, id);
-
-  if (secondaryGfx) {
-    secondaryGfx.attr(ELEMENT_ID, id);
-  }
-
-  this._elements[id] = { element: element, gfx: gfx, secondaryGfx: secondaryGfx };
-};
-
-/**
- * Removes an element from the registry.
- *
- * @param {djs.model.Base} element
- */
-ElementRegistry.prototype.remove = function(element) {
-  var elements = this._elements,
-      id = element.id || element,
-      container = id && elements[id];
-
-  if (container) {
-
-    // unset element id on gfx
-    container.gfx.attr(ELEMENT_ID, '');
-
-    if (container.secondaryGfx) {
-      container.secondaryGfx.attr(ELEMENT_ID, '');
-    }
-
-    delete elements[id];
-  }
-};
-
-/**
- * Update the id of an element
- *
- * @param {djs.model.Base} element
- * @param {String} newId
- */
-ElementRegistry.prototype.updateId = function(element, newId) {
-
-  this._validateId(newId);
-
-  if (typeof element === 'string') {
-    element = this.get(element);
-  }
-
-  var gfx = this.getGraphics(element),
-      secondaryGfx = this.getGraphics(element, true);
-
-  this.remove(element);
-
-  element.id = newId;
-
-  this.add(element, gfx, secondaryGfx);
-};
-
-/**
- * Return the model element for a given id or graphics.
- *
- * @example
- *
- * elementRegistry.get('SomeElementId_1');
- * elementRegistry.get(gfx);
- *
- *
- * @param {String|SVGElement} filter for selecting the element
- *
- * @return {djs.model.Base}
- */
-ElementRegistry.prototype.get = function(filter) {
-  var id;
-
-  if (typeof filter === 'string') {
-    id = filter;
-  } else {
-    id = filter && filter.attr(ELEMENT_ID);
-  }
-
-  var container = this._elements[id];
-  return container && container.element;
-};
-
-/**
- * Return all elements that match a given filter function.
- *
- * @param {Function} fn
- *
- * @return {Array<djs.model.Base>}
- */
-ElementRegistry.prototype.filter = function(fn) {
-
-  var filtered = [];
-
-  this.forEach(function(element, gfx) {
-    if (fn(element, gfx)) {
-      filtered.push(element);
-    }
-  });
-
-  return filtered;
-};
-
-/**
- * Return all rendered model elements.
- *
- * @return {Array<djs.model.Base>}
- */
-ElementRegistry.prototype.getAll = function() {
-  return this.filter(function(e) { return e; });
-};
-
-/**
- * Iterate over all diagram elements.
- *
- * @param {Function} fn
- */
-ElementRegistry.prototype.forEach = function(fn) {
-
-  var map = this._elements;
-
-  Object.keys(map).forEach(function(id) {
-    var container = map[id],
-        element = container.element,
-        gfx = container.gfx;
-
-    return fn(element, gfx);
-  });
-};
-
-/**
- * Return the graphical representation of an element or its id.
- *
- * @example
- * elementRegistry.getGraphics('SomeElementId_1');
- * elementRegistry.getGraphics(rootElement); // <g ...>
- *
- * elementRegistry.getGraphics(rootElement, true); // <svg ...>
- *
- *
- * @param {String|djs.model.Base} filter
- * @param {Boolean} [secondary=false] whether to return the secondary connected element
- *
- * @return {SVGElement}
- */
-ElementRegistry.prototype.getGraphics = function(filter, secondary) {
-  var id = filter.id || filter;
-
-  var container = this._elements[id];
-  return container && (secondary ? container.secondaryGfx : container.gfx);
-};
-
-/**
- * Validate the suitability of the given id and signals a problem
- * with an exception.
- *
- * @param {String} id
- *
- * @throws {Error} if id is empty or already assigned
- */
-ElementRegistry.prototype._validateId = function(id) {
-  if (!id) {
-    throw new Error('element must have an id');
-  }
-
-  if (this._elements[id]) {
-    throw new Error('element with id ' + id + ' already added');
-  }
-};
-},{}],151:[function(_dereq_,module,exports){
-'use strict';
-
-var isFunction = _dereq_(289),
-    isArray = _dereq_(288),
-    isNumber = _dereq_(291),
-    bind = _dereq_(203),
-    assign = _dereq_(297);
-
-var FN_REF = '__fn';
-
-var DEFAULT_PRIORITY = 1000;
-
-var slice = Array.prototype.slice;
-
-/**
- * A general purpose event bus.
- *
- * This component is used to communicate across a diagram instance.
- * Other parts of a diagram can use it to listen to and broadcast events.
- *
- *
- * ## Registering for Events
- *
- * The event bus provides the {@link EventBus#on} and {@link EventBus#once}
- * methods to register for events. {@link EventBus#off} can be used to
- * remove event registrations. Listeners receive an instance of {@link Event}
- * as the first argument. It allows them to hook into the event execution.
- *
- * ```javascript
- *
- * // listen for event
- * eventBus.on('foo', function(event) {
- *
- *   // access event type
- *   event.type; // 'foo'
- *
- *   // stop propagation to other listeners
- *   event.stopPropagation();
- *
- *   // prevent event default
- *   event.preventDefault();
- * });
- *
- * // listen for event with custom payload
- * eventBus.on('bar', function(event, payload) {
- *   console.log(payload);
- * });
- *
- * // listen for event returning value
- * eventBus.on('foobar', function(event) {
- *
- *   // stop event propagation + prevent default
- *   return false;
- *
- *   // stop event propagation + return custom result
- *   return {
- *     complex: 'listening result'
- *   };
- * });
- *
- *
- * // listen with custom priority (default=1000, higher is better)
- * eventBus.on('priorityfoo', 1500, function(event) {
- *   console.log('invoked first!');
- * });
- *
- *
- * // listen for event and pass the context (`this`)
- * eventBus.on('foobar', function(event) {
- *   this.foo();
- * }, this);
- * ```
- *
- *
- * ## Emitting Events
- *
- * Events can be emitted via the event bus using {@link EventBus#fire}.
- *
- * ```javascript
- *
- * // false indicates that the default action
- * // was prevented by listeners
- * if (eventBus.fire('foo') === false) {
- *   console.log('default has been prevented!');
- * };
- *
- *
- * // custom args + return value listener
- * eventBus.on('sum', function(event, a, b) {
- *   return a + b;
- * });
- *
- * // you can pass custom arguments + retrieve result values.
- * var sum = eventBus.fire('sum', 1, 2);
- * console.log(sum); // 3
- * ```
- */
-function EventBus() {
-  this._listeners = {};
-
-  // cleanup on destroy on lowest priority to allow
-  // message passing until the bitter end
-  this.on('diagram.destroy', 1, this._destroy, this);
-}
-
-module.exports = EventBus;
-
-
-/**
- * Register an event listener for events with the given name.
- *
- * The callback will be invoked with `event, ...additionalArguments`
- * that have been passed to {@link EventBus#fire}.
- *
- * Returning false from a listener will prevent the events default action
- * (if any is specified). To stop an event from being processed further in
- * other listeners execute {@link Event#stopPropagation}.
- *
- * Returning anything but `undefined` from a listener will stop the listener propagation.
- *
- * @param {String|Array<String>} events
- * @param {Number} [priority=1000] the priority in which this listener is called, larger is higher
- * @param {Function} callback
- * @param {Object} [that] Pass context (`this`) to the callback
- */
-EventBus.prototype.on = function(events, priority, callback, that) {
-
-  events = isArray(events) ? events : [ events ];
-
-  if (isFunction(priority)) {
-    that = callback;
-    callback = priority;
-    priority = DEFAULT_PRIORITY;
-  }
-
-  if (!isNumber(priority)) {
-    throw new Error('priority must be a number');
-  }
-
-  var actualCallback = callback;
-
-  if (that) {
-    actualCallback = bind(callback, that);
-
-    // make sure we remember and are able to remove
-    // bound callbacks via {@link #off} using the original
-    // callback
-    actualCallback[FN_REF] = callback[FN_REF] || callback;
-  }
-
-  var self = this,
-      listener = { priority: priority, callback: actualCallback };
-
-  events.forEach(function(e) {
-    self._addListener(e, listener);
-  });
-};
-
-
-/**
- * Register an event listener that is executed only once.
- *
- * @param {String} event the event name to register for
- * @param {Function} callback the callback to execute
- * @param {Object} [that] Pass context (`this`) to the callback
- */
-EventBus.prototype.once = function(event, priority, callback, that) {
-  var self = this;
-
-  if (isFunction(priority)) {
-    that = callback;
-    callback = priority;
-    priority = DEFAULT_PRIORITY;
-  }
-
-  if (!isNumber(priority)) {
-    throw new Error('priority must be a number');
-  }
-
-  function wrappedCallback() {
-    self.off(event, wrappedCallback);
-    return callback.apply(that, arguments);
-  }
-
-  // make sure we remember and are able to remove
-  // bound callbacks via {@link #off} using the original
-  // callback
-  wrappedCallback[FN_REF] = callback;
-
-  this.on(event, priority, wrappedCallback);
-};
-
-
-/**
- * Removes event listeners by event and callback.
- *
- * If no callback is given, all listeners for a given event name are being removed.
- *
- * @param {String} event
- * @param {Function} [callback]
- */
-EventBus.prototype.off = function(event, callback) {
-  var listeners = this._getListeners(event),
-      listener,
-      listenerCallback,
-      idx;
-
-  if (callback) {
-
-    // move through listeners from back to front
-    // and remove matching listeners
-    for (idx = listeners.length - 1; (listener = listeners[idx]); idx--) {
-      listenerCallback = listener.callback;
-
-      if (listenerCallback === callback || listenerCallback[FN_REF] === callback) {
-        listeners.splice(idx, 1);
-      }
-    }
-  } else {
-    // clear listeners
-    listeners.length = 0;
-  }
-};
-
-
-/**
- * Fires a named event.
- *
- * @example
- *
- * // fire event by name
- * events.fire('foo');
- *
- * // fire event object with nested type
- * var event = { type: 'foo' };
- * events.fire(event);
- *
- * // fire event with explicit type
- * var event = { x: 10, y: 20 };
- * events.fire('element.moved', event);
- *
- * // pass additional arguments to the event
- * events.on('foo', function(event, bar) {
- *   alert(bar);
- * });
- *
- * events.fire({ type: 'foo' }, 'I am bar!');
- *
- * @param {String} [name] the optional event name
- * @param {Object} [event] the event object
- * @param {...Object} additional arguments to be passed to the callback functions
- *
- * @return {Boolean} the events return value, if specified or false if the
- *                   default action was prevented by listeners
- */
-EventBus.prototype.fire = function(type, data) {
-
-  var event,
-      listeners,
-      returnValue,
-      args;
-
-  args = slice.call(arguments);
-
-  if (typeof type === 'object') {
-    event = type;
-    type = event.type;
-  }
-
-  if (!type) {
-    throw new Error('no event type specified');
-  }
-
-  listeners = this._listeners[type];
-
-  if (!listeners) {
-    return;
-  }
-
-  // we make sure we fire instances of our home made
-  // events here. We wrap them only once, though
-  if (data instanceof Event) {
-    // we are fine, we alread have an event
-    event = data;
-  } else {
-    event = new Event();
-    event.init(data);
-  }
-
-  // ensure we pass the event as the first parameter
-  args[0] = event;
-
-  // original event type (in case we delegate)
-  var originalType = event.type;
-
-  // update event type before delegation
-  if (type !== originalType) {
-    event.type = type;
-  }
-
-  try {
-    returnValue = this._invokeListeners(event, args, listeners);
-  } finally {
-    // reset event type after delegation
-    if (type !== originalType) {
-      event.type = originalType;
-    }
-  }
-
-  // set the return value to false if the event default
-  // got prevented and no other return value exists
-  if (returnValue === undefined && event.defaultPrevented) {
-    returnValue = false;
-  }
-
-  return returnValue;
-};
-
-
-EventBus.prototype.handleError = function(error) {
-  return this.fire('error', { error: error }) === false;
-};
-
-
-EventBus.prototype._destroy = function() {
-  this._listeners = {};
-};
-
-EventBus.prototype._invokeListeners = function(event, args, listeners) {
-
-  var idx,
-      listener,
-      returnValue;
-
-  for (idx = 0; (listener = listeners[idx]); idx++) {
-
-    // handle stopped propagation
-    if (event.cancelBubble) {
-      break;
-    }
-
-    returnValue = this._invokeListener(event, args, listener);
-  }
-
-  return returnValue;
-};
-
-EventBus.prototype._invokeListener = function(event, args, listener) {
-
-  var returnValue;
-
-  try {
-    // returning false prevents the default action
-    returnValue = invokeFunction(listener.callback, args);
-
-    // stop propagation on return value
-    if (returnValue !== undefined) {
-      event.returnValue = returnValue;
-      event.stopPropagation();
-    }
-
-    // prevent default on return false
-    if (returnValue === false) {
-      event.preventDefault();
-    }
-  } catch (e) {
-    if (!this.handleError(e)) {
-      console.error('unhandled error in event listener');
-      console.error(e.stack);
-
-      throw e;
-    }
-  }
-
-  return returnValue;
-};
-
-/*
- * Add new listener with a certain priority to the list
- * of listeners (for the given event).
- *
- * The semantics of listener registration / listener execution are
- * first register, first serve: New listeners will always be inserted
- * after existing listeners with the same priority.
- *
- * Example: Inserting two listeners with priority 1000 and 1300
- *
- *    * before: [ 1500, 1500, 1000, 1000 ]
- *    * after: [ 1500, 1500, (new=1300), 1000, 1000, (new=1000) ]
- *
- * @param {String} event
- * @param {Object} listener { priority, callback }
- */
-EventBus.prototype._addListener = function(event, newListener) {
-
-  var listeners = this._getListeners(event),
-      existingListener,
-      idx;
-
-  // ensure we order listeners by priority from
-  // 0 (high) to n > 0 (low)
-  for (idx = 0; (existingListener = listeners[idx]); idx++) {
-    if (existingListener.priority < newListener.priority) {
-
-      // prepend newListener at before existingListener
-      listeners.splice(idx, 0, newListener);
-      return;
-    }
-  }
-
-  listeners.push(newListener);
-};
-
-
-EventBus.prototype._getListeners = function(name) {
-  var listeners = this._listeners[name];
-
-  if (!listeners) {
-    this._listeners[name] = listeners = [];
-  }
-
-  return listeners;
-};
-
-
-/**
- * A event that is emitted via the event bus.
- */
-function Event() { }
-
-module.exports.Event = Event;
-
-Event.prototype.stopPropagation = function() {
-  this.cancelBubble = true;
-};
-
-Event.prototype.preventDefault = function() {
-  this.defaultPrevented = true;
-};
-
-Event.prototype.init = function(data) {
-  assign(this, data || {});
-};
-
-
-/**
- * Invoke function. Be fast...
- *
- * @param {Function} fn
- * @param {Array<Object>} args
- *
- * @return {Any}
- */
-function invokeFunction(fn, args) {
-  return fn.apply(null, args);
-}
-
-},{"203":203,"288":288,"289":289,"291":291,"297":297}],152:[function(_dereq_,module,exports){
-'use strict';
-
-var forEach = _dereq_(199),
-    reduce = _dereq_(201);
-
-var GraphicsUtil = _dereq_(174),
-    domClear = _dereq_(308);
-
-/**
- * A factory that creates graphical elements
- *
- * @param {EventBus} eventBus
- * @param {ElementRegistry} elementRegistry
- */
-function GraphicsFactory(eventBus, elementRegistry) {
-  this._eventBus = eventBus;
-  this._elementRegistry = elementRegistry;
-}
-
-GraphicsFactory.$inject = [ 'eventBus' , 'elementRegistry' ];
-
-module.exports = GraphicsFactory;
-
-
-GraphicsFactory.prototype._getChildren = function(element) {
-
-  var gfx = this._elementRegistry.getGraphics(element);
-
-  var childrenGfx;
-
-  // root element
-  if (!element.parent) {
-    childrenGfx = gfx;
-  } else {
-    childrenGfx = GraphicsUtil.getChildren(gfx);
-    if (!childrenGfx) {
-      childrenGfx = gfx.parent().group().attr('class', 'djs-children');
-    }
-  }
-
-  return childrenGfx;
-};
-
-/**
- * Clears the graphical representation of the element and returns the
- * cleared visual (the <g class="djs-visual" /> element).
- */
-GraphicsFactory.prototype._clear = function(gfx) {
-  var visual = GraphicsUtil.getVisual(gfx);
-
-  domClear(visual.node);
-
-  return visual;
-};
-
-/**
- * Creates a gfx container for shapes and connections
- *
- * The layout is as follows:
- *
- * <g class="djs-group">
- *
- *   <!-- the gfx -->
- *   <g class="djs-element djs-(shape|connection)">
- *     <g class="djs-visual">
- *       <!-- the renderer draws in here -->
- *     </g>
- *
- *     <!-- extensions (overlays, click box, ...) goes here
- *   </g>
- *
- *   <!-- the gfx child nodes -->
- *   <g class="djs-children"></g>
- * </g>
- *
- * @param {Object} parent
- * @param {String} type the type of the element, i.e. shape | connection
- */
-GraphicsFactory.prototype._createContainer = function(type, parentGfx) {
-  var outerGfx = parentGfx.group().attr('class', 'djs-group'),
-      gfx = outerGfx.group().attr('class', 'djs-element djs-' + type);
-
-  // create visual
-  gfx.group().attr('class', 'djs-visual');
-
-  return gfx;
-};
-
-GraphicsFactory.prototype.create = function(type, element) {
-  var childrenGfx = this._getChildren(element.parent);
-  return this._createContainer(type, childrenGfx);
-};
-
-
-GraphicsFactory.prototype.updateContainments = function(elements) {
-
-  var self = this,
-      elementRegistry = this._elementRegistry,
-      parents;
-
-
-  parents = reduce(elements, function(map, e) {
-
-    if (e.parent) {
-      map[e.parent.id] = e.parent;
-    }
-
-    return map;
-  }, {});
-
-  // update all parents of changed and reorganized their children
-  // in the correct order (as indicated in our model)
-  forEach(parents, function(parent) {
-
-    var childGfx = self._getChildren(parent),
-        children = parent.children;
-
-    if (!children) {
-      return;
-    }
-
-    forEach(children.slice().reverse(), function(c) {
-      var gfx = elementRegistry.getGraphics(c);
-      gfx.parent().prependTo(childGfx);
-    });
-  });
-};
-
-GraphicsFactory.prototype.drawShape = function(visual, element) {
-  var eventBus = this._eventBus;
-
-  return eventBus.fire('render.shape', { gfx: visual, element: element });
-};
-
-GraphicsFactory.prototype.getShapePath = function(element) {
-  var eventBus = this._eventBus;
-
-  return eventBus.fire('render.getShapePath', element);
-};
-
-GraphicsFactory.prototype.drawConnection = function(visual, element) {
-  var eventBus = this._eventBus;
-
-  return eventBus.fire('render.connection', { gfx: visual, element: element });
-};
-
-GraphicsFactory.prototype.getConnectionPath = function(waypoints) {
-  var eventBus = this._eventBus;
-
-  return eventBus.fire('render.getConnectionPath', waypoints);
-};
-
-GraphicsFactory.prototype.update = function(type, element, gfx) {
-  // Do not update root element
-  if (!element.parent) {
-    return;
-  }
-
-  var visual = this._clear(gfx);
-
-  // redraw
-  if (type === 'shape') {
-    this.drawShape(visual, element);
-
-    // update positioning
-    gfx.translate(element.x, element.y);
-  } else
-  if (type === 'connection') {
-    this.drawConnection(visual, element);
-  } else {
-    throw new Error('unknown type: ' + type);
-  }
-
-  gfx.attr('display', element.hidden ? 'none' : 'block');
-};
-
-GraphicsFactory.prototype.remove = function(element) {
-  var gfx = this._elementRegistry.getGraphics(element);
-
-  // remove
-  gfx.parent().remove();
-};
-
-},{"174":174,"199":199,"201":201,"308":308}],153:[function(_dereq_,module,exports){
-module.exports = {
-  __depends__: [ _dereq_(157) ],
-  __init__: [ 'canvas' ],
-  canvas: [ 'type', _dereq_(148) ],
-  elementRegistry: [ 'type', _dereq_(150) ],
-  elementFactory: [ 'type', _dereq_(149) ],
-  eventBus: [ 'type', _dereq_(151) ],
-  graphicsFactory: [ 'type', _dereq_(152) ]
-};
-},{"148":148,"149":149,"150":150,"151":151,"152":152,"157":157}],154:[function(_dereq_,module,exports){
-'use strict';
-
-var DEFAULT_RENDER_PRIORITY = 1000;
-
-/**
- * The base implementation of shape and connection renderers.
- *
- * @param {EventBus} eventBus
- * @param {Number} [renderPriority=1000]
- */
-function BaseRenderer(eventBus, renderPriority) {
-  var self = this;
-
-  renderPriority = renderPriority || DEFAULT_RENDER_PRIORITY;
-
-  eventBus.on([ 'render.shape', 'render.connection' ], renderPriority, function(evt, context) {
-    var type = evt.type,
-        element = context.element,
-        visuals = context.gfx;
-
-    if (self.canRender(element)) {
-      if (type === 'render.shape') {
-        return self.drawShape(visuals, element);
-      } else {
-        return self.drawConnection(visuals, element);
-      }
-    }
-  });
-
-  eventBus.on([ 'render.getShapePath', 'render.getConnectionPath'], renderPriority, function(evt, element) {
-    if (self.canRender(element)) {
-      if (evt.type === 'render.getShapePath') {
-        return self.getShapePath(element);
-      } else {
-        return self.getConnectionPath(element);
-      }
-    }
-  });
-}
-
-/**
- * Should check whether *this* renderer can render
- * the element/connection.
- *
- * @param {element} element
- *
- * @returns {Boolean}
- */
-BaseRenderer.prototype.canRender = function() {};
-
-/**
- * Provides the shape's snap svg element to be drawn on the `canvas`.
- *
- * @param {djs.Graphics} visuals
- * @param {Shape} shape
- *
- * @returns {Snap.svg} [returns a Snap.svg paper element ]
- */
-BaseRenderer.prototype.drawShape = function() {};
-
-/**
- * Provides the shape's snap svg element to be drawn on the `canvas`.
- *
- * @param {djs.Graphics} visuals
- * @param {Connection} connection
- *
- * @returns {Snap.svg} [returns a Snap.svg paper element ]
- */
-BaseRenderer.prototype.drawConnection = function() {};
-
-/**
- * Gets the SVG path of a shape that represents it's visual bounds.
- *
- * @param {Shape} shape
- *
- * @return {string} svg path
- */
-BaseRenderer.prototype.getShapePath = function() {};
-
-/**
- * Gets the SVG path of a connection that represents it's visual bounds.
- *
- * @param {Connection} connection
- *
- * @return {string} svg path
- */
-BaseRenderer.prototype.getConnectionPath = function() {};
-
-module.exports = BaseRenderer;
-
-},{}],155:[function(_dereq_,module,exports){
-'use strict';
-
-var inherits = _dereq_(193);
-
-var BaseRenderer = _dereq_(154);
-
-var renderUtil = _dereq_(178);
-
-var componentsToPath = renderUtil.componentsToPath,
-    createLine = renderUtil.createLine;
-
-// apply default renderer with lowest possible priority
-// so that it only kicks in if noone else could render
-var DEFAULT_RENDER_PRIORITY = 1;
-
-/**
- * The default renderer used for shapes and connections.
- *
- * @param {EventBus} eventBus
- * @param {Styles} styles
- */
-function DefaultRenderer(eventBus, styles) {
-  //
-  BaseRenderer.call(this, eventBus, DEFAULT_RENDER_PRIORITY);
-
-  this.CONNECTION_STYLE = styles.style([ 'no-fill' ], { strokeWidth: 5, stroke: 'fuchsia' });
-  this.SHAPE_STYLE = styles.style({ fill: 'white', stroke: 'fuchsia', strokeWidth: 2 });
-}
-
-inherits(DefaultRenderer, BaseRenderer);
-
-
-DefaultRenderer.prototype.canRender = function() {
-  return true;
-};
-
-DefaultRenderer.prototype.drawShape = function drawShape(visuals, element) {
-  return visuals.rect(0, 0, element.width || 0, element.height || 0).attr(this.SHAPE_STYLE);
-};
-
-DefaultRenderer.prototype.drawConnection = function drawConnection(visuals, connection) {
-  return createLine(connection.waypoints, this.CONNECTION_STYLE).appendTo(visuals);
-};
-
-DefaultRenderer.prototype.getShapePath = function getShapePath(shape) {
-
-  var x = shape.x,
-      y = shape.y,
-      width = shape.width,
-      height = shape.height;
-
-  var shapePath = [
-    ['M', x, y],
-    ['l', width, 0],
-    ['l', 0, height],
-    ['l', -width, 0],
-    ['z']
-  ];
-
-  return componentsToPath(shapePath);
-};
-
-DefaultRenderer.prototype.getConnectionPath = function getConnectionPath(connection) {
-  var waypoints = connection.waypoints;
-
-  var idx, point, connectionPath = [];
-
-  for (idx = 0; (point = waypoints[idx]); idx++) {
-
-    // take invisible docking into account
-    // when creating the path
-    point = point.original || point;
-
-    connectionPath.push([ idx === 0 ? 'M' : 'L', point.x, point.y ]);
-  }
-
-  return componentsToPath(connectionPath);
-};
-
-
-DefaultRenderer.$inject = [ 'eventBus', 'styles' ];
-
-module.exports = DefaultRenderer;
-
-},{"154":154,"178":178,"193":193}],156:[function(_dereq_,module,exports){
-'use strict';
-
-var isArray = _dereq_(288),
-    assign = _dereq_(297),
-    reduce = _dereq_(201);
-
-
-/**
- * A component that manages shape styles
- */
-function Styles() {
-
-  var defaultTraits = {
-
-    'no-fill': {
-      fill: 'none'
-    },
-    'no-border': {
-      strokeOpacity: 0.0
-    },
-    'no-events': {
-      pointerEvents: 'none'
-    }
-  };
-
-  var self = this;
-
-  /**
-   * Builds a style definition from a className, a list of traits and an object of additional attributes.
-   *
-   * @param  {String} className
-   * @param  {Array<String>} traits
-   * @param  {Object} additionalAttrs
-   *
-   * @return {Object} the style defintion
-   */
-  this.cls = function(className, traits, additionalAttrs) {
-    var attrs = this.style(traits, additionalAttrs);
-
-    return assign(attrs, { 'class': className });
-  };
-
-  /**
-   * Builds a style definition from a list of traits and an object of additional attributes.
-   *
-   * @param  {Array<String>} traits
-   * @param  {Object} additionalAttrs
-   *
-   * @return {Object} the style defintion
-   */
-  this.style = function(traits, additionalAttrs) {
-
-    if (!isArray(traits) && !additionalAttrs) {
-      additionalAttrs = traits;
-      traits = [];
-    }
-
-    var attrs = reduce(traits, function(attrs, t) {
-      return assign(attrs, defaultTraits[t] || {});
-    }, {});
-
-    return additionalAttrs ? assign(attrs, additionalAttrs) : attrs;
-  };
-
-  this.computeStyle = function(custom, traits, defaultStyles) {
-    if (!isArray(traits)) {
-      defaultStyles = traits;
-      traits = [];
-    }
-
-    return self.style(traits || [], assign({}, defaultStyles, custom || {}));
-  };
-}
-
-module.exports = Styles;
-
-},{"201":201,"288":288,"297":297}],157:[function(_dereq_,module,exports){
-module.exports = {
-  __init__: [ 'defaultRenderer' ],
-  defaultRenderer: [ 'type', _dereq_(155) ],
-  styles: [ 'type', _dereq_(156) ]
-};
-
-},{"155":155,"156":156}],158:[function(_dereq_,module,exports){
-'use strict';
-
-var forEach = _dereq_(199),
-    domDelegate = _dereq_(309);
-
-
-var isPrimaryButton = _dereq_(176).isPrimaryButton;
-
-var Snap = _dereq_(316);
-
-var renderUtil = _dereq_(178);
-
-var createLine = renderUtil.createLine,
-    updateLine = renderUtil.updateLine;
-
-/**
- * A plugin that provides interaction events for diagram elements.
- *
- * It emits the following events:
- *
- *   * element.hover
- *   * element.out
- *   * element.click
- *   * element.dblclick
- *   * element.mousedown
- *
- * Each event is a tuple { element, gfx, originalEvent }.
- *
- * Canceling the event via Event#preventDefault() prevents the original DOM operation.
- *
- * @param {EventBus} eventBus
- */
-function InteractionEvents(eventBus, elementRegistry, styles) {
-
-  var HIT_STYLE = styles.cls('djs-hit', [ 'no-fill', 'no-border' ], {
-    stroke: 'white',
-    strokeWidth: 15
-  });
-
-  /**
-   * Fire an interaction event.
-   *
-   * @param {String} type local event name, e.g. element.click.
-   * @param {DOMEvent} event native event
-   * @param {djs.model.Base} [element] the diagram element to emit the event on;
-   *                                   defaults to the event target
-   */
-  function fire(type, event, element) {
-
-    // only react on left mouse button interactions
-    // for interaction events
-    if (!isPrimaryButton(event)) {
-      return;
-    }
-
-    var target, gfx, returnValue;
-
-    if (!element) {
-      target = event.delegateTarget || event.target;
-
-      if (target) {
-        gfx = new Snap(target);
-        element = elementRegistry.get(gfx);
-      }
-    } else {
-      gfx = elementRegistry.getGraphics(element);
-    }
-
-    if (!gfx || !element) {
-      return;
-    }
-
-    returnValue = eventBus.fire(type, { element: element, gfx: gfx, originalEvent: event });
-
-    if (returnValue === false) {
-      event.stopPropagation();
-      event.preventDefault();
-    }
-  }
-
-  // TODO(nikku): document this
-  var handlers = {};
-
-  function mouseHandler(type) {
-
-    var fn = handlers[type];
-
-    if (!fn) {
-      fn = handlers[type] = function(event) {
-        fire(type, event);
-      };
-    }
-
-    return fn;
-  }
-
-  var bindings = {
-    mouseover: 'element.hover',
-    mouseout: 'element.out',
-    click: 'element.click',
-    dblclick: 'element.dblclick',
-    mousedown: 'element.mousedown',
-    mouseup: 'element.mouseup'
-  };
-
-
-  ///// manual event trigger
-
-  /**
-   * Trigger an interaction event (based on a native dom event)
-   * on the target shape or connection.
-   *
-   * @param {String} eventName the name of the triggered DOM event
-   * @param {MouseEvent} event
-   * @param {djs.model.Base} targetElement
-   */
-  function triggerMouseEvent(eventName, event, targetElement) {
-
-    // i.e. element.mousedown...
-    var localEventName = bindings[eventName];
-
-    if (!localEventName) {
-      throw new Error('unmapped DOM event name <' + eventName + '>');
-    }
-
-    return fire(localEventName, event, targetElement);
-  }
-
-
-  var elementSelector = 'svg, .djs-element';
-
-  ///// event registration
-
-  function registerEvent(node, event, localEvent) {
-    var handler = mouseHandler(localEvent);
-    handler.$delegate = domDelegate.bind(node, elementSelector, event, handler);
-  }
-
-  function unregisterEvent(node, event, localEvent) {
-    domDelegate.unbind(node, event, mouseHandler(localEvent).$delegate);
-  }
-
-  function registerEvents(svg) {
-    forEach(bindings, function(val, key) {
-      registerEvent(svg.node, key, val);
-    });
-  }
-
-  function unregisterEvents(svg) {
-    forEach(bindings, function(val, key) {
-      unregisterEvent(svg.node, key, val);
-    });
-  }
-
-  eventBus.on('canvas.destroy', function(event) {
-    unregisterEvents(event.svg);
-  });
-
-  eventBus.on('canvas.init', function(event) {
-    registerEvents(event.svg);
-  });
-
-
-  eventBus.on([ 'shape.added', 'connection.added' ], function(event) {
-    var element = event.element,
-        gfx = event.gfx,
-        hit;
-
-    if (element.waypoints) {
-      hit = createLine(element.waypoints);
-    } else {
-      hit = Snap.create('rect', { x: 0, y: 0, width: element.width, height: element.height });
-    }
-
-    hit.attr(HIT_STYLE).appendTo(gfx.node);
-  });
-
-  // update djs-hit on change
-
-  eventBus.on('shape.changed', function(event) {
-
-    var element = event.element,
-        gfx = event.gfx,
-        hit = gfx.select('.djs-hit');
-
-    hit.attr({
-      width: element.width,
-      height: element.height
-    });
-  });
-
-  eventBus.on('connection.changed', function(event) {
-
-    var element = event.element,
-        gfx = event.gfx,
-        hit = gfx.select('.djs-hit');
-
-    updateLine(hit, element.waypoints);
-  });
-
-
-  // API
-
-  this.fire = fire;
-
-  this.triggerMouseEvent = triggerMouseEvent;
-
-  this.mouseHandler = mouseHandler;
-
-  this.registerEvent = registerEvent;
-  this.unregisterEvent = unregisterEvent;
-}
-
-
-InteractionEvents.$inject = [ 'eventBus', 'elementRegistry', 'styles' ];
-
-module.exports = InteractionEvents;
-
-
-/**
- * An event indicating that the mouse hovered over an element
- *
- * @event element.hover
- *
- * @type {Object}
- * @property {djs.model.Base} element
- * @property {Snap<Element>} gfx
- * @property {Event} originalEvent
- */
-
-/**
- * An event indicating that the mouse has left an element
- *
- * @event element.out
- *
- * @type {Object}
- * @property {djs.model.Base} element
- * @property {Snap<Element>} gfx
- * @property {Event} originalEvent
- */
-
-/**
- * An event indicating that the mouse has clicked an element
- *
- * @event element.click
- *
- * @type {Object}
- * @property {djs.model.Base} element
- * @property {Snap<Element>} gfx
- * @property {Event} originalEvent
- */
-
-/**
- * An event indicating that the mouse has double clicked an element
- *
- * @event element.dblclick
- *
- * @type {Object}
- * @property {djs.model.Base} element
- * @property {Snap<Element>} gfx
- * @property {Event} originalEvent
- */
-
-/**
- * An event indicating that the mouse has gone down on an element.
- *
- * @event element.mousedown
- *
- * @type {Object}
- * @property {djs.model.Base} element
- * @property {Snap<Element>} gfx
- * @property {Event} originalEvent
- */
-
-/**
- * An event indicating that the mouse has gone up on an element.
- *
- * @event element.mouseup
- *
- * @type {Object}
- * @property {djs.model.Base} element
- * @property {Snap<Element>} gfx
- * @property {Event} originalEvent
- */
-
-},{"176":176,"178":178,"199":199,"309":309,"316":316}],159:[function(_dereq_,module,exports){
-module.exports = {
-  __init__: [ 'interactionEvents' ],
-  interactionEvents: [ 'type', _dereq_(158) ]
-};
-},{"158":158}],160:[function(_dereq_,module,exports){
-'use strict';
-
-var getBBox = _dereq_(172).getBBox;
-
-
-/**
- * @class
- *
- * A plugin that adds an outline to shapes and connections that may be activated and styled
- * via CSS classes.
- *
- * @param {EventBus} eventBus
- * @param {Styles} styles
- * @param {ElementRegistry} elementRegistry
- */
-function Outline(eventBus, styles, elementRegistry) {
-
-  this.offset = 6;
-
-  var OUTLINE_STYLE = styles.cls('djs-outline', [ 'no-fill' ]);
-
-  var self = this;
-
-  function createOutline(gfx, bounds) {
-    return gfx.rect(10, 10, 0, 0).attr(OUTLINE_STYLE);
-  }
-
-  eventBus.on([ 'shape.added', 'shape.changed' ], function(event) {
-    var element = event.element,
-        gfx     = event.gfx;
-
-    var outline = gfx.select('.djs-outline');
-
-    if (!outline) {
-      outline = createOutline(gfx, element);
-    }
-
-    self.updateShapeOutline(outline, element);
-  });
-
-  eventBus.on([ 'connection.added', 'connection.changed' ], function(event) {
-    var element = event.element,
-        gfx     = event.gfx;
-
-    var outline = gfx.select('.djs-outline');
-
-    if (!outline) {
-      outline = createOutline(gfx, element);
-    }
-
-    self.updateConnectionOutline(outline, element);
-  });
-}
-
-
-/**
- * Updates the outline of a shape respecting the dimension of the
- * element and an outline offset.
- *
- * @param  {SVGElement} outline
- * @param  {djs.model.Base} element
- */
-Outline.prototype.updateShapeOutline = function(outline, element) {
-
-  outline.attr({
-    x: -this.offset,
-    y: -this.offset,
-    width: element.width + this.offset * 2,
-    height: element.height + this.offset * 2
-  });
-
-};
-
-
-/**
- * Updates the outline of a connection respecting the bounding box of
- * the connection and an outline offset.
- *
- * @param  {SVGElement} outline
- * @param  {djs.model.Base} element
- */
-Outline.prototype.updateConnectionOutline = function(outline, connection) {
-
-  var bbox = getBBox(connection);
-
-  outline.attr({
-    x: bbox.x - this.offset,
-    y: bbox.y - this.offset,
-    width: bbox.width + this.offset * 2,
-    height: bbox.height + this.offset * 2
-  });
-
-};
-
-
-Outline.$inject = ['eventBus', 'styles', 'elementRegistry'];
-
-module.exports = Outline;
-
-},{"172":172}],161:[function(_dereq_,module,exports){
-'use strict';
-
-module.exports = {
-  __init__: [ 'outline' ],
-  outline: [ 'type', _dereq_(160) ]
-};
-},{"160":160}],162:[function(_dereq_,module,exports){
-'use strict';
-
-var isArray = _dereq_(288),
-    isString = _dereq_(294),
-    isObject = _dereq_(292),
-    assign = _dereq_(297),
-    forEach = _dereq_(199),
-    find = _dereq_(198),
-    filter = _dereq_(197);
-
-var domify = _dereq_(310),
-    domClasses = _dereq_(307),
-    domAttr = _dereq_(306),
-    domRemove = _dereq_(311),
-    domClear = _dereq_(308);
-
-var getBBox = _dereq_(172).getBBox;
-
-// document wide unique overlay ids
-var ids = new (_dereq_(175))('ov');
-
-
-function createRoot(parent) {
-  var root = domify('<div class="djs-overlay-container" style="position: absolute; width: 0; height: 0;" />');
-  parent.insertBefore(root, parent.firstChild);
-
-  return root;
-}
-
-
-function setPosition(el, x, y) {
-  assign(el.style, { left: x + 'px', top: y + 'px' });
-}
-
-function setVisible(el, visible) {
-  el.style.display = visible === false ? 'none' : '';
-}
-
-/**
- * A service that allows users to attach overlays to diagram elements.
- *
- * The overlay service will take care of overlay positioning during updates.
- *
- * @example
- *
- * // add a pink badge on the top left of the shape
- * overlays.add(someShape, {
- *   position: {
- *     top: -5,
- *     left: -5
- *   },
- *   html: '<div style="width: 10px; background: fuchsia; color: white;">0</div>'
- * });
- *
- * // or add via shape id
- *
- * overlays.add('some-element-id', {
- *   position: {
- *     top: -5,
- *     left: -5
- *   }
- *   html: '<div style="width: 10px; background: fuchsia; color: white;">0</div>'
- * });
- *
- * // or add with optional type
- *
- * overlays.add(someShape, 'badge', {
- *   position: {
- *     top: -5,
- *     left: -5
- *   }
- *   html: '<div style="width: 10px; background: fuchsia; color: white;">0</div>'
- * });
- *
- *
- * // remove an overlay
- *
- * var id = overlays.add(...);
- * overlays.remove(id);
- *
- * @param {EventBus} eventBus
- * @param {Canvas} canvas
- * @param {ElementRegistry} elementRegistry
- */
-function Overlays(eventBus, canvas, elementRegistry) {
-
-  this._eventBus = eventBus;
-  this._canvas = canvas;
-  this._elementRegistry = elementRegistry;
-
-  this._ids = ids;
-
-  this._overlayDefaults = {
-    show: {
-      minZoom: 0.7,
-      maxZoom: 5.0
-    }
-  };
-
-  /**
-   * Mapping overlayId -> overlay
-   */
-  this._overlays = {};
-
-  /**
-   * Mapping elementId -> overlay container
-   */
-  this._overlayContainers = [];
-
-  // root html element for all overlays
-  this._overlayRoot = createRoot(canvas.getContainer());
-
-  this._init();
-}
-
-
-Overlays.$inject = [ 'eventBus', 'canvas', 'elementRegistry' ];
-
-module.exports = Overlays;
-
-
-/**
- * Returns the overlay with the specified id or a list of overlays
- * for an element with a given type.
- *
- * @example
- *
- * // return the single overlay with the given id
- * overlays.get('some-id');
- *
- * // return all overlays for the shape
- * overlays.get({ element: someShape });
- *
- * // return all overlays on shape with type 'badge'
- * overlays.get({ element: someShape, type: 'badge' });
- *
- * // shape can also be specified as id
- * overlays.get({ element: 'element-id', type: 'badge' });
- *
- *
- * @param {Object} search
- * @param {String} [search.id]
- * @param {String|djs.model.Base} [search.element]
- * @param {String} [search.type]
- *
- * @return {Object|Array<Object>} the overlay(s)
- */
-Overlays.prototype.get = function(search) {
-
-  if (isString(search)) {
-    search = { id: search };
-  }
-
-  if (isString(search.element)) {
-    search.element = this._elementRegistry.get(search.element);
-  }
-
-  if (search.element) {
-    var container = this._getOverlayContainer(search.element, true);
-
-    // return a list of overlays when searching by element (+type)
-    if (container) {
-      return search.type ? filter(container.overlays, { type: search.type }) : container.overlays.slice();
-    } else {
-      return [];
-    }
-  } else
-  if (search.type) {
-    return filter(this._overlays, { type: search.type });
-  } else {
-    // return single element when searching by id
-    return search.id ? this._overlays[search.id] : null;
-  }
-};
-
-/**
- * Adds a HTML overlay to an element.
- *
- * @param {String|djs.model.Base}   element   attach overlay to this shape
- * @param {String}                  [type]    optional type to assign to the overlay
- * @param {Object}                  overlay   the overlay configuration
- *
- * @param {String|DOMElement}       overlay.html                 html element to use as an overlay
- * @param {Object}                  [overlay.show]               show configuration
- * @param {Number}                  [overlay.show.minZoom]       minimal zoom level to show the overlay
- * @param {Number}                  [overlay.show.maxZoom]       maximum zoom level to show the overlay
- * @param {Object}                  overlay.position             where to attach the overlay
- * @param {Number}                  [overlay.position.left]      relative to element bbox left attachment
- * @param {Number}                  [overlay.position.top]       relative to element bbox top attachment
- * @param {Number}                  [overlay.position.bottom]    relative to element bbox bottom attachment
- * @param {Number}                  [overlay.position.right]     relative to element bbox right attachment
- *
- * @return {String}                 id that may be used to reference the overlay for update or removal
- */
-Overlays.prototype.add = function(element, type, overlay) {
-
-  if (isObject(type)) {
-    overlay = type;
-    type = null;
-  }
-
-  if (!element.id) {
-    element = this._elementRegistry.get(element);
-  }
-
-  if (!overlay.position) {
-    throw new Error('must specifiy overlay position');
-  }
-
-  if (!overlay.html) {
-    throw new Error('must specifiy overlay html');
-  }
-
-  if (!element) {
-    throw new Error('invalid element specified');
-  }
-
-  var id = this._ids.next();
-
-  overlay = assign({}, this._overlayDefaults, overlay, {
-    id: id,
-    type: type,
-    element: element,
-    html: overlay.html
-  });
-
-  this._addOverlay(overlay);
-
-  return id;
-};
-
-
-/**
- * Remove an overlay with the given id or all overlays matching the given filter.
- *
- * @see Overlays#get for filter options.
- *
- * @param {String} [id]
- * @param {Object} [filter]
- */
-Overlays.prototype.remove = function(filter) {
-
-  var overlays = this.get(filter) || [];
-
-  if (!isArray(overlays)) {
-    overlays = [ overlays ];
-  }
-
-  var self = this;
-
-  forEach(overlays, function(overlay) {
-
-    var container = self._getOverlayContainer(overlay.element, true);
-
-    if (overlay) {
-      domRemove(overlay.html);
-      domRemove(overlay.htmlContainer);
-
-      delete overlay.htmlContainer;
-      delete overlay.element;
-
-      delete self._overlays[overlay.id];
-    }
-
-    if (container) {
-      var idx = container.overlays.indexOf(overlay);
-      if (idx !== -1) {
-        container.overlays.splice(idx, 1);
-      }
-    }
-  });
-
-};
-
-
-Overlays.prototype.show = function() {
-  setVisible(this._overlayRoot);
-};
-
-
-Overlays.prototype.hide = function() {
-  setVisible(this._overlayRoot, false);
-};
-
-Overlays.prototype.clear = function() {
-  this._overlays = {};
-
-  this._overlayContainers = [];
-
-  domClear(this._overlayRoot);
-};
-
-Overlays.prototype._updateOverlayContainer = function(container) {
-  var element = container.element,
-      html = container.html;
-
-  // update container left,top according to the elements x,y coordinates
-  // this ensures we can attach child elements relative to this container
-
-  var x = element.x,
-      y = element.y;
-
-  if (element.waypoints) {
-    var bbox = getBBox(element);
-    x = bbox.x;
-    y = bbox.y;
-  }
-
-  setPosition(html, x, y);
-
-  domAttr(container.html, 'data-container-id', element.id);
-};
-
-
-Overlays.prototype._updateOverlay = function(overlay) {
-
-  var position = overlay.position,
-      htmlContainer = overlay.htmlContainer,
-      element = overlay.element;
-
-  // update overlay html relative to shape because
-  // it is already positioned on the element
-
-  // update relative
-  var left = position.left,
-      top = position.top;
-
-  if (position.right !== undefined) {
-
-    var width;
-
-    if (element.waypoints) {
-      width = getBBox(element).width;
-    } else {
-      width = element.width;
-    }
-
-    left = position.right * -1 + width;
-  }
-
-  if (position.bottom !== undefined) {
-
-    var height;
-
-    if (element.waypoints) {
-      height = getBBox(element).height;
-    } else {
-      height = element.height;
-    }
-
-    top = position.bottom * -1 + height;
-  }
-
-  setPosition(htmlContainer, left || 0, top || 0);
-};
-
-Overlays.prototype._createOverlayContainer = function(element) {
-  var html = domify('<div class="djs-overlays" style="position: absolute" />');
-
-  this._overlayRoot.appendChild(html);
-
-  var container = {
-    html: html,
-    element: element,
-    overlays: []
-  };
-
-  this._updateOverlayContainer(container);
-
-  this._overlayContainers.push(container);
-
-  return container;
-};
-
-
-Overlays.prototype._updateRoot = function(viewbox) {
-  var a = viewbox.scale || 1;
-  var d = viewbox.scale || 1;
-
-  var matrix = 'matrix(' + a + ',0,0,' + d + ',' + (-1 * viewbox.x * a) + ',' + (-1 * viewbox.y * d) + ')';
-
-  this._overlayRoot.style.transform = matrix;
-  this._overlayRoot.style['-ms-transform'] = matrix;
-  this._overlayRoot.style['-webkit-transform'] = matrix;
-};
-
-
-Overlays.prototype._getOverlayContainer = function(element, raw) {
-  var container = find(this._overlayContainers, function(c) {
-    return c.element === element;
-  });
-
-
-  if (!container && !raw) {
-    return this._createOverlayContainer(element);
-  }
-
-  return container;
-};
-
-
-
-
-
-Overlays.prototype._addOverlay = function(overlay) {
-
-  var id = overlay.id,
-      element = overlay.element,
-      html = overlay.html,
-      htmlContainer,
-      overlayContainer;
-
-  // unwrap jquery (for those who need it)
-  if (html.get) {
-    html = html.get(0);
-  }
-
-  // create proper html elements from
-  // overlay HTML strings
-  if (isString(html)) {
-    html = domify(html);
-  }
-
-  overlayContainer = this._getOverlayContainer(element);
-
-  htmlContainer = domify('<div class="djs-overlay" data-overlay-id="' + id + '" style="position: absolute">');
-
-  htmlContainer.appendChild(html);
-
-  if (overlay.type) {
-    domClasses(htmlContainer).add('djs-overlay-' + overlay.type);
-  }
-
-  overlay.htmlContainer = htmlContainer;
-
-  overlayContainer.overlays.push(overlay);
-  overlayContainer.html.appendChild(htmlContainer);
-
-  this._overlays[id] = overlay;
-
-  this._updateOverlay(overlay);
-  this._updateOverlayVisibilty(overlay, this._canvas.viewbox());
-};
-
-Overlays.prototype._updateOverlayVisibilty = function(overlay, viewbox) {
-  var show = overlay.show,
-      htmlContainer = overlay.htmlContainer,
-      visible = true;
-
-  if (show) {
-    if (show.minZoom > viewbox.scale ||
-        show.maxZoom < viewbox.scale) {
-      visible = false;
-    }
-
-    setVisible(htmlContainer, visible);
-  }
-};
-
-Overlays.prototype._updateOverlaysVisibilty = function(viewbox) {
-
-  var self = this;
-
-  forEach(this._overlays, function(overlay) {
-    self._updateOverlayVisibilty(overlay, viewbox);
-  });
-};
-
-
-Overlays.prototype._init = function() {
-
-  var eventBus = this._eventBus;
-
-  var self = this;
-
-
-  // scroll/zoom integration
-
-  function updateViewbox(viewbox) {
-    self._updateRoot(viewbox);
-    self._updateOverlaysVisibilty(viewbox);
-
-    self.show();
-  }
-
-  eventBus.on('canvas.viewbox.changing', function(event) {
-    self.hide();
-  });
-
-  eventBus.on('canvas.viewbox.changed', function(event) {
-    updateViewbox(event.viewbox);
-  });
-
-
-  // remove integration
-
-  eventBus.on([ 'shape.remove', 'connection.remove' ], function(e) {
-    var element = e.element;
-    var overlays = self.get({ element: element });
-
-    forEach(overlays, function(o) {
-      self.remove(o.id);
-    });
-
-    var container = self._getOverlayContainer(element);
-
-    if (container) {
-      domRemove(container.html);
-      var i = self._overlayContainers.indexOf(container);
-      if (i !== -1) {
-        self._overlayContainers.splice(i, 1);
-      }
-    }
-  });
-
-
-  // move integration
-
-  eventBus.on([
-    'element.changed'
-  ], function(e) {
-    var element = e.element;
-
-    var container = self._getOverlayContainer(element, true);
-
-    if (container) {
-      forEach(container.overlays, function(overlay) {
-        self._updateOverlay(overlay);
-      });
-
-      self._updateOverlayContainer(container);
-    }
-  });
-
-
-  // marker integration, simply add them on the overlays as classes, too.
-
-  eventBus.on('element.marker.update', function(e) {
-    var container = self._getOverlayContainer(e.element, true);
-    if (container) {
-      domClasses(container.html)[e.add ? 'add' : 'remove'](e.marker);
-    }
-  });
-
-
-  // clear overlays with diagram
-
-  eventBus.on('diagram.clear', this.clear, this);
-};
-
-},{"172":172,"175":175,"197":197,"198":198,"199":199,"288":288,"292":292,"294":294,"297":297,"306":306,"307":307,"308":308,"310":310,"311":311}],163:[function(_dereq_,module,exports){
-module.exports = {
-  __init__: [ 'overlays' ],
-  overlays: [ 'type', _dereq_(162) ]
-};
-},{"162":162}],164:[function(_dereq_,module,exports){
-'use strict';
-
-var isArray = _dereq_(288),
-    forEach = _dereq_(199);
-
-
-/**
- * A service that offers the current selection in a diagram.
- * Offers the api to control the selection, too.
- *
- * @class
- *
- * @param {EventBus} eventBus the event bus
- */
-function Selection(eventBus) {
-
-  this._eventBus = eventBus;
-
-  this._selectedElements = [];
-
-  var self = this;
-
-  eventBus.on([ 'shape.remove', 'connection.remove' ], function(e) {
-    var element = e.element;
-    self.deselect(element);
-  });
-
-  eventBus.on([ 'diagram.clear' ], function(e) {
-    self.select(null);
-  });
-}
-
-Selection.$inject = [ 'eventBus' ];
-
-module.exports = Selection;
-
-
-Selection.prototype.deselect = function(element) {
-  var selectedElements = this._selectedElements;
-
-  var idx = selectedElements.indexOf(element);
-
-  if (idx !== -1) {
-    var oldSelection = selectedElements.slice();
-
-    selectedElements.splice(idx, 1);
-
-    this._eventBus.fire('selection.changed', { oldSelection: oldSelection, newSelection: selectedElements });
-  }
-};
-
-
-Selection.prototype.get = function() {
-  return this._selectedElements;
-};
-
-Selection.prototype.isSelected = function(element) {
-  return this._selectedElements.indexOf(element) !== -1;
-};
-
-
-/**
- * This method selects one or more elements on the diagram.
- *
- * By passing an additional add parameter you can decide whether or not the element(s)
- * should be added to the already existing selection or not.
- *
- * @method Selection#select
- *
- * @param  {Object|Object[]} elements element or array of elements to be selected
- * @param  {boolean} [add] whether the element(s) should be appended to the current selection, defaults to false
- */
-Selection.prototype.select = function(elements, add) {
-  var selectedElements = this._selectedElements,
-      oldSelection = selectedElements.slice();
-
-  if (!isArray(elements)) {
-    elements = elements ? [ elements ] : [];
-  }
-
-  // selection may be cleared by passing an empty array or null
-  // to the method
-  if (add) {
-    forEach(elements, function(element) {
-      if (selectedElements.indexOf(element) !== -1) {
-        // already selected
-        return;
-      } else {
-        selectedElements.push(element);
-      }
-    });
-  } else {
-    this._selectedElements = selectedElements = elements.slice();
-  }
-
-  this._eventBus.fire('selection.changed', { oldSelection: oldSelection, newSelection: selectedElements });
-};
-
-},{"199":199,"288":288}],165:[function(_dereq_,module,exports){
-'use strict';
-
-var hasPrimaryModifier = _dereq_(176).hasPrimaryModifier;
-
-var find = _dereq_(198);
-
-
-function SelectionBehavior(eventBus, selection, canvas, elementRegistry) {
-
-  eventBus.on('create.end', 500, function(e) {
-
-    // select the created shape after a
-    // successful create operation
-    if (e.context.canExecute) {
-      selection.select(e.context.shape);
-    }
-  });
-
-  eventBus.on('connect.end', 500, function(e) {
-
-    // select the connect end target
-    // after a connect operation
-    if (e.context.canExecute && e.context.target) {
-      selection.select(e.context.target);
-    }
-  });
-
-  eventBus.on('shape.move.end', 500, function(e) {
-    var previousSelection = e.previousSelection || [];
-
-    var shape = elementRegistry.get(e.context.shape.id);
-
-    // make sure at least the main moved element is being
-    // selected after a move operation
-    var inSelection = find(previousSelection, function(selectedShape) {
-      return shape.id === selectedShape.id;
-    });
-
-    if (!inSelection) {
-      selection.select(shape);
-    }
-  });
-
-  // Shift + click selection
-  eventBus.on('element.click', function(event) {
-
-    var element = event.element;
-
-    // do not select the root element
-    // or connections
-    if (element === canvas.getRootElement()) {
-      element = null;
-    }
-
-    var isSelected = selection.isSelected(element),
-        isMultiSelect = selection.get().length > 1;
-
-    // mouse-event: SELECTION_KEY
-    var add = hasPrimaryModifier(event);
-
-    // select OR deselect element in multi selection
-    if (isSelected && isMultiSelect) {
-      if (add) {
-        return selection.deselect(element);
-      } else {
-        return selection.select(element);
-      }
-    } else
-    if (!isSelected) {
-      selection.select(element, add);
-    } else {
-      selection.deselect(element);
-    }
-  });
-}
-
-SelectionBehavior.$inject = [ 'eventBus', 'selection', 'canvas', 'elementRegistry' ];
-module.exports = SelectionBehavior;
-
-},{"176":176,"198":198}],166:[function(_dereq_,module,exports){
-'use strict';
-
-var forEach = _dereq_(199);
-
-var MARKER_HOVER = 'hover',
-    MARKER_SELECTED = 'selected';
-
-
-/**
- * A plugin that adds a visible selection UI to shapes and connections
- * by appending the <code>hover</code> and <code>selected</code> classes to them.
- *
- * @class
- *
- * Makes elements selectable, too.
- *
- * @param {EventBus} events
- * @param {SelectionService} selection
- * @param {Canvas} canvas
- */
-function SelectionVisuals(events, canvas, selection, graphicsFactory, styles) {
-
-  this._multiSelectionBox = null;
-
-  function addMarker(e, cls) {
-    canvas.addMarker(e, cls);
-  }
-
-  function removeMarker(e, cls) {
-    canvas.removeMarker(e, cls);
-  }
-
-  events.on('element.hover', function(event) {
-    addMarker(event.element, MARKER_HOVER);
-  });
-
-  events.on('element.out', function(event) {
-    removeMarker(event.element, MARKER_HOVER);
-  });
-
-  events.on('selection.changed', function(event) {
-
-    function deselect(s) {
-      removeMarker(s, MARKER_SELECTED);
-    }
-
-    function select(s) {
-      addMarker(s, MARKER_SELECTED);
-    }
-
-    var oldSelection = event.oldSelection,
-        newSelection = event.newSelection;
-
-    forEach(oldSelection, function(e) {
-      if (newSelection.indexOf(e) === -1) {
-        deselect(e);
-      }
-    });
-
-    forEach(newSelection, function(e) {
-      if (oldSelection.indexOf(e) === -1) {
-        select(e);
-      }
-    });
-  });
-}
-
-SelectionVisuals.$inject = [
-  'eventBus',
-  'canvas',
-  'selection',
-  'graphicsFactory',
-  'styles'
-];
-
-module.exports = SelectionVisuals;
-
-},{"199":199}],167:[function(_dereq_,module,exports){
-module.exports = {
-  __init__: [ 'selectionVisuals', 'selectionBehavior' ],
-  __depends__: [
-    _dereq_(159),
-    _dereq_(161)
-  ],
-  selection: [ 'type', _dereq_(164) ],
-  selectionVisuals: [ 'type', _dereq_(166) ],
-  selectionBehavior: [ 'type', _dereq_(165) ]
-};
-
-},{"159":159,"161":161,"164":164,"165":165,"166":166}],168:[function(_dereq_,module,exports){
-module.exports = {
-  translate: [ 'value', _dereq_(169) ]
-};
-},{"169":169}],169:[function(_dereq_,module,exports){
-'use strict';
-
-/**
- * A simple translation stub to be used for multi-language support
- * in diagrams. Can be easily replaced with a more sophisticated
- * solution.
- *
- * @example
- *
- * // use it inside any diagram component by injecting `translate`.
- *
- * function MyService(translate) {
- *   alert(translate('HELLO {you}', { you: 'You!' }));
- * }
- *
- * @param {String} template to interpolate
- * @param {Object} [replacements] a map with substitutes
- *
- * @return {String} the translated string
- */
-module.exports = function translate(template, replacements) {
-
-  replacements = replacements || {};
-
-  return template.replace(/{([^}]+)}/g, function(_, key) {
-    return replacements[key] || '{' + key + '}';
-  });
-};
-},{}],170:[function(_dereq_,module,exports){
-'use strict';
-
-var assign = _dereq_(297),
-    inherits = _dereq_(193);
-
-var Refs = _dereq_(312);
-
-var parentRefs = new Refs({ name: 'children', enumerable: true, collection: true }, { name: 'parent' }),
-    labelRefs = new Refs({ name: 'label', enumerable: true }, { name: 'labelTarget' }),
-    attacherRefs = new Refs({ name: 'attachers', collection: true }, { name: 'host' }),
-    outgoingRefs = new Refs({ name: 'outgoing', collection: true }, { name: 'source' }),
-    incomingRefs = new Refs({ name: 'incoming', collection: true }, { name: 'target' });
-
-/**
- * @namespace djs.model
- */
-
-/**
- * @memberOf djs.model
- */
-
-/**
- * The basic graphical representation
- *
- * @class
- *
- * @abstract
- */
-function Base() {
-
-  /**
-   * The object that backs up the shape
-   *
-   * @name Base#businessObject
-   * @type Object
-   */
-  Object.defineProperty(this, 'businessObject', {
-    writable: true
-  });
-
-  /**
-   * The parent shape
-   *
-   * @name Base#parent
-   * @type Shape
-   */
-  parentRefs.bind(this, 'parent');
-
-  /**
-   * @name Base#label
-   * @type Label
-   */
-  labelRefs.bind(this, 'label');
-
-  /**
-   * The list of outgoing connections
-   *
-   * @name Base#outgoing
-   * @type Array<Connection>
-   */
-  outgoingRefs.bind(this, 'outgoing');
-
-  /**
-   * The list of incoming connections
-   *
-   * @name Base#incoming
-   * @type Array<Connection>
-   */
-  incomingRefs.bind(this, 'incoming');
-}
-
-
-/**
- * A graphical object
- *
- * @class
- * @constructor
- *
- * @extends Base
- */
-function Shape() {
-  Base.call(this);
-
-  /**
-   * The list of children
-   *
-   * @name Shape#children
-   * @type Array<Base>
-   */
-  parentRefs.bind(this, 'children');
-
-  /**
-   * @name Shape#host
-   * @type Shape
-   */
-  attacherRefs.bind(this, 'host');
-
-  /**
-   * @name Shape#attachers
-   * @type Shape
-   */
-  attacherRefs.bind(this, 'attachers');
-}
-
-inherits(Shape, Base);
-
-
-/**
- * A root graphical object
- *
- * @class
- * @constructor
- *
- * @extends Shape
- */
-function Root() {
-  Shape.call(this);
-}
-
-inherits(Root, Shape);
-
-
-/**
- * A label for an element
- *
- * @class
- * @constructor
- *
- * @extends Shape
- */
-function Label() {
-  Shape.call(this);
-
-  /**
-   * The labeled element
-   *
-   * @name Label#labelTarget
-   * @type Base
-   */
-  labelRefs.bind(this, 'labelTarget');
-}
-
-inherits(Label, Shape);
-
-
-/**
- * A connection between two elements
- *
- * @class
- * @constructor
- *
- * @extends Base
- */
-function Connection() {
-  Base.call(this);
-
-  /**
-   * The element this connection originates from
-   *
-   * @name Connection#source
-   * @type Base
-   */
-  outgoingRefs.bind(this, 'source');
-
-  /**
-   * The element this connection points to
-   *
-   * @name Connection#target
-   * @type Base
-   */
-  incomingRefs.bind(this, 'target');
-}
-
-inherits(Connection, Base);
-
-
-var types = {
-  connection: Connection,
-  shape: Shape,
-  label: Label,
-  root: Root
-};
-
-/**
- * Creates a new model element of the specified type
- *
- * @method create
- *
- * @example
- *
- * var shape1 = Model.create('shape', { x: 10, y: 10, width: 100, height: 100 });
- * var shape2 = Model.create('shape', { x: 210, y: 210, width: 100, height: 100 });
- *
- * var connection = Model.create('connection', { waypoints: [ { x: 110, y: 55 }, {x: 210, y: 55 } ] });
- *
- * @param  {String} type lower-cased model name
- * @param  {Object} attrs attributes to initialize the new model instance with
- *
- * @return {Base} the new model instance
- */
-module.exports.create = function(type, attrs) {
-  var Type = types[type];
-  if (!Type) {
-    throw new Error('unknown type: <' + type + '>');
-  }
-  return assign(new Type(), attrs);
-};
-
-
-module.exports.Base = Base;
-module.exports.Root = Root;
-module.exports.Shape = Shape;
-module.exports.Connection = Connection;
-module.exports.Label = Label;
-
-},{"193":193,"297":297,"312":312}],171:[function(_dereq_,module,exports){
-'use strict';
-
-/**
- * Failsafe remove an element from a collection
- *
- * @param  {Array<Object>} [collection]
- * @param  {Object} [element]
- *
- * @return {Number} the previous index of the element
- */
-module.exports.remove = function(collection, element) {
-
-  if (!collection || !element) {
-    return -1;
-  }
-
-  var idx = collection.indexOf(element);
-
-  if (idx !== -1) {
-    collection.splice(idx, 1);
-  }
-
-  return idx;
-};
-
-/**
- * Fail save add an element to the given connection, ensuring
- * it does not yet exist.
- *
- * @param {Array<Object>} collection
- * @param {Object} element
- * @param {Number} idx
- */
-module.exports.add = function(collection, element, idx) {
-
-  if (!collection || !element) {
-    return;
-  }
-
-  if (typeof idx !== 'number') {
-    idx = -1;
-  }
-
-  var currentIdx = collection.indexOf(element);
-
-  if (currentIdx !== -1) {
-
-    if (currentIdx === idx) {
-      // nothing to do, position has not changed
-      return;
-    } else {
-
-      if (idx !== -1) {
-        // remove from current position
-        collection.splice(currentIdx, 1);
-      } else {
-        // already exists in collection
-        return;
-      }
-    }
-  }
-
-  if (idx !== -1) {
-    // insert at specified position
-    collection.splice(idx, 0, element);
-  } else {
-    // push to end
-    collection.push(element);
-  }
-};
-
-
-/**
- * Fail save get the index of an element in a collection.
- *
- * @param {Array<Object>} collection
- * @param {Object} element
- *
- * @return {Number} the index or -1 if collection or element do
- *                  not exist or the element is not contained.
- */
-module.exports.indexOf = function(collection, element) {
-
-  if (!collection || !element) {
-    return -1;
-  }
-
-  return collection.indexOf(element);
-};
-
-},{}],172:[function(_dereq_,module,exports){
-'use strict';
-
-var isArray = _dereq_(288),
-    isNumber = _dereq_(291),
-    groupBy = _dereq_(200),
-    forEach = _dereq_(199);
-
-/**
- * Adds an element to a collection and returns true if the
- * element was added.
- *
- * @param {Array<Object>} elements
- * @param {Object} e
- * @param {Boolean} unique
- */
-function add(elements, e, unique) {
-  var canAdd = !unique || elements.indexOf(e) === -1;
-
-  if (canAdd) {
-    elements.push(e);
-  }
-
-  return canAdd;
-}
-
-/**
- * Iterate over each element in a collection, calling the iterator function `fn`
- * with (element, index, recursionDepth).
- *
- * Recurse into all elements that are returned by `fn`.
- *
- * @param  {Object|Array<Object>} elements
- * @param  {Function} fn iterator function called with (element, index, recursionDepth)
- * @param  {Number} [depth] maximum recursion depth
- */
-function eachElement(elements, fn, depth) {
-
-  depth = depth || 0;
-
-  if (!isArray(elements)) {
-    elements = [ elements ];
-  }
-
-  forEach(elements, function(s, i) {
-    var filter = fn(s, i, depth);
-
-    if (isArray(filter) && filter.length) {
-      eachElement(filter, fn, depth + 1);
-    }
-  });
-}
-
-/**
- * Collects self + child elements up to a given depth from a list of elements.
- *
- * @param  {djs.model.Base|Array<djs.model.Base>} elements the elements to select the children from
- * @param  {Boolean} unique whether to return a unique result set (no duplicates)
- * @param  {Number} maxDepth the depth to search through or -1 for infinite
- *
- * @return {Array<djs.model.Base>} found elements
- */
-function selfAndChildren(elements, unique, maxDepth) {
-  var result = [],
-      processedChildren = [];
-
-  eachElement(elements, function(element, i, depth) {
-    add(result, element, unique);
-
-    var children = element.children;
-
-    // max traversal depth not reached yet
-    if (maxDepth === -1 || depth < maxDepth) {
-
-      // children exist && children not yet processed
-      if (children && add(processedChildren, children, unique)) {
-        return children;
-      }
-    }
-  });
-
-  return result;
-}
-
-/**
- * Return self + direct children for a number of elements
- *
- * @param  {Array<djs.model.Base>} elements to query
- * @param  {Boolean} allowDuplicates to allow duplicates in the result set
- *
- * @return {Array<djs.model.Base>} the collected elements
- */
-function selfAndDirectChildren(elements, allowDuplicates) {
-  return selfAndChildren(elements, !allowDuplicates, 1);
-}
-
-/**
- * Return self + ALL children for a number of elements
- *
- * @param  {Array<djs.model.Base>} elements to query
- * @param  {Boolean} allowDuplicates to allow duplicates in the result set
- *
- * @return {Array<djs.model.Base>} the collected elements
- */
-function selfAndAllChildren(elements, allowDuplicates) {
-  return selfAndChildren(elements, !allowDuplicates, -1);
-}
-
-/**
- * Gets the the closure for all selected elements,
- * their connections and their attachment's connections
- *
- * @param {Array<djs.model.Base>} elements
- * @return {Object} enclosure
- */
-function getClosure(elements) {
-
-  // original elements passed to this function
-  var topLevel = groupBy(elements, function(e) { return e.id; });
-
-  var allShapes = {},
-      allConnections = {},
-      enclosedElements = {},
-      enclosedConnections = {};
-
-  function handleConnection(c) {
-    if (topLevel[c.source.id] && topLevel[c.target.id]) {
-      topLevel[c.id] = c;
-    }
-
-    // not enclosed as a child, but maybe logically
-    // (connecting two moved elements?)
-    if (allShapes[c.source.id] && allShapes[c.target.id]) {
-      enclosedConnections[c.id] = enclosedElements[c.id] = c;
-    }
-
-    allConnections[c.id] = c;
-  }
-
-  function handleElement(element) {
-
-    enclosedElements[element.id] = element;
-
-    if (element.waypoints) {
-      // remember connection
-      enclosedConnections[element.id] = allConnections[element.id] = element;
-    } else {
-      // remember shape
-      allShapes[element.id] = element;
-
-      // remember all connections
-      forEach(element.incoming, handleConnection);
-
-      forEach(element.outgoing, handleConnection);
-
-      // recurse into children
-      return element.children;
-    }
-  }
-
-  eachElement(elements, handleElement);
-
-  return {
-    allShapes: allShapes,
-    allConnections: allConnections,
-    topLevel: topLevel,
-    enclosedConnections: enclosedConnections,
-    enclosedElements: enclosedElements
-  };
-}
-
-/**
- * Returns the surrounding bbox for all elements in
- * the array or the element primitive.
- *
- * @param {Array<djs.model.Shape>|djs.model.Shape} elements
- * @param {Boolean} stopRecursion
- */
-function getBBox(elements, stopRecursion) {
-
-  stopRecursion = !!stopRecursion;
-  if (!isArray(elements)) {
-    elements = [elements];
-  }
-
-  var minX,
-      minY,
-      maxX,
-      maxY;
-
-  forEach(elements, function(element) {
-
-    // If element is a connection the bbox must be computed first
-    var bbox = element;
-    if (element.waypoints && !stopRecursion) {
-      bbox = getBBox(element.waypoints, true);
-    }
-
-    var x = bbox.x,
-        y = bbox.y,
-        height = bbox.height || 0,
-        width  = bbox.width  || 0;
-
-    if (x < minX || minX === undefined) {
-      minX = x;
-    }
-    if (y < minY || minY === undefined) {
-      minY = y;
-    }
-
-    if ((x + width) > maxX || maxX === undefined) {
-      maxX = x + width;
-    }
-    if ((y + height) > maxY || maxY === undefined) {
-      maxY = y + height;
-    }
-  });
-
-  return {
-    x: minX,
-    y: minY,
-    height: maxY - minY,
-    width: maxX - minX
-  };
-}
-
-
-/**
- * Returns all elements that are enclosed from the bounding box.
- *
- *   * If bbox.(width|height) is not specified the method returns
- *     all elements with element.x/y > bbox.x/y
- *   * If only bbox.x or bbox.y is specified, method return all elements with
- *     e.x > bbox.x or e.y > bbox.y
- *
- * @param {Array<djs.model.Shape>} elements List of Elements to search through
- * @param {djs.model.Shape} bbox the enclosing bbox.
- *
- * @return {Array<djs.model.Shape>} enclosed elements
- */
-function getEnclosedElements(elements, bbox) {
-
-  var filteredElements = {};
-
-  forEach(elements, function(element) {
-
-    var e = element;
-
-    if (e.waypoints) {
-      e = getBBox(e);
-    }
-
-    if (!isNumber(bbox.y) && (e.x > bbox.x)) {
-      filteredElements[element.id] = element;
-    }
-    if (!isNumber(bbox.x) && (e.y > bbox.y)) {
-      filteredElements[element.id] = element;
-    }
-    if (e.x > bbox.x && e.y > bbox.y) {
-      if (isNumber(bbox.width) && isNumber(bbox.height) &&
-          e.width  + e.x < bbox.width  + bbox.x &&
-          e.height + e.y < bbox.height + bbox.y) {
-
-        filteredElements[element.id] = element;
-      } else if (!isNumber(bbox.width) || !isNumber(bbox.height)) {
-        filteredElements[element.id] = element;
-      }
-    }
-  });
-
-  return filteredElements;
-}
-
-
-module.exports.add = add;
-module.exports.eachElement = eachElement;
-module.exports.selfAndDirectChildren = selfAndDirectChildren;
-module.exports.selfAndAllChildren = selfAndAllChildren;
-module.exports.getBBox = getBBox;
-module.exports.getEnclosedElements = getEnclosedElements;
-
-module.exports.getClosure = getClosure;
-
-
-function getElementType(element) {
-
-  if ('waypoints' in element) {
-    return 'connection';
-  }
-
-  if ('x' in element) {
-    return 'shape';
-  }
-
-  return 'root';
-}
-
-module.exports.getType = getElementType;
-},{"199":199,"200":200,"288":288,"291":291}],173:[function(_dereq_,module,exports){
-'use strict';
-
-function __preventDefault(event) {
-  return event && event.preventDefault();
-}
-
-function __stopPropagation(event, immediate) {
-  if (!event) {
-    return;
-  }
-
-  if (event.stopPropagation) {
-    event.stopPropagation();
-  }
-
-  if (immediate && event.stopImmediatePropagation) {
-    event.stopImmediatePropagation();
-  }
-}
-
-
-function getOriginal(event) {
-  return event.originalEvent || event.srcEvent;
-}
-
-module.exports.getOriginal = getOriginal;
-
-
-function stopEvent(event, immediate) {
-  stopPropagation(event, immediate);
-  preventDefault(event);
-}
-
-module.exports.stopEvent = stopEvent;
-
-
-function preventDefault(event) {
-  __preventDefault(event);
-  __preventDefault(getOriginal(event));
-}
-
-module.exports.preventDefault = preventDefault;
-
-
-function stopPropagation(event, immediate) {
-  __stopPropagation(event, immediate);
-  __stopPropagation(getOriginal(event), immediate);
-}
-
-module.exports.stopPropagation = stopPropagation;
-
-
-function toPoint(event) {
-
-  if (event.pointers && event.pointers.length) {
-    event = event.pointers[0];
-  }
-
-  if (event.touches && event.touches.length) {
-    event = event.touches[0];
-  }
-
-  return event ? {
-    x: event.clientX,
-    y: event.clientY
-  } : null;
-}
-
-module.exports.toPoint = toPoint;
-
-},{}],174:[function(_dereq_,module,exports){
-'use strict';
-
-/**
- * SVGs for elements are generated by the {@link GraphicsFactory}.
- *
- * This utility gives quick access to the important semantic
- * parts of an element.
- */
-
-/**
- * Returns the visual part of a diagram element
- *
- * @param {Snap<SVGElement>} gfx
- *
- * @return {Snap<SVGElement>}
- */
-function getVisual(gfx) {
-  return gfx.select('.djs-visual');
-}
-
-/**
- * Returns the children for a given diagram element.
- *
- * @param {Snap<SVGElement>} gfx
- * @return {Snap<SVGElement>}
- */
-function getChildren(gfx) {
-  return gfx.parent().children()[1];
-}
-
-/**
- * Returns the visual bbox of an element
- *
- * @param {Snap<SVGElement>} gfx
- *
- * @return {Bounds}
- */
-function getBBox(gfx) {
-  return getVisual(gfx).select('*').getBBox();
-}
-
-
-module.exports.getVisual = getVisual;
-module.exports.getChildren = getChildren;
-module.exports.getBBox = getBBox;
-},{}],175:[function(_dereq_,module,exports){
-'use strict';
-
-/**
- * Util that provides unique IDs.
- *
- * @class djs.util.IdGenerator
- * @constructor
- * @memberOf djs.util
- *
- * The ids can be customized via a given prefix and contain a random value to avoid collisions.
- *
- * @param {String} prefix a prefix to prepend to generated ids (for better readability)
- */
-function IdGenerator(prefix) {
-
-  this._counter = 0;
-  this._prefix = (prefix ? prefix + '-' : '') + Math.floor(Math.random() * 1000000000) + '-';
-}
-
-module.exports = IdGenerator;
-
-/**
- * Returns a next unique ID.
- *
- * @method djs.util.IdGenerator#next
- *
- * @returns {String} the id
- */
-IdGenerator.prototype.next = function() {
-  return this._prefix + (++this._counter);
-};
-
-},{}],176:[function(_dereq_,module,exports){
-'use strict';
-
-var getOriginalEvent = _dereq_(173).getOriginal;
-
-var isMac = _dereq_(177).isMac;
-
-
-function isPrimaryButton(event) {
-  // button === 0 -> left áka primary mouse button
-  return !(getOriginalEvent(event) || event).button;
-}
-
-module.exports.isPrimaryButton = isPrimaryButton;
-
-module.exports.isMac = isMac;
-
-module.exports.hasPrimaryModifier = function(event) {
-  var originalEvent = getOriginalEvent(event) || event;
-
-  if (!isPrimaryButton(event)) {
-    return false;
-  }
-
-  // Use alt as primary modifier key for mac OS
-  if (isMac()) {
-    return originalEvent.metaKey;
-  } else {
-    return originalEvent.ctrlKey;
-  }
-};
-
-
-module.exports.hasSecondaryModifier = function(event) {
-  var originalEvent = getOriginalEvent(event) || event;
-
-  return isPrimaryButton(event) && originalEvent.shiftKey;
-};
-
-},{"173":173,"177":177}],177:[function(_dereq_,module,exports){
-'use strict';
-
-module.exports.isMac = function isMac() {
-  return (/mac/i).test(navigator.platform);
-};
-},{}],178:[function(_dereq_,module,exports){
-'use strict';
-
-var Snap = _dereq_(316);
-
-
-module.exports.componentsToPath = function(elements) {
-  return elements.join(',').replace(/,?([A-z]),?/g, '$1');
-};
-
-function toSVGPoints(points) {
-  var result = '';
-
-  for (var i = 0, p; (p = points[i]); i++) {
-    result += p.x + ',' + p.y + ' ';
-  }
-
-  return result;
-}
-
-module.exports.toSVGPoints = toSVGPoints;
-
-module.exports.createLine = function(points, attrs) {
-  return Snap.create('polyline', { points: toSVGPoints(points) }).attr(attrs || {});
-};
-
-module.exports.updateLine = function(gfx, points) {
-  return gfx.attr({ points: toSVGPoints(points) });
-};
-
-},{"316":316}],179:[function(_dereq_,module,exports){
-'use strict';
-
-var isObject = _dereq_(292),
-    assign = _dereq_(297),
-    pick = _dereq_(302),
-    forEach = _dereq_(199),
-    reduce = _dereq_(201),
-    merge = _dereq_(300);
-
-var Snap = _dereq_(316);
-
-var DEFAULT_BOX_PADDING = 0;
-
-var DEFAULT_LABEL_SIZE = {
-  width: 150,
-  height: 50
-};
-
-
-function parseAlign(align) {
-
-  var parts = align.split('-');
-
-  return {
-    horizontal: parts[0] || 'center',
-    vertical: parts[1] || 'top'
-  };
-}
-
-function parsePadding(padding) {
-
-  if (isObject(padding)) {
-    return assign({ top: 0, left: 0, right: 0, bottom: 0 }, padding);
-  } else {
-    return {
-      top: padding,
-      left: padding,
-      right: padding,
-      bottom: padding
-    };
-  }
-}
-
-function getTextBBox(text, fakeText) {
-  fakeText.textContent = text;
-  return pick(fakeText.getBBox(), [ 'width', 'height' ]);
-}
-
-
-/**
- * Layout the next line and return the layouted element.
- *
- * Alters the lines passed.
- *
- * @param  {Array<String>} lines
- * @return {Object} the line descriptor, an object { width, height, text }
- */
-function layoutNext(lines, maxWidth, fakeText) {
-
-  var originalLine = lines.shift(),
-      fitLine = originalLine;
-
-  var textBBox;
-
-  for (;;) {
-    textBBox = getTextBBox(fitLine, fakeText);
-
-    textBBox.width = fitLine ? textBBox.width : 0;
-
-    // try to fit
-    if (fitLine === ' ' || fitLine === '' || textBBox.width < Math.round(maxWidth) || fitLine.length < 4) {
-      return fit(lines, fitLine, originalLine, textBBox);
-    }
-
-    fitLine = shortenLine(fitLine, textBBox.width, maxWidth);
-  }
-}
-
-function fit(lines, fitLine, originalLine, textBBox) {
-  if (fitLine.length < originalLine.length) {
-    var nextLine = lines[0] || '',
-        remainder = originalLine.slice(fitLine.length).trim();
-
-    if (/-\s*$/.test(remainder)) {
-      nextLine = remainder + nextLine.replace(/^\s+/, '');
-    } else {
-      nextLine = remainder + ' ' + nextLine;
-    }
-
-    lines[0] = nextLine;
-  }
-  return { width: textBBox.width, height: textBBox.height, text: fitLine };
-}
-
-
-/**
- * Shortens a line based on spacing and hyphens.
- * Returns the shortened result on success.
- *
- * @param  {String} line
- * @param  {Number} maxLength the maximum characters of the string
- * @return {String} the shortened string
- */
-function semanticShorten(line, maxLength) {
-  var parts = line.split(/(\s|-)/g),
-      part,
-      shortenedParts = [],
-      length = 0;
-
-  // try to shorten via spaces + hyphens
-  if (parts.length > 1) {
-    while ((part = parts.shift())) {
-      if (part.length + length < maxLength) {
-        shortenedParts.push(part);
-        length += part.length;
-      } else {
-        // remove previous part, too if hyphen does not fit anymore
-        if (part === '-') {
-          shortenedParts.pop();
-        }
-
-        break;
-      }
-    }
-  }
-
-  return shortenedParts.join('');
-}
-
-
-function shortenLine(line, width, maxWidth) {
-  var length = Math.max(line.length * (maxWidth / width), 1);
-
-  // try to shorten semantically (i.e. based on spaces and hyphens)
-  var shortenedLine = semanticShorten(line, length);
-
-  if (!shortenedLine) {
-
-    // force shorten by cutting the long word
-    shortenedLine = line.slice(0, Math.max(Math.round(length - 1), 1));
-  }
-
-  return shortenedLine;
-}
-
-
-/**
- * Creates a new label utility
- *
- * @param {Object} config
- * @param {Dimensions} config.size
- * @param {Number} config.padding
- * @param {Object} config.style
- * @param {String} config.align
- */
-function Text(config) {
-
-  this._config = assign({}, {
-    size: DEFAULT_LABEL_SIZE,
-    padding: DEFAULT_BOX_PADDING,
-    style: {},
-    align: 'center-top'
-  }, config || {});
-}
-
-
-/**
- * Create a label in the parent node.
- *
- * @method Text#createText
- *
- * @param {SVGElement} parent the parent to draw the label on
- * @param {String} text the text to render on the label
- * @param {Object} options
- * @param {String} options.align how to align in the bounding box.
- *                             Any of { 'center-middle', 'center-top' }, defaults to 'center-top'.
- * @param {String} options.style style to be applied to the text
- *
- * @return {SVGText} the text element created
- */
-Text.prototype.createText = function(parent, text, options) {
-
-  var box = merge({}, this._config.size, options.box || {}),
-      style = merge({}, this._config.style, options.style || {}),
-      align = parseAlign(options.align || this._config.align),
-      padding = parsePadding(options.padding !== undefined ? options.padding : this._config.padding);
-
-  var lines = text.split(/\r?\n/g),
-      layouted = [];
-
-  var maxWidth = box.width - padding.left - padding.right;
-
-  // FF regression: ensure text is shown during rendering
-  // by attaching it directly to the body
-  var fakeText = parent.paper.text(0, 0, '').attr(style).node;
-
-  while (lines.length) {
-    layouted.push(layoutNext(lines, maxWidth, fakeText));
-  }
-
-  var totalHeight = reduce(layouted, function(sum, line, idx) {
-    return sum + line.height;
-  }, 0);
-
-  // the y position of the next line
-  var y, x;
-
-  switch (align.vertical) {
-  case 'middle':
-    y = (box.height - totalHeight) / 2 - layouted[0].height / 4;
-    break;
-
-  default:
-    y = padding.top;
-  }
-
-  var textElement = parent.text().attr(style);
-
-  forEach(layouted, function(line) {
-    y += line.height;
-
-    switch (align.horizontal) {
-    case 'left':
-      x = padding.left;
-      break;
-
-    case 'right':
-      x = (maxWidth - padding.right - line.width);
-      break;
-
-    default:
-        // aka center
-      x = Math.max(((maxWidth - line.width) / 2 + padding.left), 0);
-    }
-
-
-    var tspan = Snap.create('tspan', { x: x, y: y }).node;
-    tspan.textContent = line.text;
-
-    textElement.append(tspan);
-  });
-
-  // remove fake text
-  fakeText.parentNode.removeChild(fakeText);
-
-  return textElement;
-};
-
-
-module.exports = Text;
-
-},{"199":199,"201":201,"292":292,"297":297,"300":300,"302":302,"316":316}],180:[function(_dereq_,module,exports){
-/**
- * Module dependencies.
- */
-
-try {
-  var index = _dereq_(184);
-} catch (err) {
-  var index = _dereq_(184);
-}
-
-/**
- * Whitespace regexp.
- */
-
-var re = /\s+/;
-
-/**
- * toString reference.
- */
-
-var toString = Object.prototype.toString;
-
-/**
- * Wrap `el` in a `ClassList`.
- *
- * @param {Element} el
- * @return {ClassList}
- * @api public
- */
-
-module.exports = function(el){
-  return new ClassList(el);
-};
-
-/**
- * Initialize a new ClassList for `el`.
- *
- * @param {Element} el
- * @api private
- */
-
-function ClassList(el) {
-  if (!el || !el.nodeType) {
-    throw new Error('A DOM element reference is required');
-  }
-  this.el = el;
-  this.list = el.classList;
-}
-
-/**
- * Add class `name` if not already present.
- *
- * @param {String} name
- * @return {ClassList}
- * @api public
- */
-
-ClassList.prototype.add = function(name){
-  // classList
-  if (this.list) {
-    this.list.add(name);
-    return this;
-  }
-
-  // fallback
-  var arr = this.array();
-  var i = index(arr, name);
-  if (!~i) arr.push(name);
-  this.el.className = arr.join(' ');
-  return this;
-};
-
-/**
- * Remove class `name` when present, or
- * pass a regular expression to remove
- * any which match.
- *
- * @param {String|RegExp} name
- * @return {ClassList}
- * @api public
- */
-
-ClassList.prototype.remove = function(name){
-  if ('[object RegExp]' == toString.call(name)) {
-    return this.removeMatching(name);
-  }
-
-  // classList
-  if (this.list) {
-    this.list.remove(name);
-    return this;
-  }
-
-  // fallback
-  var arr = this.array();
-  var i = index(arr, name);
-  if (~i) arr.splice(i, 1);
-  this.el.className = arr.join(' ');
-  return this;
-};
-
-/**
- * Remove all classes matching `re`.
- *
- * @param {RegExp} re
- * @return {ClassList}
- * @api private
- */
-
-ClassList.prototype.removeMatching = function(re){
-  var arr = this.array();
-  for (var i = 0; i < arr.length; i++) {
-    if (re.test(arr[i])) {
-      this.remove(arr[i]);
-    }
-  }
-  return this;
-};
-
-/**
- * Toggle class `name`, can force state via `force`.
- *
- * For browsers that support classList, but do not support `force` yet,
- * the mistake will be detected and corrected.
- *
- * @param {String} name
- * @param {Boolean} force
- * @return {ClassList}
- * @api public
- */
-
-ClassList.prototype.toggle = function(name, force){
-  // classList
-  if (this.list) {
-    if ("undefined" !== typeof force) {
-      if (force !== this.list.toggle(name, force)) {
-        this.list.toggle(name); // toggle again to correct
-      }
-    } else {
-      this.list.toggle(name);
-    }
-    return this;
-  }
-
-  // fallback
-  if ("undefined" !== typeof force) {
-    if (!force) {
-      this.remove(name);
-    } else {
-      this.add(name);
-    }
-  } else {
-    if (this.has(name)) {
-      this.remove(name);
-    } else {
-      this.add(name);
-    }
-  }
-
-  return this;
-};
-
-/**
- * Return an array of classes.
- *
- * @return {Array}
- * @api public
- */
-
-ClassList.prototype.array = function(){
-  var className = this.el.getAttribute('class') || '';
-  var str = className.replace(/^\s+|\s+$/g, '');
-  var arr = str.split(re);
-  if ('' === arr[0]) arr.shift();
-  return arr;
-};
-
-/**
- * Check if class `name` is present.
- *
- * @param {String} name
- * @return {ClassList}
- * @api public
- */
-
-ClassList.prototype.has =
-ClassList.prototype.contains = function(name){
-  return this.list
-    ? this.list.contains(name)
-    : !! ~index(this.array(), name);
-};
-
-},{"184":184}],181:[function(_dereq_,module,exports){
-arguments[4][22][0].apply(exports,arguments)
-},{"185":185,"22":22}],182:[function(_dereq_,module,exports){
-arguments[4][23][0].apply(exports,arguments)
-},{"181":181,"183":183,"23":23}],183:[function(_dereq_,module,exports){
-arguments[4][24][0].apply(exports,arguments)
-},{"24":24}],184:[function(_dereq_,module,exports){
-module.exports = function(arr, obj){
-  if (arr.indexOf) return arr.indexOf(obj);
-  for (var i = 0; i < arr.length; ++i) {
-    if (arr[i] === obj) return i;
-  }
-  return -1;
-};
-},{}],185:[function(_dereq_,module,exports){
-arguments[4][25][0].apply(exports,arguments)
-},{"186":186,"25":25}],186:[function(_dereq_,module,exports){
-arguments[4][26][0].apply(exports,arguments)
-},{"26":26}],187:[function(_dereq_,module,exports){
-
-var isArray = function(obj) {
-  return Object.prototype.toString.call(obj) === '[object Array]';
-};
-
-var annotate = function() {
-  var args = Array.prototype.slice.call(arguments);
-  
-  if (args.length === 1 && isArray(args[0])) {
-    args = args[0];
-  }
-
-  var fn = args.pop();
-
-  fn.$inject = args;
-
-  return fn;
-};
-
-
-// Current limitations:
-// - can't put into "function arg" comments
-// function /* (no parenthesis like this) */ (){}
-// function abc( /* xx (no parenthesis like this) */ a, b) {}
-//
-// Just put the comment before function or inside:
-// /* (((this is fine))) */ function(a, b) {}
-// function abc(a) { /* (((this is fine))) */}
-
-var FN_ARGS = /^function\s*[^\(]*\(\s*([^\)]*)\)/m;
-var FN_ARG = /\/\*([^\*]*)\*\//m;
-
-var parse = function(fn) {
-  if (typeof fn !== 'function') {
-    throw new Error('Cannot annotate "' + fn + '". Expected a function!');
-  }
-
-  var match = fn.toString().match(FN_ARGS);
-  return match[1] && match[1].split(',').map(function(arg) {
-    match = arg.match(FN_ARG);
-    return match ? match[1].trim() : arg.trim();
-  }) || [];
-};
-
-
-exports.annotate = annotate;
-exports.parse = parse;
-exports.isArray = isArray;
-
-},{}],188:[function(_dereq_,module,exports){
-module.exports = {
-  annotate: _dereq_(187).annotate,
-  Module: _dereq_(190),
-  Injector: _dereq_(189)
-};
-
-},{"187":187,"189":189,"190":190}],189:[function(_dereq_,module,exports){
-var Module = _dereq_(190);
-var autoAnnotate = _dereq_(187).parse;
-var annotate = _dereq_(187).annotate;
-var isArray = _dereq_(187).isArray;
-
-
-var Injector = function(modules, parent) {
-  parent = parent || {
-    get: function(name, strict) {
-      currentlyResolving.push(name);
-
-      if (strict === false) {
-        return null;
-      } else {
-        throw error('No provider for "' + name + '"!');
-      }
-    }
-  };
-
-  var currentlyResolving = [];
-  var providers = this._providers = Object.create(parent._providers || null);
-  var instances = this._instances = Object.create(null);
-
-  var self = instances.injector = this;
-
-  var error = function(msg) {
-    var stack = currentlyResolving.join(' -> ');
-    currentlyResolving.length = 0;
-    return new Error(stack ? msg + ' (Resolving: ' + stack + ')' : msg);
-  };
-
-  /**
-   * Return a named service.
-   *
-   * @param {String} name
-   * @param {Boolean} [strict=true] if false, resolve missing services to null
-   *
-   * @return {Object}
-   */
-  var get = function(name, strict) {
-    if (!providers[name] && name.indexOf('.') !== -1) {
-      var parts = name.split('.');
-      var pivot = get(parts.shift());
-
-      while(parts.length) {
-        pivot = pivot[parts.shift()];
-      }
-
-      return pivot;
-    }
-
-    if (Object.hasOwnProperty.call(instances, name)) {
-      return instances[name];
-    }
-
-    if (Object.hasOwnProperty.call(providers, name)) {
-      if (currentlyResolving.indexOf(name) !== -1) {
-        currentlyResolving.push(name);
-        throw error('Cannot resolve circular dependency!');
-      }
-
-      currentlyResolving.push(name);
-      instances[name] = providers[name][0](providers[name][1]);
-      currentlyResolving.pop();
-
-      return instances[name];
-    }
-
-    return parent.get(name, strict);
-  };
-
-  var instantiate = function(Type) {
-    var instance = Object.create(Type.prototype);
-    var returned = invoke(Type, instance);
-
-    return typeof returned === 'object' ? returned : instance;
-  };
-
-  var invoke = function(fn, context) {
-    if (typeof fn !== 'function') {
-      if (isArray(fn)) {
-        fn = annotate(fn.slice());
-      } else {
-        throw new Error('Cannot invoke "' + fn + '". Expected a function!');
-      }
-    }
-
-    var inject = fn.$inject && fn.$inject || autoAnnotate(fn);
-    var dependencies = inject.map(function(dep) {
-      return get(dep);
-    });
-
-    // TODO(vojta): optimize without apply
-    return fn.apply(context, dependencies);
-  };
-
-
-  var createPrivateInjectorFactory = function(privateChildInjector) {
-    return annotate(function(key) {
-      return privateChildInjector.get(key);
-    });
-  };
-
-  var createChild = function(modules, forceNewInstances) {
-    if (forceNewInstances && forceNewInstances.length) {
-      var fromParentModule = Object.create(null);
-      var matchedScopes = Object.create(null);
-
-      var privateInjectorsCache = [];
-      var privateChildInjectors = [];
-      var privateChildFactories = [];
-
-      var provider;
-      var cacheIdx;
-      var privateChildInjector;
-      var privateChildInjectorFactory;
-      for (var name in providers) {
-        provider = providers[name];
-
-        if (forceNewInstances.indexOf(name) !== -1) {
-          if (provider[2] === 'private') {
-            cacheIdx = privateInjectorsCache.indexOf(provider[3]);
-            if (cacheIdx === -1) {
-              privateChildInjector = provider[3].createChild([], forceNewInstances);
-              privateChildInjectorFactory = createPrivateInjectorFactory(privateChildInjector);
-              privateInjectorsCache.push(provider[3]);
-              privateChildInjectors.push(privateChildInjector);
-              privateChildFactories.push(privateChildInjectorFactory);
-              fromParentModule[name] = [privateChildInjectorFactory, name, 'private', privateChildInjector];
-            } else {
-              fromParentModule[name] = [privateChildFactories[cacheIdx], name, 'private', privateChildInjectors[cacheIdx]];
-            }
-          } else {
-            fromParentModule[name] = [provider[2], provider[1]];
-          }
-          matchedScopes[name] = true;
-        }
-
-        if ((provider[2] === 'factory' || provider[2] === 'type') && provider[1].$scope) {
-          forceNewInstances.forEach(function(scope) {
-            if (provider[1].$scope.indexOf(scope) !== -1) {
-              fromParentModule[name] = [provider[2], provider[1]];
-              matchedScopes[scope] = true;
-            }
-          });
-        }
-      }
-
-      forceNewInstances.forEach(function(scope) {
-        if (!matchedScopes[scope]) {
-          throw new Error('No provider for "' + scope + '". Cannot use provider from the parent!');
-        }
-      });
-
-      modules.unshift(fromParentModule);
-    }
-
-    return new Injector(modules, self);
-  };
-
-  var factoryMap = {
-    factory: invoke,
-    type: instantiate,
-    value: function(value) {
-      return value;
-    }
-  };
-
-  modules.forEach(function(module) {
-
-    function arrayUnwrap(type, value) {
-      if (type !== 'value' && isArray(value)) {
-        value = annotate(value.slice());
-      }
-
-      return value;
-    }
-
-    // TODO(vojta): handle wrong inputs (modules)
-    if (module instanceof Module) {
-      module.forEach(function(provider) {
-        var name = provider[0];
-        var type = provider[1];
-        var value = provider[2];
-
-        providers[name] = [factoryMap[type], arrayUnwrap(type, value), type];
-      });
-    } else if (typeof module === 'object') {
-      if (module.__exports__) {
-        var clonedModule = Object.keys(module).reduce(function(m, key) {
-          if (key.substring(0, 2) !== '__') {
-            m[key] = module[key];
-          }
-          return m;
-        }, Object.create(null));
-
-        var privateInjector = new Injector((module.__modules__ || []).concat([clonedModule]), self);
-        var getFromPrivateInjector = annotate(function(key) {
-          return privateInjector.get(key);
-        });
-        module.__exports__.forEach(function(key) {
-          providers[key] = [getFromPrivateInjector, key, 'private', privateInjector];
-        });
-      } else {
-        Object.keys(module).forEach(function(name) {
-          if (module[name][2] === 'private') {
-            providers[name] = module[name];
-            return;
-          }
-
-          var type = module[name][0];
-          var value = module[name][1];
-
-          providers[name] = [factoryMap[type], arrayUnwrap(type, value), type];
-        });
-      }
-    }
-  });
-
-  // public API
-  this.get = get;
-  this.invoke = invoke;
-  this.instantiate = instantiate;
-  this.createChild = createChild;
-};
-
-module.exports = Injector;
-
-},{"187":187,"190":190}],190:[function(_dereq_,module,exports){
-var Module = function() {
-  var providers = [];
-
-  this.factory = function(name, factory) {
-    providers.push([name, 'factory', factory]);
-    return this;
-  };
-
-  this.value = function(name, value) {
-    providers.push([name, 'value', value]);
-    return this;
-  };
-
-  this.type = function(name, type) {
-    providers.push([name, 'type', type]);
-    return this;
-  };
-
-  this.forEach = function(iterator) {
-    providers.forEach(iterator);
-  };
-};
-
-module.exports = Module;
-
-},{}],191:[function(_dereq_,module,exports){
-arguments[4][27][0].apply(exports,arguments)
-},{"27":27}],192:[function(_dereq_,module,exports){
-// Copyright (c) 2013 Adobe Systems Incorporated. All rights reserved.
-// 
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-// 
-// http://www.apache.org/licenses/LICENSE-2.0
-// 
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// ┌────────────────────────────────────────────────────────────┐ \\
-// │ Eve 0.4.2 - JavaScript Events Library                      │ \\
-// ├────────────────────────────────────────────────────────────┤ \\
-// │ Author Dmitry Baranovskiy (http://dmitry.baranovskiy.com/) │ \\
-// └────────────────────────────────────────────────────────────┘ \\
-
-(function (glob) {
-    var version = "0.4.2",
-        has = "hasOwnProperty",
-        separator = /[\.\/]/,
-        comaseparator = /\s*,\s*/,
-        wildcard = "*",
-        fun = function () {},
-        numsort = function (a, b) {
-            return a - b;
-        },
-        current_event,
-        stop,
-        events = {n: {}},
-        firstDefined = function () {
-            for (var i = 0, ii = this.length; i < ii; i++) {
-                if (typeof this[i] != "undefined") {
-                    return this[i];
-                }
-            }
-        },
-        lastDefined = function () {
-            var i = this.length;
-            while (--i) {
-                if (typeof this[i] != "undefined") {
-                    return this[i];
-                }
-            }
-        },
-    /*\
-     * eve
-     [ method ]
-
-     * Fires event with given `name`, given scope and other parameters.
-
-     > Arguments
-
-     - name (string) name of the *event*, dot (`.`) or slash (`/`) separated
-     - scope (object) context for the event handlers
-     - varargs (...) the rest of arguments will be sent to event handlers
-
-     = (object) array of returned values from the listeners. Array has two methods `.firstDefined()` and `.lastDefined()` to get first or last not `undefined` value.
-    \*/
-        eve = function (name, scope) {
-            name = String(name);
-            var e = events,
-                oldstop = stop,
-                args = Array.prototype.slice.call(arguments, 2),
-                listeners = eve.listeners(name),
-                z = 0,
-                f = false,
-                l,
-                indexed = [],
-                queue = {},
-                out = [],
-                ce = current_event,
-                errors = [];
-            out.firstDefined = firstDefined;
-            out.lastDefined = lastDefined;
-            current_event = name;
-            stop = 0;
-            for (var i = 0, ii = listeners.length; i < ii; i++) if ("zIndex" in listeners[i]) {
-                indexed.push(listeners[i].zIndex);
-                if (listeners[i].zIndex < 0) {
-                    queue[listeners[i].zIndex] = listeners[i];
-                }
-            }
-            indexed.sort(numsort);
-            while (indexed[z] < 0) {
-                l = queue[indexed[z++]];
-                out.push(l.apply(scope, args));
-                if (stop) {
-                    stop = oldstop;
-                    return out;
-                }
-            }
-            for (i = 0; i < ii; i++) {
-                l = listeners[i];
-                if ("zIndex" in l) {
-                    if (l.zIndex == indexed[z]) {
-                        out.push(l.apply(scope, args));
-                        if (stop) {
-                            break;
-                        }
-                        do {
-                            z++;
-                            l = queue[indexed[z]];
-                            l && out.push(l.apply(scope, args));
-                            if (stop) {
-                                break;
-                            }
-                        } while (l)
-                    } else {
-                        queue[l.zIndex] = l;
-                    }
-                } else {
-                    out.push(l.apply(scope, args));
-                    if (stop) {
-                        break;
-                    }
-                }
-            }
-            stop = oldstop;
-            current_event = ce;
-            return out;
-        };
-        // Undocumented. Debug only.
-        eve._events = events;
-    /*\
-     * eve.listeners
-     [ method ]
-
-     * Internal method which gives you array of all event handlers that will be triggered by the given `name`.
-
-     > Arguments
-
-     - name (string) name of the event, dot (`.`) or slash (`/`) separated
-
-     = (array) array of event handlers
-    \*/
-    eve.listeners = function (name) {
-        var names = name.split(separator),
-            e = events,
-            item,
-            items,
-            k,
-            i,
-            ii,
-            j,
-            jj,
-            nes,
-            es = [e],
-            out = [];
-        for (i = 0, ii = names.length; i < ii; i++) {
-            nes = [];
-            for (j = 0, jj = es.length; j < jj; j++) {
-                e = es[j].n;
-                items = [e[names[i]], e[wildcard]];
-                k = 2;
-                while (k--) {
-                    item = items[k];
-                    if (item) {
-                        nes.push(item);
-                        out = out.concat(item.f || []);
-                    }
-                }
-            }
-            es = nes;
-        }
-        return out;
-    };
-    
-    /*\
-     * eve.on
-     [ method ]
-     **
-     * Binds given event handler with a given name. You can use wildcards “`*`” for the names:
-     | eve.on("*.under.*", f);
-     | eve("mouse.under.floor"); // triggers f
-     * Use @eve to trigger the listener.
-     **
-     > Arguments
-     **
-     - name (string) name of the event, dot (`.`) or slash (`/`) separated, with optional wildcards
-     - f (function) event handler function
-     **
-     = (function) returned function accepts a single numeric parameter that represents z-index of the handler. It is an optional feature and only used when you need to ensure that some subset of handlers will be invoked in a given order, despite of the order of assignment. 
-     > Example:
-     | eve.on("mouse", eatIt)(2);
-     | eve.on("mouse", scream);
-     | eve.on("mouse", catchIt)(1);
-     * This will ensure that `catchIt` function will be called before `eatIt`.
-     *
-     * If you want to put your handler before non-indexed handlers, specify a negative value.
-     * Note: I assume most of the time you don’t need to worry about z-index, but it’s nice to have this feature “just in case”.
-    \*/
-    eve.on = function (name, f) {
-        name = String(name);
-        if (typeof f != "function") {
-            return function () {};
-        }
-        var names = name.split(comaseparator);
-        for (var i = 0, ii = names.length; i < ii; i++) {
-            (function (name) {
-                var names = name.split(separator),
-                    e = events,
-                    exist;
-                for (var i = 0, ii = names.length; i < ii; i++) {
-                    e = e.n;
-                    e = e.hasOwnProperty(names[i]) && e[names[i]] || (e[names[i]] = {n: {}});
-                }
-                e.f = e.f || [];
-                for (i = 0, ii = e.f.length; i < ii; i++) if (e.f[i] == f) {
-                    exist = true;
-                    break;
-                }
-                !exist && e.f.push(f);
-            }(names[i]));
-        }
-        return function (zIndex) {
-            if (+zIndex == +zIndex) {
-                f.zIndex = +zIndex;
-            }
-        };
-    };
-    /*\
-     * eve.f
-     [ method ]
-     **
-     * Returns function that will fire given event with optional arguments.
-     * Arguments that will be passed to the result function will be also
-     * concated to the list of final arguments.
-     | el.onclick = eve.f("click", 1, 2);
-     | eve.on("click", function (a, b, c) {
-     |     console.log(a, b, c); // 1, 2, [event object]
-     | });
-     > Arguments
-     - event (string) event name
-     - varargs (…) and any other arguments
-     = (function) possible event handler function
-    \*/
-    eve.f = function (event) {
-        var attrs = [].slice.call(arguments, 1);
-        return function () {
-            eve.apply(null, [event, null].concat(attrs).concat([].slice.call(arguments, 0)));
-        };
-    };
-    /*\
-     * eve.stop
-     [ method ]
-     **
-     * Is used inside an event handler to stop the event, preventing any subsequent listeners from firing.
-    \*/
-    eve.stop = function () {
-        stop = 1;
-    };
-    /*\
-     * eve.nt
-     [ method ]
-     **
-     * Could be used inside event handler to figure out actual name of the event.
-     **
-     > Arguments
-     **
-     - subname (string) #optional subname of the event
-     **
-     = (string) name of the event, if `subname` is not specified
-     * or
-     = (boolean) `true`, if current event’s name contains `subname`
-    \*/
-    eve.nt = function (subname) {
-        if (subname) {
-            return new RegExp("(?:\\.|\\/|^)" + subname + "(?:\\.|\\/|$)").test(current_event);
-        }
-        return current_event;
-    };
-    /*\
-     * eve.nts
-     [ method ]
-     **
-     * Could be used inside event handler to figure out actual name of the event.
-     **
-     **
-     = (array) names of the event
-    \*/
-    eve.nts = function () {
-        return current_event.split(separator);
-    };
-    /*\
-     * eve.off
-     [ method ]
-     **
-     * Removes given function from the list of event listeners assigned to given name.
-     * If no arguments specified all the events will be cleared.
-     **
-     > Arguments
-     **
-     - name (string) name of the event, dot (`.`) or slash (`/`) separated, with optional wildcards
-     - f (function) event handler function
-    \*/
-    /*\
-     * eve.unbind
-     [ method ]
-     **
-     * See @eve.off
-    \*/
-    eve.off = eve.unbind = function (name, f) {
-        if (!name) {
-            eve._events = events = {n: {}};
-            return;
-        }
-        var names = name.split(comaseparator);
-        if (names.length > 1) {
-            for (var i = 0, ii = names.length; i < ii; i++) {
-                eve.off(names[i], f);
-            }
-            return;
-        }
-        names = name.split(separator);
-        var e,
-            key,
-            splice,
-            i, ii, j, jj,
-            cur = [events];
-        for (i = 0, ii = names.length; i < ii; i++) {
-            for (j = 0; j < cur.length; j += splice.length - 2) {
-                splice = [j, 1];
-                e = cur[j].n;
-                if (names[i] != wildcard) {
-                    if (e[names[i]]) {
-                        splice.push(e[names[i]]);
-                    }
-                } else {
-                    for (key in e) if (e[has](key)) {
-                        splice.push(e[key]);
-                    }
-                }
-                cur.splice.apply(cur, splice);
-            }
-        }
-        for (i = 0, ii = cur.length; i < ii; i++) {
-            e = cur[i];
-            while (e.n) {
-                if (f) {
-                    if (e.f) {
-                        for (j = 0, jj = e.f.length; j < jj; j++) if (e.f[j] == f) {
-                            e.f.splice(j, 1);
-                            break;
-                        }
-                        !e.f.length && delete e.f;
-                    }
-                    for (key in e.n) if (e.n[has](key) && e.n[key].f) {
-                        var funcs = e.n[key].f;
-                        for (j = 0, jj = funcs.length; j < jj; j++) if (funcs[j] == f) {
-                            funcs.splice(j, 1);
-                            break;
-                        }
-                        !funcs.length && delete e.n[key].f;
-                    }
-                } else {
-                    delete e.f;
-                    for (key in e.n) if (e.n[has](key) && e.n[key].f) {
-                        delete e.n[key].f;
-                    }
-                }
-                e = e.n;
-            }
-        }
-    };
-    /*\
-     * eve.once
-     [ method ]
-     **
-     * Binds given event handler with a given name to only run once then unbind itself.
-     | eve.once("login", f);
-     | eve("login"); // triggers f
-     | eve("login"); // no listeners
-     * Use @eve to trigger the listener.
-     **
-     > Arguments
-     **
-     - name (string) name of the event, dot (`.`) or slash (`/`) separated, with optional wildcards
-     - f (function) event handler function
-     **
-     = (function) same return function as @eve.on
-    \*/
-    eve.once = function (name, f) {
-        var f2 = function () {
-            eve.unbind(name, f2);
-            return f.apply(this, arguments);
-        };
-        return eve.on(name, f2);
-    };
-    /*\
-     * eve.version
-     [ property (string) ]
-     **
-     * Current version of the library.
-    \*/
-    eve.version = version;
-    eve.toString = function () {
-        return "You are running Eve " + version;
-    };
-    (typeof module != "undefined" && module.exports) ? (module.exports = eve) : (typeof define === "function" && define.amd ? (define("eve", [], function() { return eve; })) : (glob.eve = eve));
-})(this);
-
-},{}],193:[function(_dereq_,module,exports){
-arguments[4][28][0].apply(exports,arguments)
-},{"28":28}],194:[function(_dereq_,module,exports){
-arguments[4][29][0].apply(exports,arguments)
-},{"29":29}],195:[function(_dereq_,module,exports){
-var LazyWrapper = _dereq_(206),
-    LodashWrapper = _dereq_(207),
-    baseLodash = _dereq_(233),
-    isArray = _dereq_(288),
-    isObjectLike = _dereq_(273),
-    wrapperClone = _dereq_(286);
-
-/** Used for native method references. */
-var objectProto = Object.prototype;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
-
-/**
- * Creates a `lodash` object which wraps `value` to enable implicit chaining.
- * Methods that operate on and return arrays, collections, and functions can
- * be chained together. Methods that retrieve a single value or may return a
- * primitive value will automatically end the chain returning the unwrapped
- * value. Explicit chaining may be enabled using `_.chain`. The execution of
- * chained methods is lazy, that is, execution is deferred until `_#value`
- * is implicitly or explicitly called.
- *
- * Lazy evaluation allows several methods to support shortcut fusion. Shortcut
- * fusion is an optimization strategy which merge iteratee calls; this can help
- * to avoid the creation of intermediate data structures and greatly reduce the
- * number of iteratee executions.
- *
- * Chaining is supported in custom builds as long as the `_#value` method is
- * directly or indirectly included in the build.
- *
- * In addition to lodash methods, wrappers have `Array` and `String` methods.
- *
- * The wrapper `Array` methods are:
- * `concat`, `join`, `pop`, `push`, `reverse`, `shift`, `slice`, `sort`,
- * `splice`, and `unshift`
- *
- * The wrapper `String` methods are:
- * `replace` and `split`
- *
- * The wrapper methods that support shortcut fusion are:
- * `compact`, `drop`, `dropRight`, `dropRightWhile`, `dropWhile`, `filter`,
- * `first`, `initial`, `last`, `map`, `pluck`, `reject`, `rest`, `reverse`,
- * `slice`, `take`, `takeRight`, `takeRightWhile`, `takeWhile`, `toArray`,
- * and `where`
- *
- * The chainable wrapper methods are:
- * `after`, `ary`, `assign`, `at`, `before`, `bind`, `bindAll`, `bindKey`,
- * `callback`, `chain`, `chunk`, `commit`, `compact`, `concat`, `constant`,
- * `countBy`, `create`, `curry`, `debounce`, `defaults`, `defaultsDeep`,
- * `defer`, `delay`, `difference`, `drop`, `dropRight`, `dropRightWhile`,
- * `dropWhile`, `fill`, `filter`, `flatten`, `flattenDeep`, `flow`, `flowRight`,
- * `forEach`, `forEachRight`, `forIn`, `forInRight`, `forOwn`, `forOwnRight`,
- * `functions`, `groupBy`, `indexBy`, `initial`, `intersection`, `invert`,
- * `invoke`, `keys`, `keysIn`, `map`, `mapKeys`, `mapValues`, `matches`,
- * `matchesProperty`, `memoize`, `merge`, `method`, `methodOf`, `mixin`,
- * `modArgs`, `negate`, `omit`, `once`, `pairs`, `partial`, `partialRight`,
- * `partition`, `pick`, `plant`, `pluck`, `property`, `propertyOf`, `pull`,
- * `pullAt`, `push`, `range`, `rearg`, `reject`, `remove`, `rest`, `restParam`,
- * `reverse`, `set`, `shuffle`, `slice`, `sort`, `sortBy`, `sortByAll`,
- * `sortByOrder`, `splice`, `spread`, `take`, `takeRight`, `takeRightWhile`,
- * `takeWhile`, `tap`, `throttle`, `thru`, `times`, `toArray`, `toPlainObject`,
- * `transform`, `union`, `uniq`, `unshift`, `unzip`, `unzipWith`, `values`,
- * `valuesIn`, `where`, `without`, `wrap`, `xor`, `zip`, `zipObject`, `zipWith`
- *
- * The wrapper methods that are **not** chainable by default are:
- * `add`, `attempt`, `camelCase`, `capitalize`, `ceil`, `clone`, `cloneDeep`,
- * `deburr`, `endsWith`, `escape`, `escapeRegExp`, `every`, `find`, `findIndex`,
- * `findKey`, `findLast`, `findLastIndex`, `findLastKey`, `findWhere`, `first`,
- * `floor`, `get`, `gt`, `gte`, `has`, `identity`, `includes`, `indexOf`,
- * `inRange`, `isArguments`, `isArray`, `isBoolean`, `isDate`, `isElement`,
- * `isEmpty`, `isEqual`, `isError`, `isFinite` `isFunction`, `isMatch`,
- * `isNative`, `isNaN`, `isNull`, `isNumber`, `isObject`, `isPlainObject`,
- * `isRegExp`, `isString`, `isUndefined`, `isTypedArray`, `join`, `kebabCase`,
- * `last`, `lastIndexOf`, `lt`, `lte`, `max`, `min`, `noConflict`, `noop`,
- * `now`, `pad`, `padLeft`, `padRight`, `parseInt`, `pop`, `random`, `reduce`,
- * `reduceRight`, `repeat`, `result`, `round`, `runInContext`, `shift`, `size`,
- * `snakeCase`, `some`, `sortedIndex`, `sortedLastIndex`, `startCase`,
- * `startsWith`, `sum`, `template`, `trim`, `trimLeft`, `trimRight`, `trunc`,
- * `unescape`, `uniqueId`, `value`, and `words`
- *
- * The wrapper method `sample` will return a wrapped value when `n` is provided,
- * otherwise an unwrapped value is returned.
- *
- * @name _
- * @constructor
- * @category Chain
- * @param {*} value The value to wrap in a `lodash` instance.
- * @returns {Object} Returns the new `lodash` wrapper instance.
- * @example
- *
- * var wrapped = _([1, 2, 3]);
- *
- * // returns an unwrapped value
- * wrapped.reduce(function(total, n) {
- *   return total + n;
- * });
- * // => 6
- *
- * // returns a wrapped value
- * var squares = wrapped.map(function(n) {
- *   return n * n;
- * });
- *
- * _.isArray(squares);
- * // => false
- *
- * _.isArray(squares.value());
- * // => true
- */
-function lodash(value) {
-  if (isObjectLike(value) && !isArray(value) && !(value instanceof LazyWrapper)) {
-    if (value instanceof LodashWrapper) {
-      return value;
-    }
-    if (hasOwnProperty.call(value, '__chain__') && hasOwnProperty.call(value, '__wrapped__')) {
-      return wrapperClone(value);
-    }
-  }
-  return new LodashWrapper(value);
-}
-
-// Ensure wrappers are instances of `baseLodash`.
-lodash.prototype = baseLodash.prototype;
-
-module.exports = lodash;
-
-},{"206":206,"207":207,"233":233,"273":273,"286":286,"288":288}],196:[function(_dereq_,module,exports){
-arguments[4][30][0].apply(exports,arguments)
-},{"210":210,"217":217,"221":221,"269":269,"288":288,"30":30}],197:[function(_dereq_,module,exports){
-arguments[4][31][0].apply(exports,arguments)
-},{"211":211,"217":217,"222":222,"288":288,"31":31}],198:[function(_dereq_,module,exports){
-arguments[4][32][0].apply(exports,arguments)
-},{"220":220,"253":253,"32":32}],199:[function(_dereq_,module,exports){
-arguments[4][33][0].apply(exports,arguments)
-},{"209":209,"220":220,"254":254,"33":33}],200:[function(_dereq_,module,exports){
-var createAggregator = _dereq_(247);
-
-/** Used for native method references. */
-var objectProto = Object.prototype;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
-
-/**
- * Creates an object composed of keys generated from the results of running
- * each element of `collection` through `iteratee`. The corresponding value
- * of each key is an array of the elements responsible for generating the key.
- * The `iteratee` is bound to `thisArg` and invoked with three arguments:
- * (value, index|key, collection).
- *
- * If a property name is provided for `iteratee` the created `_.property`
- * style callback returns the property value of the given element.
- *
- * If a value is also provided for `thisArg` the created `_.matchesProperty`
- * style callback returns `true` for elements that have a matching property
- * value, else `false`.
- *
- * If an object is provided for `iteratee` the created `_.matches` style
- * callback returns `true` for elements that have the properties of the given
- * object, else `false`.
- *
- * @static
- * @memberOf _
- * @category Collection
- * @param {Array|Object|string} collection The collection to iterate over.
- * @param {Function|Object|string} [iteratee=_.identity] The function invoked
- *  per iteration.
- * @param {*} [thisArg] The `this` binding of `iteratee`.
- * @returns {Object} Returns the composed aggregate object.
- * @example
- *
- * _.groupBy([4.2, 6.1, 6.4], function(n) {
- *   return Math.floor(n);
- * });
- * // => { '4': [4.2], '6': [6.1, 6.4] }
- *
- * _.groupBy([4.2, 6.1, 6.4], function(n) {
- *   return this.floor(n);
- * }, Math);
- * // => { '4': [4.2], '6': [6.1, 6.4] }
- *
- * // using the `_.property` callback shorthand
- * _.groupBy(['one', 'two', 'three'], 'length');
- * // => { '3': ['one', 'two'], '5': ['three'] }
- */
-var groupBy = createAggregator(function(result, value, key) {
-  if (hasOwnProperty.call(result, key)) {
-    result[key].push(value);
-  } else {
-    result[key] = [value];
-  }
-});
-
-module.exports = groupBy;
-
-},{"247":247}],201:[function(_dereq_,module,exports){
-arguments[4][36][0].apply(exports,arguments)
-},{"213":213,"220":220,"257":257,"36":36}],202:[function(_dereq_,module,exports){
-var getNative = _dereq_(266);
-
-/* Native method references for those with the same name as other `lodash` methods. */
-var nativeNow = getNative(Date, 'now');
-
-/**
- * Gets the number of milliseconds that have elapsed since the Unix epoch
- * (1 January 1970 00:00:00 UTC).
- *
- * @static
- * @memberOf _
- * @category Date
- * @example
- *
- * _.defer(function(stamp) {
- *   console.log(_.now() - stamp);
- * }, _.now());
- * // => logs the number of milliseconds it took for the deferred function to be invoked
- */
-var now = nativeNow || function() {
-  return new Date().getTime();
-};
-
-module.exports = now;
-
-},{"266":266}],203:[function(_dereq_,module,exports){
-var createWrapper = _dereq_(258),
-    replaceHolders = _dereq_(281),
-    restParam = _dereq_(205);
-
-/** Used to compose bitmasks for wrapper metadata. */
-var BIND_FLAG = 1,
-    PARTIAL_FLAG = 32;
-
-/**
- * Creates a function that invokes `func` with the `this` binding of `thisArg`
- * and prepends any additional `_.bind` arguments to those provided to the
- * bound function.
- *
- * The `_.bind.placeholder` value, which defaults to `_` in monolithic builds,
- * may be used as a placeholder for partially applied arguments.
- *
- * **Note:** Unlike native `Function#bind` this method does not set the "length"
- * property of bound functions.
- *
- * @static
- * @memberOf _
- * @category Function
- * @param {Function} func The function to bind.
- * @param {*} thisArg The `this` binding of `func`.
- * @param {...*} [partials] The arguments to be partially applied.
- * @returns {Function} Returns the new bound function.
- * @example
- *
- * var greet = function(greeting, punctuation) {
- *   return greeting + ' ' + this.user + punctuation;
- * };
- *
- * var object = { 'user': 'fred' };
- *
- * var bound = _.bind(greet, object, 'hi');
- * bound('!');
- * // => 'hi fred!'
- *
- * // using placeholders
- * var bound = _.bind(greet, object, _, '!');
- * bound('hi');
- * // => 'hi fred!'
- */
-var bind = restParam(function(func, thisArg, partials) {
-  var bitmask = BIND_FLAG;
-  if (partials.length) {
-    var holders = replaceHolders(partials, bind.placeholder);
-    bitmask |= PARTIAL_FLAG;
-  }
-  return createWrapper(func, bitmask, thisArg, partials, holders);
-});
-
-// Assign default placeholders.
-bind.placeholder = {};
-
-module.exports = bind;
-
-},{"205":205,"258":258,"281":281}],204:[function(_dereq_,module,exports){
-var isObject = _dereq_(292),
-    now = _dereq_(202);
-
-/** Used as the `TypeError` message for "Functions" methods. */
-var FUNC_ERROR_TEXT = 'Expected a function';
-
-/* Native method references for those with the same name as other `lodash` methods. */
-var nativeMax = Math.max;
-
-/**
- * Creates a debounced function that delays invoking `func` until after `wait`
- * milliseconds have elapsed since the last time the debounced function was
- * invoked. The debounced function comes with a `cancel` method to cancel
- * delayed invocations. Provide an options object to indicate that `func`
- * should be invoked on the leading and/or trailing edge of the `wait` timeout.
- * Subsequent calls to the debounced function return the result of the last
- * `func` invocation.
- *
- * **Note:** If `leading` and `trailing` options are `true`, `func` is invoked
- * on the trailing edge of the timeout only if the the debounced function is
- * invoked more than once during the `wait` timeout.
- *
- * See [David Corbacho's article](http://drupalmotion.com/article/debounce-and-throttle-visual-explanation)
- * for details over the differences between `_.debounce` and `_.throttle`.
- *
- * @static
- * @memberOf _
- * @category Function
- * @param {Function} func The function to debounce.
- * @param {number} [wait=0] The number of milliseconds to delay.
- * @param {Object} [options] The options object.
- * @param {boolean} [options.leading=false] Specify invoking on the leading
- *  edge of the timeout.
- * @param {number} [options.maxWait] The maximum time `func` is allowed to be
- *  delayed before it's invoked.
- * @param {boolean} [options.trailing=true] Specify invoking on the trailing
- *  edge of the timeout.
- * @returns {Function} Returns the new debounced function.
- * @example
- *
- * // avoid costly calculations while the window size is in flux
- * jQuery(window).on('resize', _.debounce(calculateLayout, 150));
- *
- * // invoke `sendMail` when the click event is fired, debouncing subsequent calls
- * jQuery('#postbox').on('click', _.debounce(sendMail, 300, {
- *   'leading': true,
- *   'trailing': false
- * }));
- *
- * // ensure `batchLog` is invoked once after 1 second of debounced calls
- * var source = new EventSource('/stream');
- * jQuery(source).on('message', _.debounce(batchLog, 250, {
- *   'maxWait': 1000
- * }));
- *
- * // cancel a debounced call
- * var todoChanges = _.debounce(batchLog, 1000);
- * Object.observe(models.todo, todoChanges);
- *
- * Object.observe(models, function(changes) {
- *   if (_.find(changes, { 'user': 'todo', 'type': 'delete'})) {
- *     todoChanges.cancel();
- *   }
- * }, ['delete']);
- *
- * // ...at some point `models.todo` is changed
- * models.todo.completed = true;
- *
- * // ...before 1 second has passed `models.todo` is deleted
- * // which cancels the debounced `todoChanges` call
- * delete models.todo;
- */
-function debounce(func, wait, options) {
-  var args,
-      maxTimeoutId,
-      result,
-      stamp,
-      thisArg,
-      timeoutId,
-      trailingCall,
-      lastCalled = 0,
-      maxWait = false,
-      trailing = true;
-
-  if (typeof func != 'function') {
-    throw new TypeError(FUNC_ERROR_TEXT);
-  }
-  wait = wait < 0 ? 0 : (+wait || 0);
-  if (options === true) {
-    var leading = true;
-    trailing = false;
-  } else if (isObject(options)) {
-    leading = !!options.leading;
-    maxWait = 'maxWait' in options && nativeMax(+options.maxWait || 0, wait);
-    trailing = 'trailing' in options ? !!options.trailing : trailing;
-  }
-
-  function cancel() {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
-    if (maxTimeoutId) {
-      clearTimeout(maxTimeoutId);
-    }
-    lastCalled = 0;
-    maxTimeoutId = timeoutId = trailingCall = undefined;
-  }
-
-  function complete(isCalled, id) {
-    if (id) {
-      clearTimeout(id);
-    }
-    maxTimeoutId = timeoutId = trailingCall = undefined;
-    if (isCalled) {
-      lastCalled = now();
-      result = func.apply(thisArg, args);
-      if (!timeoutId && !maxTimeoutId) {
-        args = thisArg = undefined;
-      }
-    }
-  }
-
-  function delayed() {
-    var remaining = wait - (now() - stamp);
-    if (remaining <= 0 || remaining > wait) {
-      complete(trailingCall, maxTimeoutId);
-    } else {
-      timeoutId = setTimeout(delayed, remaining);
-    }
-  }
-
-  function maxDelayed() {
-    complete(trailing, timeoutId);
-  }
-
-  function debounced() {
-    args = arguments;
-    stamp = now();
-    thisArg = this;
-    trailingCall = trailing && (timeoutId || !leading);
-
-    if (maxWait === false) {
-      var leadingCall = leading && !timeoutId;
-    } else {
-      if (!maxTimeoutId && !leading) {
-        lastCalled = stamp;
-      }
-      var remaining = maxWait - (stamp - lastCalled),
-          isCalled = remaining <= 0 || remaining > maxWait;
-
-      if (isCalled) {
-        if (maxTimeoutId) {
-          maxTimeoutId = clearTimeout(maxTimeoutId);
-        }
-        lastCalled = stamp;
-        result = func.apply(thisArg, args);
-      }
-      else if (!maxTimeoutId) {
-        maxTimeoutId = setTimeout(maxDelayed, remaining);
-      }
-    }
-    if (isCalled && timeoutId) {
-      timeoutId = clearTimeout(timeoutId);
-    }
-    else if (!timeoutId && wait !== maxWait) {
-      timeoutId = setTimeout(delayed, wait);
-    }
-    if (leadingCall) {
-      isCalled = true;
-      result = func.apply(thisArg, args);
-    }
-    if (isCalled && !timeoutId && !maxTimeoutId) {
-      args = thisArg = undefined;
-    }
-    return result;
-  }
-  debounced.cancel = cancel;
-  return debounced;
-}
-
-module.exports = debounce;
-
-},{"202":202,"292":292}],205:[function(_dereq_,module,exports){
-arguments[4][39][0].apply(exports,arguments)
-},{"39":39}],206:[function(_dereq_,module,exports){
-var baseCreate = _dereq_(219),
-    baseLodash = _dereq_(233);
-
-/** Used as references for `-Infinity` and `Infinity`. */
-var POSITIVE_INFINITY = Number.POSITIVE_INFINITY;
-
-/**
- * Creates a lazy wrapper object which wraps `value` to enable lazy evaluation.
- *
- * @private
- * @param {*} value The value to wrap.
- */
-function LazyWrapper(value) {
-  this.__wrapped__ = value;
-  this.__actions__ = [];
-  this.__dir__ = 1;
-  this.__filtered__ = false;
-  this.__iteratees__ = [];
-  this.__takeCount__ = POSITIVE_INFINITY;
-  this.__views__ = [];
-}
-
-LazyWrapper.prototype = baseCreate(baseLodash.prototype);
-LazyWrapper.prototype.constructor = LazyWrapper;
-
-module.exports = LazyWrapper;
-
-},{"219":219,"233":233}],207:[function(_dereq_,module,exports){
-var baseCreate = _dereq_(219),
-    baseLodash = _dereq_(233);
-
-/**
- * The base constructor for creating `lodash` wrapper objects.
- *
- * @private
- * @param {*} value The value to wrap.
- * @param {boolean} [chainAll] Enable chaining for all wrapper methods.
- * @param {Array} [actions=[]] Actions to peform to resolve the unwrapped value.
- */
-function LodashWrapper(value, chainAll, actions) {
-  this.__wrapped__ = value;
-  this.__actions__ = actions || [];
-  this.__chain__ = !!chainAll;
-}
-
-LodashWrapper.prototype = baseCreate(baseLodash.prototype);
-LodashWrapper.prototype.constructor = LodashWrapper;
-
-module.exports = LodashWrapper;
-
-},{"219":219,"233":233}],208:[function(_dereq_,module,exports){
-/**
- * Copies the values of `source` to `array`.
- *
- * @private
- * @param {Array} source The array to copy values from.
- * @param {Array} [array=[]] The array to copy values to.
- * @returns {Array} Returns `array`.
- */
-function arrayCopy(source, array) {
-  var index = -1,
-      length = source.length;
-
-  array || (array = Array(length));
-  while (++index < length) {
-    array[index] = source[index];
-  }
-  return array;
-}
-
-module.exports = arrayCopy;
-
-},{}],209:[function(_dereq_,module,exports){
-arguments[4][41][0].apply(exports,arguments)
-},{"41":41}],210:[function(_dereq_,module,exports){
-arguments[4][42][0].apply(exports,arguments)
-},{"42":42}],211:[function(_dereq_,module,exports){
-arguments[4][43][0].apply(exports,arguments)
-},{"43":43}],212:[function(_dereq_,module,exports){
-arguments[4][45][0].apply(exports,arguments)
-},{"45":45}],213:[function(_dereq_,module,exports){
-arguments[4][46][0].apply(exports,arguments)
-},{"46":46}],214:[function(_dereq_,module,exports){
-arguments[4][47][0].apply(exports,arguments)
-},{"47":47}],215:[function(_dereq_,module,exports){
-arguments[4][48][0].apply(exports,arguments)
-},{"298":298,"48":48}],216:[function(_dereq_,module,exports){
-arguments[4][49][0].apply(exports,arguments)
-},{"218":218,"298":298,"49":49}],217:[function(_dereq_,module,exports){
-arguments[4][50][0].apply(exports,arguments)
-},{"234":234,"235":235,"244":244,"303":303,"305":305,"50":50}],218:[function(_dereq_,module,exports){
-arguments[4][51][0].apply(exports,arguments)
-},{"51":51}],219:[function(_dereq_,module,exports){
-var isObject = _dereq_(292);
-
-/**
- * The base implementation of `_.create` without support for assigning
- * properties to the created object.
- *
- * @private
- * @param {Object} prototype The object to inherit from.
- * @returns {Object} Returns the new object.
- */
-var baseCreate = (function() {
-  function object() {}
-  return function(prototype) {
-    if (isObject(prototype)) {
-      object.prototype = prototype;
-      var result = new object;
-      object.prototype = undefined;
-    }
-    return result || {};
-  };
-}());
-
-module.exports = baseCreate;
-
-},{"292":292}],220:[function(_dereq_,module,exports){
-arguments[4][54][0].apply(exports,arguments)
-},{"228":228,"249":249,"54":54}],221:[function(_dereq_,module,exports){
-arguments[4][55][0].apply(exports,arguments)
-},{"220":220,"55":55}],222:[function(_dereq_,module,exports){
-arguments[4][56][0].apply(exports,arguments)
-},{"220":220,"56":56}],223:[function(_dereq_,module,exports){
-arguments[4][57][0].apply(exports,arguments)
-},{"57":57}],224:[function(_dereq_,module,exports){
-arguments[4][58][0].apply(exports,arguments)
-},{"58":58}],225:[function(_dereq_,module,exports){
-arguments[4][59][0].apply(exports,arguments)
-},{"212":212,"267":267,"273":273,"287":287,"288":288,"59":59}],226:[function(_dereq_,module,exports){
-arguments[4][60][0].apply(exports,arguments)
-},{"250":250,"60":60}],227:[function(_dereq_,module,exports){
-arguments[4][61][0].apply(exports,arguments)
-},{"226":226,"299":299,"61":61}],228:[function(_dereq_,module,exports){
-arguments[4][62][0].apply(exports,arguments)
-},{"226":226,"298":298,"62":62}],229:[function(_dereq_,module,exports){
-arguments[4][63][0].apply(exports,arguments)
-},{"284":284,"63":63}],230:[function(_dereq_,module,exports){
-arguments[4][65][0].apply(exports,arguments)
-},{"231":231,"273":273,"292":292,"65":65}],231:[function(_dereq_,module,exports){
-arguments[4][66][0].apply(exports,arguments)
-},{"259":259,"260":260,"261":261,"288":288,"295":295,"66":66}],232:[function(_dereq_,module,exports){
-arguments[4][67][0].apply(exports,arguments)
-},{"230":230,"284":284,"67":67}],233:[function(_dereq_,module,exports){
-/**
- * The function whose prototype all chaining wrappers inherit from.
- *
- * @private
- */
-function baseLodash() {
-  // No operation performed.
-}
-
-module.exports = baseLodash;
-
-},{}],234:[function(_dereq_,module,exports){
-arguments[4][69][0].apply(exports,arguments)
-},{"232":232,"265":265,"284":284,"69":69}],235:[function(_dereq_,module,exports){
-arguments[4][70][0].apply(exports,arguments)
-},{"194":194,"229":229,"230":230,"242":242,"270":270,"274":274,"284":284,"285":285,"288":288,"70":70}],236:[function(_dereq_,module,exports){
-var arrayEach = _dereq_(209),
-    baseMergeDeep = _dereq_(237),
-    isArray = _dereq_(288),
-    isArrayLike = _dereq_(267),
-    isObject = _dereq_(292),
-    isObjectLike = _dereq_(273),
-    isTypedArray = _dereq_(295),
-    keys = _dereq_(298);
-
-/**
- * The base implementation of `_.merge` without support for argument juggling,
- * multiple sources, and `this` binding `customizer` functions.
- *
- * @private
- * @param {Object} object The destination object.
- * @param {Object} source The source object.
- * @param {Function} [customizer] The function to customize merged values.
- * @param {Array} [stackA=[]] Tracks traversed source objects.
- * @param {Array} [stackB=[]] Associates values with source counterparts.
- * @returns {Object} Returns `object`.
- */
-function baseMerge(object, source, customizer, stackA, stackB) {
-  if (!isObject(object)) {
-    return object;
-  }
-  var isSrcArr = isArrayLike(source) && (isArray(source) || isTypedArray(source)),
-      props = isSrcArr ? undefined : keys(source);
-
-  arrayEach(props || source, function(srcValue, key) {
-    if (props) {
-      key = srcValue;
-      srcValue = source[key];
-    }
-    if (isObjectLike(srcValue)) {
-      stackA || (stackA = []);
-      stackB || (stackB = []);
-      baseMergeDeep(object, source, key, baseMerge, customizer, stackA, stackB);
-    }
-    else {
-      var value = object[key],
-          result = customizer ? customizer(value, srcValue, key, object, source) : undefined,
-          isCommon = result === undefined;
-
-      if (isCommon) {
-        result = srcValue;
-      }
-      if ((result !== undefined || (isSrcArr && !(key in object))) &&
-          (isCommon || (result === result ? (result !== value) : (value === value)))) {
-        object[key] = result;
-      }
-    }
-  });
-  return object;
-}
-
-module.exports = baseMerge;
-
-},{"209":209,"237":237,"267":267,"273":273,"288":288,"292":292,"295":295,"298":298}],237:[function(_dereq_,module,exports){
-var arrayCopy = _dereq_(208),
-    isArguments = _dereq_(287),
-    isArray = _dereq_(288),
-    isArrayLike = _dereq_(267),
-    isPlainObject = _dereq_(293),
-    isTypedArray = _dereq_(295),
-    toPlainObject = _dereq_(296);
-
-/**
- * A specialized version of `baseMerge` for arrays and objects which performs
- * deep merges and tracks traversed objects enabling objects with circular
- * references to be merged.
- *
- * @private
- * @param {Object} object The destination object.
- * @param {Object} source The source object.
- * @param {string} key The key of the value to merge.
- * @param {Function} mergeFunc The function to merge values.
- * @param {Function} [customizer] The function to customize merged values.
- * @param {Array} [stackA=[]] Tracks traversed source objects.
- * @param {Array} [stackB=[]] Associates values with source counterparts.
- * @returns {boolean} Returns `true` if the objects are equivalent, else `false`.
- */
-function baseMergeDeep(object, source, key, mergeFunc, customizer, stackA, stackB) {
-  var length = stackA.length,
-      srcValue = source[key];
-
-  while (length--) {
-    if (stackA[length] == srcValue) {
-      object[key] = stackB[length];
-      return;
-    }
-  }
-  var value = object[key],
-      result = customizer ? customizer(value, srcValue, key, object, source) : undefined,
-      isCommon = result === undefined;
-
-  if (isCommon) {
-    result = srcValue;
-    if (isArrayLike(srcValue) && (isArray(srcValue) || isTypedArray(srcValue))) {
-      result = isArray(value)
-        ? value
-        : (isArrayLike(value) ? arrayCopy(value) : []);
-    }
-    else if (isPlainObject(srcValue) || isArguments(srcValue)) {
-      result = isArguments(value)
-        ? toPlainObject(value)
-        : (isPlainObject(value) ? value : {});
-    }
-    else {
-      isCommon = false;
-    }
-  }
-  // Add the source value to the stack of traversed objects and associate
-  // it with its merged value.
-  stackA.push(srcValue);
-  stackB.push(result);
-
-  if (isCommon) {
-    // Recursively merge objects and arrays (susceptible to call stack limits).
-    object[key] = mergeFunc(result, srcValue, customizer, stackA, stackB);
-  } else if (result === result ? (result !== value) : (value === value)) {
-    object[key] = result;
-  }
-}
-
-module.exports = baseMergeDeep;
-
-},{"208":208,"267":267,"287":287,"288":288,"293":293,"295":295,"296":296}],238:[function(_dereq_,module,exports){
-arguments[4][71][0].apply(exports,arguments)
-},{"71":71}],239:[function(_dereq_,module,exports){
-arguments[4][72][0].apply(exports,arguments)
-},{"229":229,"285":285,"72":72}],240:[function(_dereq_,module,exports){
-arguments[4][73][0].apply(exports,arguments)
-},{"73":73}],241:[function(_dereq_,module,exports){
-var identity = _dereq_(303),
-    metaMap = _dereq_(276);
-
-/**
- * The base implementation of `setData` without support for hot loop detection.
- *
- * @private
- * @param {Function} func The function to associate metadata with.
- * @param {*} data The metadata.
- * @returns {Function} Returns `func`.
- */
-var baseSetData = !metaMap ? identity : function(func, data) {
-  metaMap.set(func, data);
-  return func;
-};
-
-module.exports = baseSetData;
-
-},{"276":276,"303":303}],242:[function(_dereq_,module,exports){
-arguments[4][74][0].apply(exports,arguments)
-},{"74":74}],243:[function(_dereq_,module,exports){
-arguments[4][76][0].apply(exports,arguments)
-},{"76":76}],244:[function(_dereq_,module,exports){
-arguments[4][78][0].apply(exports,arguments)
-},{"303":303,"78":78}],245:[function(_dereq_,module,exports){
-/* Native method references for those with the same name as other `lodash` methods. */
-var nativeMax = Math.max;
-
-/**
- * Creates an array that is the composition of partially applied arguments,
- * placeholders, and provided arguments into a single array of arguments.
- *
- * @private
- * @param {Array|Object} args The provided arguments.
- * @param {Array} partials The arguments to prepend to those provided.
- * @param {Array} holders The `partials` placeholder indexes.
- * @returns {Array} Returns the new array of composed arguments.
- */
-function composeArgs(args, partials, holders) {
-  var holdersLength = holders.length,
-      argsIndex = -1,
-      argsLength = nativeMax(args.length - holdersLength, 0),
-      leftIndex = -1,
-      leftLength = partials.length,
-      result = Array(leftLength + argsLength);
-
-  while (++leftIndex < leftLength) {
-    result[leftIndex] = partials[leftIndex];
-  }
-  while (++argsIndex < holdersLength) {
-    result[holders[argsIndex]] = args[argsIndex];
-  }
-  while (argsLength--) {
-    result[leftIndex++] = args[argsIndex++];
-  }
-  return result;
-}
-
-module.exports = composeArgs;
-
-},{}],246:[function(_dereq_,module,exports){
-/* Native method references for those with the same name as other `lodash` methods. */
-var nativeMax = Math.max;
-
-/**
- * This function is like `composeArgs` except that the arguments composition
- * is tailored for `_.partialRight`.
- *
- * @private
- * @param {Array|Object} args The provided arguments.
- * @param {Array} partials The arguments to append to those provided.
- * @param {Array} holders The `partials` placeholder indexes.
- * @returns {Array} Returns the new array of composed arguments.
- */
-function composeArgsRight(args, partials, holders) {
-  var holdersIndex = -1,
-      holdersLength = holders.length,
-      argsIndex = -1,
-      argsLength = nativeMax(args.length - holdersLength, 0),
-      rightIndex = -1,
-      rightLength = partials.length,
-      result = Array(argsLength + rightLength);
-
-  while (++argsIndex < argsLength) {
-    result[argsIndex] = args[argsIndex];
-  }
-  var offset = argsIndex;
-  while (++rightIndex < rightLength) {
-    result[offset + rightIndex] = partials[rightIndex];
-  }
-  while (++holdersIndex < holdersLength) {
-    result[offset + holders[holdersIndex]] = args[argsIndex++];
-  }
-  return result;
-}
-
-module.exports = composeArgsRight;
-
-},{}],247:[function(_dereq_,module,exports){
-var baseCallback = _dereq_(217),
-    baseEach = _dereq_(220),
-    isArray = _dereq_(288);
-
-/**
- * Creates a `_.countBy`, `_.groupBy`, `_.indexBy`, or `_.partition` function.
- *
- * @private
- * @param {Function} setter The function to set keys and values of the accumulator object.
- * @param {Function} [initializer] The function to initialize the accumulator object.
- * @returns {Function} Returns the new aggregator function.
- */
-function createAggregator(setter, initializer) {
-  return function(collection, iteratee, thisArg) {
-    var result = initializer ? initializer() : {};
-    iteratee = baseCallback(iteratee, thisArg, 3);
-
-    if (isArray(collection)) {
-      var index = -1,
-          length = collection.length;
-
-      while (++index < length) {
-        var value = collection[index];
-        setter(result, value, iteratee(value, index, collection), collection);
-      }
-    } else {
-      baseEach(collection, function(value, key, collection) {
-        setter(result, value, iteratee(value, key, collection), collection);
-      });
-    }
-    return result;
-  };
-}
-
-module.exports = createAggregator;
-
-},{"217":217,"220":220,"288":288}],248:[function(_dereq_,module,exports){
-arguments[4][81][0].apply(exports,arguments)
-},{"205":205,"244":244,"269":269,"81":81}],249:[function(_dereq_,module,exports){
-arguments[4][82][0].apply(exports,arguments)
-},{"264":264,"272":272,"284":284,"82":82}],250:[function(_dereq_,module,exports){
-arguments[4][83][0].apply(exports,arguments)
-},{"284":284,"83":83}],251:[function(_dereq_,module,exports){
-(function (global){
-var createCtorWrapper = _dereq_(252);
-
-/**
- * Creates a function that wraps `func` and invokes it with the `this`
- * binding of `thisArg`.
- *
- * @private
- * @param {Function} func The function to bind.
- * @param {*} [thisArg] The `this` binding of `func`.
- * @returns {Function} Returns the new bound function.
- */
-function createBindWrapper(func, thisArg) {
-  var Ctor = createCtorWrapper(func);
-
-  function wrapper() {
-    var fn = (this && this !== global && this instanceof wrapper) ? Ctor : func;
-    return fn.apply(thisArg, arguments);
-  }
-  return wrapper;
-}
-
-module.exports = createBindWrapper;
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-
-},{"252":252}],252:[function(_dereq_,module,exports){
-var baseCreate = _dereq_(219),
-    isObject = _dereq_(292);
-
-/**
- * Creates a function that produces an instance of `Ctor` regardless of
- * whether it was invoked as part of a `new` expression or by `call` or `apply`.
- *
- * @private
- * @param {Function} Ctor The constructor to wrap.
- * @returns {Function} Returns the new wrapped function.
- */
-function createCtorWrapper(Ctor) {
-  return function() {
-    // Use a `switch` statement to work with class constructors.
-    // See http://ecma-international.org/ecma-262/6.0/#sec-ecmascript-function-objects-call-thisargument-argumentslist
-    // for more details.
-    var args = arguments;
-    switch (args.length) {
-      case 0: return new Ctor;
-      case 1: return new Ctor(args[0]);
-      case 2: return new Ctor(args[0], args[1]);
-      case 3: return new Ctor(args[0], args[1], args[2]);
-      case 4: return new Ctor(args[0], args[1], args[2], args[3]);
-      case 5: return new Ctor(args[0], args[1], args[2], args[3], args[4]);
-      case 6: return new Ctor(args[0], args[1], args[2], args[3], args[4], args[5]);
-      case 7: return new Ctor(args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
-    }
-    var thisBinding = baseCreate(Ctor.prototype),
-        result = Ctor.apply(thisBinding, args);
-
-    // Mimic the constructor's `return` behavior.
-    // See https://es5.github.io/#x13.2.2 for more details.
-    return isObject(result) ? result : thisBinding;
-  };
-}
-
-module.exports = createCtorWrapper;
-
-},{"219":219,"292":292}],253:[function(_dereq_,module,exports){
-arguments[4][85][0].apply(exports,arguments)
-},{"217":217,"223":223,"224":224,"288":288,"85":85}],254:[function(_dereq_,module,exports){
-arguments[4][86][0].apply(exports,arguments)
-},{"244":244,"288":288,"86":86}],255:[function(_dereq_,module,exports){
-(function (global){
-var arrayCopy = _dereq_(208),
-    composeArgs = _dereq_(245),
-    composeArgsRight = _dereq_(246),
-    createCtorWrapper = _dereq_(252),
-    isLaziable = _dereq_(271),
-    reorder = _dereq_(280),
-    replaceHolders = _dereq_(281),
-    setData = _dereq_(282);
-
-/** Used to compose bitmasks for wrapper metadata. */
-var BIND_FLAG = 1,
-    BIND_KEY_FLAG = 2,
-    CURRY_BOUND_FLAG = 4,
-    CURRY_FLAG = 8,
-    CURRY_RIGHT_FLAG = 16,
-    PARTIAL_FLAG = 32,
-    PARTIAL_RIGHT_FLAG = 64,
-    ARY_FLAG = 128;
-
-/* Native method references for those with the same name as other `lodash` methods. */
-var nativeMax = Math.max;
-
-/**
- * Creates a function that wraps `func` and invokes it with optional `this`
- * binding of, partial application, and currying.
- *
- * @private
- * @param {Function|string} func The function or method name to reference.
- * @param {number} bitmask The bitmask of flags. See `createWrapper` for more details.
- * @param {*} [thisArg] The `this` binding of `func`.
- * @param {Array} [partials] The arguments to prepend to those provided to the new function.
- * @param {Array} [holders] The `partials` placeholder indexes.
- * @param {Array} [partialsRight] The arguments to append to those provided to the new function.
- * @param {Array} [holdersRight] The `partialsRight` placeholder indexes.
- * @param {Array} [argPos] The argument positions of the new function.
- * @param {number} [ary] The arity cap of `func`.
- * @param {number} [arity] The arity of `func`.
- * @returns {Function} Returns the new wrapped function.
- */
-function createHybridWrapper(func, bitmask, thisArg, partials, holders, partialsRight, holdersRight, argPos, ary, arity) {
-  var isAry = bitmask & ARY_FLAG,
-      isBind = bitmask & BIND_FLAG,
-      isBindKey = bitmask & BIND_KEY_FLAG,
-      isCurry = bitmask & CURRY_FLAG,
-      isCurryBound = bitmask & CURRY_BOUND_FLAG,
-      isCurryRight = bitmask & CURRY_RIGHT_FLAG,
-      Ctor = isBindKey ? undefined : createCtorWrapper(func);
-
-  function wrapper() {
-    // Avoid `arguments` object use disqualifying optimizations by
-    // converting it to an array before providing it to other functions.
-    var length = arguments.length,
-        index = length,
-        args = Array(length);
-
-    while (index--) {
-      args[index] = arguments[index];
-    }
-    if (partials) {
-      args = composeArgs(args, partials, holders);
-    }
-    if (partialsRight) {
-      args = composeArgsRight(args, partialsRight, holdersRight);
-    }
-    if (isCurry || isCurryRight) {
-      var placeholder = wrapper.placeholder,
-          argsHolders = replaceHolders(args, placeholder);
-
-      length -= argsHolders.length;
-      if (length < arity) {
-        var newArgPos = argPos ? arrayCopy(argPos) : undefined,
-            newArity = nativeMax(arity - length, 0),
-            newsHolders = isCurry ? argsHolders : undefined,
-            newHoldersRight = isCurry ? undefined : argsHolders,
-            newPartials = isCurry ? args : undefined,
-            newPartialsRight = isCurry ? undefined : args;
-
-        bitmask |= (isCurry ? PARTIAL_FLAG : PARTIAL_RIGHT_FLAG);
-        bitmask &= ~(isCurry ? PARTIAL_RIGHT_FLAG : PARTIAL_FLAG);
-
-        if (!isCurryBound) {
-          bitmask &= ~(BIND_FLAG | BIND_KEY_FLAG);
-        }
-        var newData = [func, bitmask, thisArg, newPartials, newsHolders, newPartialsRight, newHoldersRight, newArgPos, ary, newArity],
-            result = createHybridWrapper.apply(undefined, newData);
-
-        if (isLaziable(func)) {
-          setData(result, newData);
-        }
-        result.placeholder = placeholder;
-        return result;
-      }
-    }
-    var thisBinding = isBind ? thisArg : this,
-        fn = isBindKey ? thisBinding[func] : func;
-
-    if (argPos) {
-      args = reorder(args, argPos);
-    }
-    if (isAry && ary < args.length) {
-      args.length = ary;
-    }
-    if (this && this !== global && this instanceof wrapper) {
-      fn = Ctor || createCtorWrapper(func);
-    }
-    return fn.apply(thisBinding, args);
-  }
-  return wrapper;
-}
-
-module.exports = createHybridWrapper;
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-
-},{"208":208,"245":245,"246":246,"252":252,"271":271,"280":280,"281":281,"282":282}],256:[function(_dereq_,module,exports){
-(function (global){
-var createCtorWrapper = _dereq_(252);
-
-/** Used to compose bitmasks for wrapper metadata. */
-var BIND_FLAG = 1;
-
-/**
- * Creates a function that wraps `func` and invokes it with the optional `this`
- * binding of `thisArg` and the `partials` prepended to those provided to
- * the wrapper.
- *
- * @private
- * @param {Function} func The function to partially apply arguments to.
- * @param {number} bitmask The bitmask of flags. See `createWrapper` for more details.
- * @param {*} thisArg The `this` binding of `func`.
- * @param {Array} partials The arguments to prepend to those provided to the new function.
- * @returns {Function} Returns the new bound function.
- */
-function createPartialWrapper(func, bitmask, thisArg, partials) {
-  var isBind = bitmask & BIND_FLAG,
-      Ctor = createCtorWrapper(func);
-
-  function wrapper() {
-    // Avoid `arguments` object use disqualifying optimizations by
-    // converting it to an array before providing it `func`.
-    var argsIndex = -1,
-        argsLength = arguments.length,
-        leftIndex = -1,
-        leftLength = partials.length,
-        args = Array(leftLength + argsLength);
-
-    while (++leftIndex < leftLength) {
-      args[leftIndex] = partials[leftIndex];
-    }
-    while (argsLength--) {
-      args[leftIndex++] = arguments[++argsIndex];
-    }
-    var fn = (this && this !== global && this instanceof wrapper) ? Ctor : func;
-    return fn.apply(isBind ? thisArg : this, args);
-  }
-  return wrapper;
-}
-
-module.exports = createPartialWrapper;
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-
-},{"252":252}],257:[function(_dereq_,module,exports){
-arguments[4][87][0].apply(exports,arguments)
-},{"217":217,"240":240,"288":288,"87":87}],258:[function(_dereq_,module,exports){
-var baseSetData = _dereq_(241),
-    createBindWrapper = _dereq_(251),
-    createHybridWrapper = _dereq_(255),
-    createPartialWrapper = _dereq_(256),
-    getData = _dereq_(262),
-    mergeData = _dereq_(275),
-    setData = _dereq_(282);
-
-/** Used to compose bitmasks for wrapper metadata. */
-var BIND_FLAG = 1,
-    BIND_KEY_FLAG = 2,
-    PARTIAL_FLAG = 32,
-    PARTIAL_RIGHT_FLAG = 64;
-
-/** Used as the `TypeError` message for "Functions" methods. */
-var FUNC_ERROR_TEXT = 'Expected a function';
-
-/* Native method references for those with the same name as other `lodash` methods. */
-var nativeMax = Math.max;
-
-/**
- * Creates a function that either curries or invokes `func` with optional
- * `this` binding and partially applied arguments.
- *
- * @private
- * @param {Function|string} func The function or method name to reference.
- * @param {number} bitmask The bitmask of flags.
- *  The bitmask may be composed of the following flags:
- *     1 - `_.bind`
- *     2 - `_.bindKey`
- *     4 - `_.curry` or `_.curryRight` of a bound function
- *     8 - `_.curry`
- *    16 - `_.curryRight`
- *    32 - `_.partial`
- *    64 - `_.partialRight`
- *   128 - `_.rearg`
- *   256 - `_.ary`
- * @param {*} [thisArg] The `this` binding of `func`.
- * @param {Array} [partials] The arguments to be partially applied.
- * @param {Array} [holders] The `partials` placeholder indexes.
- * @param {Array} [argPos] The argument positions of the new function.
- * @param {number} [ary] The arity cap of `func`.
- * @param {number} [arity] The arity of `func`.
- * @returns {Function} Returns the new wrapped function.
- */
-function createWrapper(func, bitmask, thisArg, partials, holders, argPos, ary, arity) {
-  var isBindKey = bitmask & BIND_KEY_FLAG;
-  if (!isBindKey && typeof func != 'function') {
-    throw new TypeError(FUNC_ERROR_TEXT);
-  }
-  var length = partials ? partials.length : 0;
-  if (!length) {
-    bitmask &= ~(PARTIAL_FLAG | PARTIAL_RIGHT_FLAG);
-    partials = holders = undefined;
-  }
-  length -= (holders ? holders.length : 0);
-  if (bitmask & PARTIAL_RIGHT_FLAG) {
-    var partialsRight = partials,
-        holdersRight = holders;
-
-    partials = holders = undefined;
-  }
-  var data = isBindKey ? undefined : getData(func),
-      newData = [func, bitmask, thisArg, partials, holders, partialsRight, holdersRight, argPos, ary, arity];
-
-  if (data) {
-    mergeData(newData, data);
-    bitmask = newData[1];
-    arity = newData[9];
-  }
-  newData[9] = arity == null
-    ? (isBindKey ? 0 : func.length)
-    : (nativeMax(arity - length, 0) || 0);
-
-  if (bitmask == BIND_FLAG) {
-    var result = createBindWrapper(newData[0], newData[2]);
-  } else if ((bitmask == PARTIAL_FLAG || bitmask == (BIND_FLAG | PARTIAL_FLAG)) && !newData[4].length) {
-    result = createPartialWrapper.apply(undefined, newData);
-  } else {
-    result = createHybridWrapper.apply(undefined, newData);
-  }
-  var setter = data ? baseSetData : setData;
-  return setter(result, newData);
-}
-
-module.exports = createWrapper;
-
-},{"241":241,"251":251,"255":255,"256":256,"262":262,"275":275,"282":282}],259:[function(_dereq_,module,exports){
-arguments[4][88][0].apply(exports,arguments)
-},{"214":214,"88":88}],260:[function(_dereq_,module,exports){
-arguments[4][89][0].apply(exports,arguments)
-},{"89":89}],261:[function(_dereq_,module,exports){
-arguments[4][90][0].apply(exports,arguments)
-},{"298":298,"90":90}],262:[function(_dereq_,module,exports){
-var metaMap = _dereq_(276),
-    noop = _dereq_(304);
-
-/**
- * Gets metadata for `func`.
- *
- * @private
- * @param {Function} func The function to query.
- * @returns {*} Returns the metadata for `func`.
- */
-var getData = !metaMap ? noop : function(func) {
-  return metaMap.get(func);
-};
-
-module.exports = getData;
-
-},{"276":276,"304":304}],263:[function(_dereq_,module,exports){
-var realNames = _dereq_(279);
-
-/**
- * Gets the name of `func`.
- *
- * @private
- * @param {Function} func The function to query.
- * @returns {string} Returns the function name.
- */
-function getFuncName(func) {
-  var result = (func.name + ''),
-      array = realNames[result],
-      length = array ? array.length : 0;
-
-  while (length--) {
-    var data = array[length],
-        otherFunc = data.func;
-    if (otherFunc == null || otherFunc == func) {
-      return data.name;
-    }
-  }
-  return result;
-}
-
-module.exports = getFuncName;
-
-},{"279":279}],264:[function(_dereq_,module,exports){
-arguments[4][91][0].apply(exports,arguments)
-},{"238":238,"91":91}],265:[function(_dereq_,module,exports){
-arguments[4][92][0].apply(exports,arguments)
-},{"274":274,"301":301,"92":92}],266:[function(_dereq_,module,exports){
-arguments[4][93][0].apply(exports,arguments)
-},{"290":290,"93":93}],267:[function(_dereq_,module,exports){
-arguments[4][95][0].apply(exports,arguments)
-},{"264":264,"272":272,"95":95}],268:[function(_dereq_,module,exports){
-arguments[4][96][0].apply(exports,arguments)
-},{"96":96}],269:[function(_dereq_,module,exports){
-arguments[4][97][0].apply(exports,arguments)
-},{"267":267,"268":268,"292":292,"97":97}],270:[function(_dereq_,module,exports){
-arguments[4][98][0].apply(exports,arguments)
-},{"284":284,"288":288,"98":98}],271:[function(_dereq_,module,exports){
-var LazyWrapper = _dereq_(206),
-    getData = _dereq_(262),
-    getFuncName = _dereq_(263),
-    lodash = _dereq_(195);
-
-/**
- * Checks if `func` has a lazy counterpart.
- *
- * @private
- * @param {Function} func The function to check.
- * @returns {boolean} Returns `true` if `func` has a lazy counterpart, else `false`.
- */
-function isLaziable(func) {
-  var funcName = getFuncName(func),
-      other = lodash[funcName];
-
-  if (typeof other != 'function' || !(funcName in LazyWrapper.prototype)) {
-    return false;
-  }
-  if (func === other) {
-    return true;
-  }
-  var data = getData(other);
-  return !!data && func === data[0];
-}
-
-module.exports = isLaziable;
-
-},{"195":195,"206":206,"262":262,"263":263}],272:[function(_dereq_,module,exports){
-arguments[4][99][0].apply(exports,arguments)
-},{"99":99}],273:[function(_dereq_,module,exports){
-arguments[4][100][0].apply(exports,arguments)
-},{"100":100}],274:[function(_dereq_,module,exports){
-arguments[4][101][0].apply(exports,arguments)
-},{"101":101,"292":292}],275:[function(_dereq_,module,exports){
-var arrayCopy = _dereq_(208),
-    composeArgs = _dereq_(245),
-    composeArgsRight = _dereq_(246),
-    replaceHolders = _dereq_(281);
-
-/** Used to compose bitmasks for wrapper metadata. */
-var BIND_FLAG = 1,
-    CURRY_BOUND_FLAG = 4,
-    CURRY_FLAG = 8,
-    ARY_FLAG = 128,
-    REARG_FLAG = 256;
-
-/** Used as the internal argument placeholder. */
-var PLACEHOLDER = '__lodash_placeholder__';
-
-/* Native method references for those with the same name as other `lodash` methods. */
-var nativeMin = Math.min;
-
-/**
- * Merges the function metadata of `source` into `data`.
- *
- * Merging metadata reduces the number of wrappers required to invoke a function.
- * This is possible because methods like `_.bind`, `_.curry`, and `_.partial`
- * may be applied regardless of execution order. Methods like `_.ary` and `_.rearg`
- * augment function arguments, making the order in which they are executed important,
- * preventing the merging of metadata. However, we make an exception for a safe
- * common case where curried functions have `_.ary` and or `_.rearg` applied.
- *
- * @private
- * @param {Array} data The destination metadata.
- * @param {Array} source The source metadata.
- * @returns {Array} Returns `data`.
- */
-function mergeData(data, source) {
-  var bitmask = data[1],
-      srcBitmask = source[1],
-      newBitmask = bitmask | srcBitmask,
-      isCommon = newBitmask < ARY_FLAG;
-
-  var isCombo =
-    (srcBitmask == ARY_FLAG && bitmask == CURRY_FLAG) ||
-    (srcBitmask == ARY_FLAG && bitmask == REARG_FLAG && data[7].length <= source[8]) ||
-    (srcBitmask == (ARY_FLAG | REARG_FLAG) && bitmask == CURRY_FLAG);
-
-  // Exit early if metadata can't be merged.
-  if (!(isCommon || isCombo)) {
-    return data;
-  }
-  // Use source `thisArg` if available.
-  if (srcBitmask & BIND_FLAG) {
-    data[2] = source[2];
-    // Set when currying a bound function.
-    newBitmask |= (bitmask & BIND_FLAG) ? 0 : CURRY_BOUND_FLAG;
-  }
-  // Compose partial arguments.
-  var value = source[3];
-  if (value) {
-    var partials = data[3];
-    data[3] = partials ? composeArgs(partials, value, source[4]) : arrayCopy(value);
-    data[4] = partials ? replaceHolders(data[3], PLACEHOLDER) : arrayCopy(source[4]);
-  }
-  // Compose partial right arguments.
-  value = source[5];
-  if (value) {
-    partials = data[5];
-    data[5] = partials ? composeArgsRight(partials, value, source[6]) : arrayCopy(value);
-    data[6] = partials ? replaceHolders(data[5], PLACEHOLDER) : arrayCopy(source[6]);
-  }
-  // Use source `argPos` if available.
-  value = source[7];
-  if (value) {
-    data[7] = arrayCopy(value);
-  }
-  // Use source `ary` if it's smaller.
-  if (srcBitmask & ARY_FLAG) {
-    data[8] = data[8] == null ? source[8] : nativeMin(data[8], source[8]);
-  }
-  // Use source `arity` if one is not provided.
-  if (data[9] == null) {
-    data[9] = source[9];
-  }
-  // Use source `func` and merge bitmasks.
-  data[0] = source[0];
-  data[1] = newBitmask;
-
-  return data;
-}
-
-module.exports = mergeData;
-
-},{"208":208,"245":245,"246":246,"281":281}],276:[function(_dereq_,module,exports){
-(function (global){
-var getNative = _dereq_(266);
-
-/** Native method references. */
-var WeakMap = getNative(global, 'WeakMap');
-
-/** Used to store function metadata. */
-var metaMap = WeakMap && new WeakMap;
-
-module.exports = metaMap;
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-
-},{"266":266}],277:[function(_dereq_,module,exports){
-arguments[4][102][0].apply(exports,arguments)
-},{"102":102,"284":284}],278:[function(_dereq_,module,exports){
-arguments[4][103][0].apply(exports,arguments)
-},{"103":103,"227":227}],279:[function(_dereq_,module,exports){
-/** Used to lookup unminified function names. */
-var realNames = {};
-
-module.exports = realNames;
-
-},{}],280:[function(_dereq_,module,exports){
-var arrayCopy = _dereq_(208),
-    isIndex = _dereq_(268);
-
-/* Native method references for those with the same name as other `lodash` methods. */
-var nativeMin = Math.min;
-
-/**
- * Reorder `array` according to the specified indexes where the element at
- * the first index is assigned as the first element, the element at
- * the second index is assigned as the second element, and so on.
- *
- * @private
- * @param {Array} array The array to reorder.
- * @param {Array} indexes The arranged array indexes.
- * @returns {Array} Returns `array`.
- */
-function reorder(array, indexes) {
-  var arrLength = array.length,
-      length = nativeMin(indexes.length, arrLength),
-      oldArray = arrayCopy(array);
-
-  while (length--) {
-    var index = indexes[length];
-    array[length] = isIndex(index, arrLength) ? oldArray[index] : undefined;
-  }
-  return array;
-}
-
-module.exports = reorder;
-
-},{"208":208,"268":268}],281:[function(_dereq_,module,exports){
-/** Used as the internal argument placeholder. */
-var PLACEHOLDER = '__lodash_placeholder__';
-
-/**
- * Replaces all `placeholder` elements in `array` with an internal placeholder
- * and returns an array of their indexes.
- *
- * @private
- * @param {Array} array The array to modify.
- * @param {*} placeholder The placeholder to replace.
- * @returns {Array} Returns the new array of placeholder indexes.
- */
-function replaceHolders(array, placeholder) {
-  var index = -1,
-      length = array.length,
-      resIndex = -1,
-      result = [];
-
-  while (++index < length) {
-    if (array[index] === placeholder) {
-      array[index] = PLACEHOLDER;
-      result[++resIndex] = index;
-    }
-  }
-  return result;
-}
-
-module.exports = replaceHolders;
-
-},{}],282:[function(_dereq_,module,exports){
-var baseSetData = _dereq_(241),
-    now = _dereq_(202);
-
-/** Used to detect when a function becomes hot. */
-var HOT_COUNT = 150,
-    HOT_SPAN = 16;
-
-/**
- * Sets metadata for `func`.
- *
- * **Note:** If this function becomes hot, i.e. is invoked a lot in a short
- * period of time, it will trip its breaker and transition to an identity function
- * to avoid garbage collection pauses in V8. See [V8 issue 2070](https://code.google.com/p/v8/issues/detail?id=2070)
- * for more details.
- *
- * @private
- * @param {Function} func The function to associate metadata with.
- * @param {*} data The metadata.
- * @returns {Function} Returns `func`.
- */
-var setData = (function() {
-  var count = 0,
-      lastCalled = 0;
-
-  return function(key, value) {
-    var stamp = now(),
-        remaining = HOT_SPAN - (stamp - lastCalled);
-
-    lastCalled = stamp;
-    if (remaining > 0) {
-      if (++count >= HOT_COUNT) {
-        return key;
-      }
-    } else {
-      count = 0;
-    }
-    return baseSetData(key, value);
-  };
-}());
-
-module.exports = setData;
-
-},{"202":202,"241":241}],283:[function(_dereq_,module,exports){
-arguments[4][104][0].apply(exports,arguments)
-},{"104":104,"268":268,"272":272,"287":287,"288":288,"299":299}],284:[function(_dereq_,module,exports){
-arguments[4][105][0].apply(exports,arguments)
-},{"105":105,"292":292}],285:[function(_dereq_,module,exports){
-arguments[4][106][0].apply(exports,arguments)
-},{"106":106,"243":243,"288":288}],286:[function(_dereq_,module,exports){
-var LazyWrapper = _dereq_(206),
-    LodashWrapper = _dereq_(207),
-    arrayCopy = _dereq_(208);
-
-/**
- * Creates a clone of `wrapper`.
- *
- * @private
- * @param {Object} wrapper The wrapper to clone.
- * @returns {Object} Returns the cloned wrapper.
- */
-function wrapperClone(wrapper) {
-  return wrapper instanceof LazyWrapper
-    ? wrapper.clone()
-    : new LodashWrapper(wrapper.__wrapped__, wrapper.__chain__, arrayCopy(wrapper.__actions__));
-}
-
-module.exports = wrapperClone;
-
-},{"206":206,"207":207,"208":208}],287:[function(_dereq_,module,exports){
-arguments[4][107][0].apply(exports,arguments)
-},{"107":107,"267":267,"273":273}],288:[function(_dereq_,module,exports){
-arguments[4][108][0].apply(exports,arguments)
-},{"108":108,"266":266,"272":272,"273":273}],289:[function(_dereq_,module,exports){
-arguments[4][109][0].apply(exports,arguments)
-},{"109":109,"292":292}],290:[function(_dereq_,module,exports){
-arguments[4][110][0].apply(exports,arguments)
-},{"110":110,"273":273,"289":289}],291:[function(_dereq_,module,exports){
-arguments[4][111][0].apply(exports,arguments)
-},{"111":111,"273":273}],292:[function(_dereq_,module,exports){
-arguments[4][112][0].apply(exports,arguments)
-},{"112":112}],293:[function(_dereq_,module,exports){
-var baseForIn = _dereq_(227),
-    isArguments = _dereq_(287),
-    isObjectLike = _dereq_(273);
-
-/** `Object#toString` result references. */
-var objectTag = '[object Object]';
-
-/** Used for native method references. */
-var objectProto = Object.prototype;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
-
-/**
- * Used to resolve the [`toStringTag`](http://ecma-international.org/ecma-262/6.0/#sec-object.prototype.tostring)
- * of values.
- */
-var objToString = objectProto.toString;
-
-/**
- * Checks if `value` is a plain object, that is, an object created by the
- * `Object` constructor or one with a `[[Prototype]]` of `null`.
- *
- * **Note:** This method assumes objects created by the `Object` constructor
- * have no inherited enumerable properties.
- *
- * @static
- * @memberOf _
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a plain object, else `false`.
- * @example
- *
- * function Foo() {
- *   this.a = 1;
- * }
- *
- * _.isPlainObject(new Foo);
- * // => false
- *
- * _.isPlainObject([1, 2, 3]);
- * // => false
- *
- * _.isPlainObject({ 'x': 0, 'y': 0 });
- * // => true
- *
- * _.isPlainObject(Object.create(null));
- * // => true
- */
-function isPlainObject(value) {
-  var Ctor;
-
-  // Exit early for non `Object` objects.
-  if (!(isObjectLike(value) && objToString.call(value) == objectTag && !isArguments(value)) ||
-      (!hasOwnProperty.call(value, 'constructor') && (Ctor = value.constructor, typeof Ctor == 'function' && !(Ctor instanceof Ctor)))) {
-    return false;
-  }
-  // IE < 9 iterates inherited properties before own properties. If the first
-  // iterated property is an object's own property then there are no inherited
-  // enumerable properties.
-  var result;
-  // In most environments an object's own properties are iterated before
-  // its inherited properties. If the last iterated property is an object's
-  // own property then there are no inherited enumerable properties.
-  baseForIn(value, function(subValue, key) {
-    result = key;
-  });
-  return result === undefined || hasOwnProperty.call(value, result);
-}
-
-module.exports = isPlainObject;
-
-},{"227":227,"273":273,"287":287}],294:[function(_dereq_,module,exports){
-arguments[4][113][0].apply(exports,arguments)
-},{"113":113,"273":273}],295:[function(_dereq_,module,exports){
-arguments[4][114][0].apply(exports,arguments)
-},{"114":114,"272":272,"273":273}],296:[function(_dereq_,module,exports){
-var baseCopy = _dereq_(218),
-    keysIn = _dereq_(299);
-
-/**
- * Converts `value` to a plain object flattening inherited enumerable
- * properties of `value` to own properties of the plain object.
- *
- * @static
- * @memberOf _
- * @category Lang
- * @param {*} value The value to convert.
- * @returns {Object} Returns the converted plain object.
- * @example
- *
- * function Foo() {
- *   this.b = 2;
- * }
- *
- * Foo.prototype.c = 3;
- *
- * _.assign({ 'a': 1 }, new Foo);
- * // => { 'a': 1, 'b': 2 }
- *
- * _.assign({ 'a': 1 }, _.toPlainObject(new Foo));
- * // => { 'a': 1, 'b': 2, 'c': 3 }
- */
-function toPlainObject(value) {
-  return baseCopy(value, keysIn(value));
-}
-
-module.exports = toPlainObject;
-
-},{"218":218,"299":299}],297:[function(_dereq_,module,exports){
-arguments[4][115][0].apply(exports,arguments)
-},{"115":115,"215":215,"216":216,"248":248}],298:[function(_dereq_,module,exports){
-arguments[4][116][0].apply(exports,arguments)
-},{"116":116,"266":266,"267":267,"283":283,"292":292}],299:[function(_dereq_,module,exports){
-arguments[4][117][0].apply(exports,arguments)
-},{"117":117,"268":268,"272":272,"287":287,"288":288,"292":292}],300:[function(_dereq_,module,exports){
-var baseMerge = _dereq_(236),
-    createAssigner = _dereq_(248);
-
-/**
- * Recursively merges own enumerable properties of the source object(s), that
- * don't resolve to `undefined` into the destination object. Subsequent sources
- * overwrite property assignments of previous sources. If `customizer` is
- * provided it's invoked to produce the merged values of the destination and
- * source properties. If `customizer` returns `undefined` merging is handled
- * by the method instead. The `customizer` is bound to `thisArg` and invoked
- * with five arguments: (objectValue, sourceValue, key, object, source).
- *
- * @static
- * @memberOf _
- * @category Object
- * @param {Object} object The destination object.
- * @param {...Object} [sources] The source objects.
- * @param {Function} [customizer] The function to customize assigned values.
- * @param {*} [thisArg] The `this` binding of `customizer`.
- * @returns {Object} Returns `object`.
- * @example
- *
- * var users = {
- *   'data': [{ 'user': 'barney' }, { 'user': 'fred' }]
- * };
- *
- * var ages = {
- *   'data': [{ 'age': 36 }, { 'age': 40 }]
- * };
- *
- * _.merge(users, ages);
- * // => { 'data': [{ 'user': 'barney', 'age': 36 }, { 'user': 'fred', 'age': 40 }] }
- *
- * // using a customizer callback
- * var object = {
- *   'fruits': ['apple'],
- *   'vegetables': ['beet']
- * };
- *
- * var other = {
- *   'fruits': ['banana'],
- *   'vegetables': ['carrot']
- * };
- *
- * _.merge(object, other, function(a, b) {
- *   if (_.isArray(a)) {
- *     return a.concat(b);
- *   }
- * });
- * // => { 'fruits': ['apple', 'banana'], 'vegetables': ['beet', 'carrot'] }
- */
-var merge = createAssigner(baseMerge);
-
-module.exports = merge;
-
-},{"236":236,"248":248}],301:[function(_dereq_,module,exports){
-arguments[4][119][0].apply(exports,arguments)
-},{"119":119,"284":284,"298":298}],302:[function(_dereq_,module,exports){
-arguments[4][120][0].apply(exports,arguments)
-},{"120":120,"205":205,"225":225,"244":244,"277":277,"278":278}],303:[function(_dereq_,module,exports){
-arguments[4][122][0].apply(exports,arguments)
-},{"122":122}],304:[function(_dereq_,module,exports){
-/**
- * A no-operation function that returns `undefined` regardless of the
- * arguments it receives.
- *
- * @static
- * @memberOf _
- * @category Utility
- * @example
- *
- * var object = { 'user': 'fred' };
- *
- * _.noop(object) === undefined;
- * // => true
- */
-function noop() {
-  // No operation performed.
-}
-
-module.exports = noop;
-
-},{}],305:[function(_dereq_,module,exports){
-arguments[4][123][0].apply(exports,arguments)
-},{"123":123,"238":238,"239":239,"270":270}],306:[function(_dereq_,module,exports){
-/**
- * Set attribute `name` to `val`, or get attr `name`.
- *
- * @param {Element} el
- * @param {String} name
- * @param {String} [val]
- * @api public
- */
-
-module.exports = function(el, name, val) {
-  // get
-  if (arguments.length == 2) {
-    return el.getAttribute(name);
-  }
-
-  // remove
-  if (val === null) {
-    return el.removeAttribute(name);
-  }
-
-  // set
-  el.setAttribute(name, val);
-
-  return el;
-};
-},{}],307:[function(_dereq_,module,exports){
-module.exports = _dereq_(180);
-},{"180":180}],308:[function(_dereq_,module,exports){
-module.exports = function(el) {
-
-  var c;
-
-  while (el.childNodes.length) {
-    c = el.childNodes[0];
-    el.removeChild(c);
-  }
-
-  return el;
-};
-},{}],309:[function(_dereq_,module,exports){
-arguments[4][124][0].apply(exports,arguments)
-},{"124":124,"182":182}],310:[function(_dereq_,module,exports){
-arguments[4][125][0].apply(exports,arguments)
-},{"125":125,"191":191}],311:[function(_dereq_,module,exports){
-arguments[4][128][0].apply(exports,arguments)
-},{"128":128}],312:[function(_dereq_,module,exports){
-arguments[4][141][0].apply(exports,arguments)
-},{"141":141,"313":313,"314":314}],313:[function(_dereq_,module,exports){
-arguments[4][142][0].apply(exports,arguments)
-},{"142":142}],314:[function(_dereq_,module,exports){
-arguments[4][143][0].apply(exports,arguments)
-},{"143":143,"313":313}],315:[function(_dereq_,module,exports){
+},{"undefined":undefined}],225:[function(_dereq_,module,exports){
 // Snap.svg 0.3.0
 // 
 // Copyright (c) 2013 – 2014 Adobe Systems Incorporated. All rights reserved.
@@ -22545,7 +22469,7 @@ arguments[4][143][0].apply(exports,arguments)
         });
     } else if (typeof exports !== 'undefined') {
         // Next for Node.js or CommonJS
-        var eve = _dereq_(192);
+        var eve = _dereq_(69);
         module.exports = factory(glob, eve);
     } else {
         // Browser globals (glob is window)
@@ -29170,215 +29094,123 @@ Snap.plugin(function (Snap, Element, Paper, glob) {
 
 return Snap;
 }));
-},{"192":192}],316:[function(_dereq_,module,exports){
-'use strict';
+},{"69":69}],226:[function(_dereq_,module,exports){
+/**
+ * Tiny stack for browser or server
+ *
+ * @author Jason Mulligan <jason.mulligan@avoidwork.com>
+ * @copyright 2014 Jason Mulligan
+ * @license BSD-3 <https://raw.github.com/avoidwork/tiny-stack/master/LICENSE>
+ * @link http://avoidwork.github.io/tiny-stack
+ * @module tiny-stack
+ * @version 0.1.0
+ */
 
-var snapsvg = module.exports = _dereq_(315);
+( function ( global ) {
 
-snapsvg.plugin(function(Snap, Element) {
-
-  /*\
-   * Element.children
-   [ method ]
-   **
-   * Returns array of all the children of the element.
-   = (array) array of Elements
-  \*/
-  Element.prototype.children = function () {
-      var out = [],
-          ch = this.node.childNodes;
-      for (var i = 0, ii = ch.length; i < ii; i++) {
-          out[i] = new Snap(ch[i]);
-      }
-      return out;
-  };
-});
-
+"use strict";
 
 /**
- * @class ClassPlugin
+ * TinyStack
  *
- * Extends snapsvg with methods to add and remove classes
+ * @constructor
  */
-snapsvg.plugin(function (Snap, Element, Paper, global) {
-
-  function split(str) {
-    return str.split(/\s+/);
-  }
-
-  function join(array) {
-    return array.join(' ');
-  }
-
-  function getClasses(e) {
-    return split(e.attr('class') || '');
-  }
-
-  function setClasses(e, classes) {
-    e.attr('class', join(classes));
-  }
-
-  /**
-   * @method snapsvg.Element#addClass
-   *
-   * @example
-   *
-   * e.attr('class', 'selector');
-   *
-   * e.addClass('foo bar'); // adds classes foo and bar
-   * e.attr('class'); // -> 'selector foo bar'
-   *
-   * e.addClass('fooBar');
-   * e.attr('class'); // -> 'selector foo bar fooBar'
-   *
-   * @param {String} cls classes to be added to the element
-   *
-   * @return {snapsvg.Element} the element (this)
-   */
-  Element.prototype.addClass = function(cls) {
-    var current = getClasses(this),
-        add = split(cls),
-        i, e;
-
-    for (i = 0, e; !!(e = add[i]); i++) {
-      if (current.indexOf(e) === -1) {
-        current.push(e);
-      }
-    }
-
-    setClasses(this, current);
-
-    return this;
-  };
-
-  /**
-   * @method snapsvg.Element#hasClass
-   *
-   * @param  {String}  cls the class to query for
-   * @return {Boolean} returns true if the element has the given class
-   */
-  Element.prototype.hasClass = function(cls) {
-    if (!cls) {
-      throw new Error('[snapsvg] syntax: hasClass(clsStr)');
-    }
-
-    return getClasses(this).indexOf(cls) !== -1;
-  };
-
-  /**
-   * @method snapsvg.Element#removeClass
-   *
-   * @example
-   *
-   * e.attr('class', 'foo bar');
-   *
-   * e.removeClass('foo');
-   * e.attr('class'); // -> 'bar'
-   *
-   * e.removeClass('foo bar'); // removes classes foo and bar
-   * e.attr('class'); // -> ''
-   *
-   * @param {String} cls classes to be removed from element
-   *
-   * @return {snapsvg.Element} the element (this)
-   */
-  Element.prototype.removeClass = function(cls) {
-    var current = getClasses(this),
-        remove = split(cls),
-        i, e, idx;
-
-    for (i = 0, e; !!(e = remove[i]); i++) {
-      idx = current.indexOf(e);
-
-      if (idx !== -1) {
-        // remove element from array
-        current.splice(idx, 1);
-      }
-    }
-
-    setClasses(this, current);
-
-    return this;
-  };
-
-});
+function TinyStack () {
+	this.data = [null];
+	this.top  = 0;
+}
 
 /**
- * @class TranslatePlugin
+ * Clears the stack
  *
- * Extends snapsvg with methods to translate elements
+ * @method clear
+ * @memberOf TinyStack
+ * @return {Object} {@link TinyStack}
  */
-snapsvg.plugin(function (Snap, Element, Paper, global) {
+TinyStack.prototype.clear = function clear () {
+	this.data = [null];
+	this.top  = 0;
 
-  /*
-   * @method snapsvg.Element#translate
-   *
-   * @example
-   *
-   * e.translate(10, 20);
-   *
-   * // sets transform matrix to translate(10, 20)
-   *
-   * @param {Number} x translation
-   * @param {Number} y translation
-   *
-   * @return {snapsvg.Element} the element (this)
-   */
-  Element.prototype.translate = function(x, y) {
-    var matrix = new Snap.Matrix();
-    matrix.translate(x, y);
-    return this.transform(matrix);
-  };
-});
-
+	return this;
+};
 
 /**
- * @class CreatePlugin
+ * Gets the size of the stack
  *
- * Create an svg element without attaching it to the dom
+ * @method length
+ * @memberOf TinyStack
+ * @return {Number} Size of stack
  */
-snapsvg.plugin(function(Snap) {
-
-  Snap.create = function(name, attrs) {
-    return Snap._.wrap(Snap._.$(name, attrs));
-  };
-});
-
+TinyStack.prototype.length = function length () {
+	return this.top;
+};
 
 /**
- * @class CreatSnapAtPlugin
+ * Gets the item at the top of the stack
  *
- * Extends snap.svg with a method to create a SVG element
- * at a specific position in the DOM.
+ * @method peek
+ * @memberOf TinyStack
+ * @return {Mixed} Item at the top of the stack
  */
-snapsvg.plugin(function(Snap, Element, Paper, global) {
+TinyStack.prototype.peek = function peek () {
+	return this.data[this.top];
+};
 
-  /*
-   * @method snapsvg.createSnapAt
-   *
-   * @example
-   *
-   * snapsvg.createSnapAt(parentNode, 200, 200);
-   *
-   * @param {Number} width of svg
-   * @param {Number} height of svg
-   * @param {Object} parentNode svg Element will be child of this
-   *
-   * @return {snapsvg.Element} the newly created wrapped SVG element instance
-   */
-  Snap.createSnapAt = function(width, height, parentNode) {
+/**
+ * Gets & removes the item at the top of the stack
+ *
+ * @method pop
+ * @memberOf TinyStack
+ * @return {Mixed} Item at the top of the stack
+ */
+TinyStack.prototype.pop = function pop () {
+	if ( this.top > 0 ) {
+		this.top--;
 
-    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('width', width);
-    svg.setAttribute('height', height);
-    if (!parentNode) {
-      parentNode = document.body;
-    }
-    parentNode.appendChild(svg);
+		return this.data.pop();
+	}
+	else {
+		return undefined;
+	}
+};
 
-    return new Snap(svg);
-  };
-});
-},{"315":315}]},{},[1])(1)
+/**
+ * Pushes an item onto the stack
+ *
+ * @method push
+ * @memberOf TinyStack
+ * @return {Object} {@link TinyStack}
+ */
+TinyStack.prototype.push = function push ( arg ) {
+	this.data[++this.top] = arg;
+
+	return this;
+};
+
+/**
+ * TinyStack factory
+ *
+ * @method factory
+ * @return {Object} {@link TinyStack}
+ */
+function factory () {
+	return new TinyStack();
+}
+
+// Node, AMD & window supported
+if ( typeof exports != "undefined" ) {
+	module.exports = factory;
+}
+else if ( typeof define == "function" ) {
+	define( function () {
+		return factory;
+	} );
+}
+else {
+	global.stack = factory;
+}
+} )( this );
+
+},{}]},{},[1])(1)
 });
 //# sourceMappingURL=bpmn-viewer.js.map
