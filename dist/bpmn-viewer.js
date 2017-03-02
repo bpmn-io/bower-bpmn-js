@@ -1,5 +1,5 @@
 /*!
- * bpmn-js - bpmn-viewer v0.19.0
+ * bpmn-js - bpmn-viewer v0.20.0
 
  * Copyright 2014, 2015 camunda Services GmbH and other contributors
  *
@@ -8,7 +8,7 @@
  *
  * Source Code: https://github.com/bpmn-io/bpmn-js
  *
- * Date: 2016-12-21
+ * Date: 2017-03-02
  */
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.BpmnJS = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 /**
@@ -21,7 +21,6 @@
 
 var assign = _dereq_(188),
     omit = _dereq_(192),
-    isString = _dereq_(185),
     isNumber = _dereq_(182);
 
 var domify = _dereq_(202),
@@ -59,8 +58,7 @@ function checkValidationError(err) {
 var DEFAULT_OPTIONS = {
   width: '100%',
   height: '100%',
-  position: 'relative',
-  container: 'body'
+  position: 'relative'
 };
 
 
@@ -369,9 +367,49 @@ Viewer.prototype.off = function(event, callback) {
   this.get('eventBus').off(event, callback);
 };
 
+Viewer.prototype.attachTo = function(parentNode) {
+
+  if (!parentNode) {
+    throw new Error('parentNode required');
+  }
+
+  // ensure we detach from the
+  // previous, old parent
+  this.detach();
+
+  // unwrap jQuery if provided
+  if (parentNode.get && parentNode.constructor.prototype.jquery) {
+    parentNode = parentNode.get(0);
+  }
+
+  if (typeof parentNode === 'string') {
+    parentNode = domQuery(parentNode);
+  }
+
+  var container = this._container;
+
+  parentNode.appendChild(container);
+
+  this._emit('attach', {});
+};
+
+Viewer.prototype.detach = function() {
+
+  var container = this._container,
+      parentNode = container.parentNode;
+
+  if (!parentNode) {
+    return;
+  }
+
+  this._emit('detach', {});
+
+  parentNode.removeChild(container);
+};
 
 Viewer.prototype._init = function(container, moddle, options) {
 
+  this._container = container;
   var baseModules = options.modules || this.getModules(),
       additionalModules = options.additionalModules || [],
       staticModules = [
@@ -390,6 +428,10 @@ Viewer.prototype._init = function(container, moddle, options) {
 
   // invoke diagram constructor
   Diagram.call(this, diagramOptions);
+
+  if (options && options.container) {
+    this.attachTo(options.container);
+  }
 };
 
 /**
@@ -406,29 +448,13 @@ Viewer.prototype._emit = function(type, event) {
 
 Viewer.prototype._createContainer = function(options) {
 
-  var parent = options.container,
-      container;
-
-  // support jquery element
-  // unwrap it if passed
-  if (parent.get) {
-    parent = parent.get(0);
-  }
-
-  // support selector
-  if (isString(parent)) {
-    parent = domQuery(parent);
-  }
-
-  container = domify('<div class="bjs-container"></div>');
+  var container = domify('<div class="bjs-container"></div>');
 
   assign(container.style, {
     width: ensureUnit(options.width),
     height: ensureUnit(options.height),
     position: options.position
   });
-
-  parent.appendChild(container);
 
   return container;
 };
@@ -489,7 +515,7 @@ function addProjectLogo(container) {
 
 /* </project-logo> */
 
-},{"14":14,"15":15,"182":182,"185":185,"188":188,"192":192,"2":2,"202":202,"203":203,"204":204,"205":205,"230":230,"30":30,"47":47,"51":51,"52":52,"70":70,"8":8}],2:[function(_dereq_,module,exports){
+},{"14":14,"15":15,"182":182,"188":188,"192":192,"2":2,"202":202,"203":203,"204":204,"205":205,"230":230,"30":30,"47":47,"51":51,"52":52,"70":70,"8":8}],2:[function(_dereq_,module,exports){
 module.exports = {
   __depends__: [
     _dereq_(5),
@@ -910,8 +936,9 @@ function BpmnRenderer(eventBus, styles, pathMap, canvas, priority) {
   }
 
   function renderLabel(parentGfx, label, options) {
-    var text = textUtil.createText(parentGfx, label || '', options);
+    var text = textUtil.createText(label || '', options);
     svgClasses(text).add('djs-label');
+    svgAppend(parentGfx, text);
 
     return text;
   }
@@ -938,7 +965,11 @@ function BpmnRenderer(eventBus, styles, pathMap, canvas, priority) {
       y: element.height / 2 + element.y
     };
 
-    return renderLabel(parentGfx, semantic.name, { box: box, style: { fontSize: '11px' } });
+    return renderLabel(parentGfx, semantic.name, {
+      box: box,
+      fitBox: true,
+      style: { fontSize: '11px' }
+    });
   }
 
   function renderLaneLabel(parentGfx, text, element) {
@@ -2020,33 +2051,7 @@ function BpmnRenderer(eventBus, styles, pathMap, canvas, priority) {
       });
     },
     'label': function(parentGfx, element) {
-      // Update external label size and bounds during rendering when
-      // we have the actual rendered bounds anyway.
-
-      var textElement = renderExternalLabel(parentGfx, element);
-
-      var textBBox;
-
-      try {
-        textBBox = textElement.getBBox();
-      } catch (e) {
-        textBBox = { width: 0, height: 0, x: 0 };
-      }
-
-      // update element.x so that the layouted text is still
-      // center alligned (newX = oldMidX - newWidth / 2)
-      element.x = Math.ceil(element.x + element.width / 2) - Math.ceil((textBBox.width / 2));
-
-      // take element width, height from actual bounds
-      element.width = Math.ceil(textBBox.width);
-      element.height = Math.ceil(textBBox.height);
-
-      // compensate bounding box x
-      svgAttr(textElement, {
-        transform: 'translate(' + (-1 * textBBox.x) + ',0)'
-      });
-
-      return textElement;
+      return renderExternalLabel(parentGfx, element);
     },
     'bpmn:TextAnnotation': function(parentGfx, element) {
       var style = {
@@ -2947,6 +2952,8 @@ var assign = _dereq_(188),
 
 var LabelUtil = _dereq_(12);
 
+var TextUtil = _dereq_(64);
+
 var is = _dereq_(13).is;
 
 var hasExternalLabel = LabelUtil.hasExternalLabel,
@@ -2977,6 +2984,7 @@ function notYetDrawn(translate, semantic, refSemantic, property) {
   }));
 }
 
+
 /**
  * An importer that adds bpmn elements to the canvas
  *
@@ -2992,6 +3000,8 @@ function BpmnImporter(eventBus, canvas, elementFactory, elementRegistry, transla
   this._elementFactory = elementFactory;
   this._elementRegistry = elementRegistry;
   this._translate = translate;
+
+  this._textUtil = new TextUtil();
 }
 
 BpmnImporter.$inject = [ 'eventBus', 'canvas', 'elementFactory', 'elementRegistry', 'translate' ];
@@ -3128,9 +3138,20 @@ BpmnImporter.prototype._attachBoundary = function(boundarySemantic, boundaryElem
  * add label for an element
  */
 BpmnImporter.prototype.addLabel = function(semantic, element) {
-  var bounds = getExternalLabelBounds(semantic, element);
+  var bounds,
+      text,
+      label;
 
-  var label = this._elementFactory.createLabel(elementData(semantic, {
+  bounds = getExternalLabelBounds(semantic, element);
+
+  text = semantic.name;
+
+  if (text) {
+    // get corrected bounds from actual layouted text
+    bounds = getLayoutedBounds(bounds, text, this._textUtil);
+  }
+
+  label = this._elementFactory.createLabel(elementData(semantic, {
     id: semantic.id + '_label',
     labelTarget: element,
     type: 'label',
@@ -3199,7 +3220,35 @@ BpmnImporter.prototype._getElement = function(semantic) {
   return this._elementRegistry.get(semantic.id);
 };
 
-},{"11":11,"12":12,"13":13,"188":188,"78":78,"9":9}],7:[function(_dereq_,module,exports){
+
+// TODO(nikku): repeating code (search for <getLayoutedBounds>)
+
+var EXTERNAL_LABEL_STYLE = {
+  fontFamily: 'Arial, sans-serif',
+  fontSize: '11px'
+};
+
+function getLayoutedBounds(bounds, text, textUtil) {
+
+  var layoutedLabelDimensions = textUtil.getDimensions(text, {
+    box: {
+      width: 90,
+      height: 30,
+      x: bounds.width / 2 + bounds.x,
+      y: bounds.height / 2 + bounds.y
+    },
+    style: EXTERNAL_LABEL_STYLE
+  });
+
+  // resize label shape to fit label text
+  return {
+    x: Math.round(bounds.x + bounds.width / 2 - layoutedLabelDimensions.width / 2),
+    y: Math.round(bounds.y),
+    width: Math.ceil(layoutedLabelDimensions.width),
+    height: Math.ceil(layoutedLabelDimensions.height)
+  };
+}
+},{"11":11,"12":12,"13":13,"188":188,"64":64,"78":78,"9":9}],7:[function(_dereq_,module,exports){
 'use strict';
 
 var filter = _dereq_(74),
@@ -11331,7 +11380,7 @@ Overlays.prototype._addOverlay = function(overlay) {
       overlayContainer;
 
   // unwrap jquery (for those who need it)
-  if (html.get) {
+  if (html.get && html.constructor.prototype.jquery) {
     html = html.get(0);
   }
 
@@ -12837,6 +12886,20 @@ function shortenLine(line, width, maxWidth) {
 }
 
 
+function getHelperSvg() {
+  var helperSvg = document.getElementById('helper-svg');
+
+  if (!helperSvg) {
+    helperSvg = svgCreate('svg');
+    helperSvg.id = 'helper-svg';
+    svgAttr(helperSvg, { visibility: 'hidden' });
+    document.body.appendChild(helperSvg);
+  }
+
+  return helperSvg;
+}
+
+
 /**
  * Creates a new label utility
  *
@@ -12856,47 +12919,77 @@ function Text(config) {
   }, config || {});
 }
 
+/**
+ * Returns the layouted text as an SVG element.
+ *
+ * @param {String} text
+ * @param {Object} options
+ *
+ * @return {SVGText}
+ */
+Text.prototype.createText = function(text, options) {
+  return this.layoutText(text, options).element;
+};
 
 /**
- * Create a label in the parent node.
+ * Returns a labels layouted dimensions.
+ *
+ * @param {String} text to layout
+ * @param {Object} options
+ *
+ * @return {Dimensions}
+ */
+Text.prototype.getDimensions = function(text, options) {
+  return this.layoutText(text, options).dimensions;
+};
+
+/**
+ * Creates and returns a label and its bounding box.
  *
  * @method Text#createText
  *
- * @param {SVGElement} parent the parent to draw the label on
  * @param {String} text the text to render on the label
  * @param {Object} options
  * @param {String} options.align how to align in the bounding box.
- *                             Any of { 'center-middle', 'center-top' }, defaults to 'center-top'.
+ *                               Any of { 'center-middle', 'center-top' },
+ *                               defaults to 'center-top'.
  * @param {String} options.style style to be applied to the text
+ * @param {boolean} options.fitBox indicates if box will be recalculated to
+ *                                 fit text
  *
- * @return {SVGText} the text element created
+ * @return {Object} { element, dimensions }
  */
-Text.prototype.createText = function(parent, text, options) {
-
+Text.prototype.layoutText = function(text, options) {
   var box = merge({}, this._config.size, options.box || {}),
       style = merge({}, this._config.style, options.style || {}),
       align = parseAlign(options.align || this._config.align),
-      padding = parsePadding(options.padding !== undefined ? options.padding : this._config.padding);
+      padding = parsePadding(options.padding !== undefined ? options.padding : this._config.padding),
+      fitBox = options.fitBox || false;
 
   var lines = text.split(/\r?\n/g),
       layouted = [];
 
   var maxWidth = box.width - padding.left - padding.right;
 
-  // FF regression: ensure text is shown during rendering
-  // by attaching it directly to the body
-  var fakeText = svgCreate('text');
-  svgAttr(fakeText, { x: 0, y: 0 });
-  svgAttr(fakeText, style);
+  // ensure correct rendering by attaching helper text node to invisible SVG
+  var helperText = svgCreate('text');
+  svgAttr(helperText, { x: 0, y: 0 });
+  svgAttr(helperText, style);
 
-  svgAppend(parent, fakeText);
+  var helperSvg = getHelperSvg();
+
+  svgAppend(helperSvg, helperText);
 
   while (lines.length) {
-    layouted.push(layoutNext(lines, maxWidth, fakeText));
+    layouted.push(layoutNext(lines, maxWidth, helperText));
   }
 
   var totalHeight = reduce(layouted, function(sum, line, idx) {
     return sum + line.height;
+  }, 0);
+
+  var maxLineWidth = reduce(layouted, function(sum, line, idx) {
+    return line.width > sum ? line.width : sum;
   }, 0);
 
   // the y position of the next line
@@ -12915,8 +13008,8 @@ Text.prototype.createText = function(parent, text, options) {
 
   svgAttr(textElement, style);
 
-  svgAppend(parent, textElement);
-
+  // layout each line taking into account that parent
+  // shape might resize to fit text size
   forEach(layouted, function(line) {
     y += line.height;
 
@@ -12926,12 +13019,14 @@ Text.prototype.createText = function(parent, text, options) {
       break;
 
     case 'right':
-      x = (maxWidth - padding.right - line.width);
+      x = ((fitBox ? maxLineWidth : maxWidth)
+        - padding.right - line.width);
       break;
 
     default:
-        // aka center
-      x = Math.max(((maxWidth - line.width) / 2 + padding.left), 0);
+      // aka center
+      x = Math.max((((fitBox ? maxLineWidth : maxWidth)
+        - line.width) / 2 + padding.left), 0);
     }
 
     var tspan = svgCreate('tspan');
@@ -12942,12 +13037,18 @@ Text.prototype.createText = function(parent, text, options) {
     svgAppend(textElement, tspan);
   });
 
-  // remove fake text
-  svgRemove(fakeText);
+  svgRemove(helperText);
 
-  return textElement;
+  var dimensions = {
+    width: maxLineWidth,
+    height: totalHeight
+  };
+
+  return {
+    dimensions: dimensions,
+    element: textElement
+  };
 };
-
 
 module.exports = Text;
 
@@ -18511,7 +18612,7 @@ BaseHandler.prototype.handleNode = function() {};
  */
 function NoopHandler() { }
 
-NoopHandler.prototype = new BaseHandler();
+NoopHandler.prototype = Object.create(BaseHandler.prototype);
 
 NoopHandler.prototype.handleNode = function() {
   return this;
@@ -18519,7 +18620,7 @@ NoopHandler.prototype.handleNode = function() {
 
 function BodyHandler() {}
 
-BodyHandler.prototype = new BaseHandler();
+BodyHandler.prototype = Object.create(BaseHandler.prototype);
 
 BodyHandler.prototype.handleText = function(text) {
   this.body = (this.body || '') + text;
@@ -18530,7 +18631,7 @@ function ReferenceHandler(property, context) {
   this.context = context;
 }
 
-ReferenceHandler.prototype = new BodyHandler();
+ReferenceHandler.prototype = Object.create(BodyHandler.prototype);
 
 ReferenceHandler.prototype.handleNode = function(node) {
 
@@ -18559,11 +18660,11 @@ function ValueHandler(propertyDesc, element) {
   this.propertyDesc = propertyDesc;
 }
 
-ValueHandler.prototype = new BodyHandler();
+ValueHandler.prototype = Object.create(BodyHandler.prototype);
 
 ValueHandler.prototype.handleEnd = function() {
 
-  var value = this.body,
+  var value = this.body || '',
       element = this.element,
       propertyDesc = this.propertyDesc;
 
@@ -18606,7 +18707,7 @@ function ElementHandler(model, type, context) {
   this.context = context;
 }
 
-ElementHandler.prototype = new BaseElementHandler();
+ElementHandler.prototype = Object.create(BaseElementHandler.prototype);
 
 ElementHandler.prototype.addReference = function(reference) {
   this.context.addReference(reference);
@@ -20229,12 +20330,18 @@ Moddle.prototype.hasType = function(element, type) {
   });
 };
 
-
 /**
  * Returns the descriptor of an elements named property
  */
 Moddle.prototype.getPropertyDescriptor = function(element, property) {
   return this.getElementDescriptor(element).propertiesByName[property];
+};
+
+/**
+ * Returns a mapped type's descriptor
+ */
+Moddle.prototype.getTypeDescriptor = function(type) {
+  return this.registry.typeMap[type];
 };
 
 },{"183":183,"185":185,"212":212,"214":214,"215":215,"216":216,"75":75,"76":76}],214:[function(_dereq_,module,exports){
@@ -20452,7 +20559,8 @@ Registry.prototype.registerType = function(type, pkg) {
   type = assign({}, type, {
     superClass: (type.superClass || []).slice(),
     extends: (type.extends || []).slice(),
-    properties: (type.properties || []).slice()
+    properties: (type.properties || []).slice(),
+    meta: assign(({}, type.meta || {}))
   });
 
   var ns = parseNameNs(type.name, pkg.prefix),
@@ -20578,6 +20686,7 @@ Registry.prototype.getEffectiveDescriptor = function(name) {
 Registry.prototype.definePackage = function(target, pkg) {
   this.properties.define(target, '$pkg', { value: pkg });
 };
+
 },{"188":188,"211":211,"214":214,"217":217,"76":76}],217:[function(_dereq_,module,exports){
 'use strict';
 
