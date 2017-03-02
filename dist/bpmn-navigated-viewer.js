@@ -1,5 +1,5 @@
 /*!
- * bpmn-js - bpmn-navigated-viewer v0.20.0
+ * bpmn-js - bpmn-navigated-viewer v0.20.1
 
  * Copyright 2014, 2015 camunda Services GmbH and other contributors
  *
@@ -13322,8 +13322,14 @@ function getHelperSvg() {
 
   if (!helperSvg) {
     helperSvg = svgCreate('svg');
-    helperSvg.id = 'helper-svg';
-    svgAttr(helperSvg, { visibility: 'hidden' });
+
+    svgAttr(helperSvg, {
+      id: 'helper-svg',
+      width: 0,
+      height: 0,
+      style: 'visibility: hidden; position: fixed'
+    });
+
     document.body.appendChild(helperSvg);
   }
 
