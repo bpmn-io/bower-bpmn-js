@@ -1,5 +1,5 @@
 /*!
- * bpmn-js - bpmn-modeler v0.20.3
+ * bpmn-js - bpmn-modeler v0.20.4
 
  * Copyright 2014, 2015 camunda Services GmbH and other contributors
  *
@@ -8,7 +8,7 @@
  *
  * Source Code: https://github.com/bpmn-io/bpmn-js
  *
- * Date: 2017-03-10
+ * Date: 2017-03-17
  */
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.BpmnJS = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 'use strict';
@@ -40252,10 +40252,20 @@ module.exports.transform = function(gfx, x, y, angle, amount) {
  * @param {Number} y
  */
 module.exports.translate = function(gfx, x, y) {
-  var translate = createTransform();
-  translate.setTranslate(x, y);
+  // var translate = createTransform();
+  // translate.setTranslate(x, y);
+  //
+  // svgTransform(gfx, translate);
 
-  svgTransform(gfx, translate);
+  // TODO@philippfromme: temporary fix for Chrome >57
+  gfx.setAttribute('transform', matrixToTransformString({
+    a: 1,
+    b: 0,
+    c: 0,
+    d: 1,
+    e: x,
+    f: y
+  }));
 };
 
 
@@ -40281,6 +40291,18 @@ module.exports.scale = function(gfx, amount) {
 
   svgTransform(gfx, scale);
 };
+
+// TODO@philippfromme: temporary fix for Chrome >57
+function matrixToTransformString(matrix) {
+  return 'matrix(' + [
+    matrix.a || 1,
+    matrix.b || 0,
+    matrix.c || 0,
+    matrix.d || 1,
+    matrix.e || 0,
+    matrix.f || 0
+  ] + ')';
+}
 
 },{"477":477,"480":480}],279:[function(_dereq_,module,exports){
 'use strict';
