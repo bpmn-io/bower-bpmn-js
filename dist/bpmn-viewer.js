@@ -1,5 +1,5 @@
 /*!
- * bpmn-js - bpmn-viewer v0.20.6
+ * bpmn-js - bpmn-viewer v0.21.0
 
  * Copyright 2014, 2015 camunda Services GmbH and other contributors
  *
@@ -8,7 +8,7 @@
  *
  * Source Code: https://github.com/bpmn-io/bpmn-js
  *
- * Date: 2017-05-04
+ * Date: 2017-07-31
  */
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.BpmnJS = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 /**
@@ -2076,7 +2076,7 @@ function BpmnRenderer(eventBus, styles, pathMap, canvas, priority) {
       });
 
       var text = getSemantic(element).text || '';
-      renderLabel(parentGfx, text, { box: element, align: 'left-middle', padding: 5 });
+      renderLabel(parentGfx, text, { box: element, align: 'left-top', padding: 5 });
 
       return textElement;
     },
@@ -16988,6 +16988,18 @@ Canvas.prototype._viewboxChanged = function() {
  * //   width, height
  * // }
  *
+ * // if the current diagram is zoomed and scrolled, you may reset it to the
+ * // default zoom via this method, too:
+ *
+ * var zoomedAndScrolledViewbox = canvas.viewbox();
+ *
+ * canvas.viewbox({
+ *   x: 0,
+ *   y: 0,
+ *   width: zoomedAndScrolledViewbox.outer.width,
+ *   height: zoomedAndScrolledViewbox.outer.height
+ * });
+ *
  * @param  {Object} [box] the new view box to set
  * @param  {Number} box.x the top left X coordinate of the canvas visible in view box
  * @param  {Number} box.y the top left Y coordinate of the canvas visible in view box
@@ -17247,14 +17259,7 @@ Canvas.prototype.getAbsoluteBBox = function(element) {
   if (element.waypoints) {
     var gfx = this.getGraphics(element);
 
-    var transformBBox = gfx.getBBox(true);
     bbox = gfx.getBBox();
-
-    bbox.x -= transformBBox.x;
-    bbox.y -= transformBBox.y;
-
-    bbox.width += 2 * transformBBox.x;
-    bbox.height +=  2 * transformBBox.y;
   }
   // shapes
   // use data
@@ -20641,6 +20646,11 @@ module.exports.updateLine = function(gfx, points) {
 },{"328":328,"330":330}],189:[function(_dereq_,module,exports){
 'use strict';
 
+var svgTransform = _dereq_(333);
+
+var createTransform = _dereq_(331).createTransform;
+
+
 /**
  * @param {<SVGElement>} element
  * @param {Number} x
@@ -20649,23 +20659,16 @@ module.exports.updateLine = function(gfx, points) {
  * @param {Number} amount
  */
 module.exports.transform = function(gfx, x, y, angle, amount) {
-  var transform = '';
+  var translate = createTransform();
+  translate.setTranslate(x, y);
 
-  if (x !== 0 || y !== 0) {
-    transform += 'translate(' + x + ' ' + y + ') ';
-  }
+  var rotate = createTransform();
+  rotate.setRotate(angle, 0, 0);
 
-  if (angle !== 0) {
-    transform += 'rotate(' + angle + ') ';
-  }
+  var scale = createTransform();
+  scale.setScale(amount || 1, amount || 1);
 
-  if (amount) {
-    transform += 'scale(' + amount + ' ' + amount + ')';
-  }
-
-  transform = transform.trim();
-
-  gfx.setAttribute('transform', transform);
+  svgTransform(gfx, [ translate, rotate, scale ]);
 };
 
 
@@ -20675,7 +20678,10 @@ module.exports.transform = function(gfx, x, y, angle, amount) {
  * @param {Number} y
  */
 module.exports.translate = function(gfx, x, y) {
-  gfx.setAttribute('transform', 'translate(' + x + ' ' + y + ')');
+  var translate = createTransform();
+  translate.setTranslate(x, y);
+
+  svgTransform(gfx, translate);
 };
 
 
@@ -20684,7 +20690,10 @@ module.exports.translate = function(gfx, x, y) {
  * @param {Number} angle
  */
 module.exports.rotate = function(gfx, angle) {
-  gfx.setAttribute('transform', 'rotate(' + angle + ')');
+  var rotate = createTransform();
+  rotate.setRotate(angle, 0, 0);
+
+  svgTransform(gfx, rotate);
 };
 
 
@@ -20693,10 +20702,13 @@ module.exports.rotate = function(gfx, angle) {
  * @param {Number} amount
  */
 module.exports.scale = function(gfx, amount) {
-  gfx.setAttribute('transform', 'scale(' + amount + ' ' + amount + ')');
+  var scale = createTransform();
+  scale.setScale(amount, amount);
+
+  svgTransform(gfx, scale);
 };
 
-},{}],190:[function(_dereq_,module,exports){
+},{"331":331,"333":333}],190:[function(_dereq_,module,exports){
 'use strict';
 
 var isObject = _dereq_(302),
@@ -20789,7 +20801,7 @@ function layoutNext(lines, maxWidth, fakeText) {
     textBBox.width = fitLine ? textBBox.width : 0;
 
     // try to fit
-    if (fitLine === ' ' || fitLine === '' || textBBox.width < Math.round(maxWidth) || fitLine.length < 4) {
+    if (fitLine === ' ' || fitLine === '' || textBBox.width < Math.round(maxWidth) || fitLine.length < 2) {
       return fit(lines, fitLine, originalLine, textBBox);
     }
 
@@ -20799,16 +20811,9 @@ function layoutNext(lines, maxWidth, fakeText) {
 
 function fit(lines, fitLine, originalLine, textBBox) {
   if (fitLine.length < originalLine.length) {
-    var nextLine = lines[0] || '',
-        remainder = originalLine.slice(fitLine.length).trim();
+    var remainder = originalLine.slice(fitLine.length).trim();
 
-    if (/-\s*$/.test(remainder)) {
-      nextLine = remainder + nextLine.replace(/^\s+/, '');
-    } else {
-      nextLine = remainder + ' ' + nextLine;
-    }
-
-    lines[0] = nextLine;
+    lines.unshift(remainder);
   }
   return { width: textBBox.width, height: textBBox.height, text: fitLine };
 }
