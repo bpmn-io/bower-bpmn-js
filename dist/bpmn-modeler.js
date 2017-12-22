@@ -1,5 +1,5 @@
 /*!
- * bpmn-js - bpmn-modeler v0.26.0
+ * bpmn-js - bpmn-modeler v0.26.1
 
  * Copyright 2014 - 2017 camunda Services GmbH and other contributors
  *
@@ -3970,10 +3970,6 @@ ContextPadProvider.prototype.getContextPadEntries = function(element) {
   var businessObject = element.businessObject;
 
   function startConnect(event, element) {
-
-    // prevent dragging of connection symbol
-    event.preventDefault();
-
     connect.start(event, element);
   }
 
@@ -27174,6 +27170,10 @@ var EventBusEvent = _dereq_(128).Event;
 var DRAG_ACTIVE_CLS = 'djs-drag-active';
 
 
+function preventDefault(event) {
+  event.preventDefault();
+}
+
 function stopPropagation(event) {
   Event.stopPropagation(event);
 }
@@ -27516,6 +27516,9 @@ function Dragging(eventBus, canvas, selection) {
     // reset dom listeners
     domEvent.unbind(document, 'mousemove', move);
 
+    domEvent.unbind(document, 'dragstart', preventDefault);
+    domEvent.unbind(document, 'selectstart', preventDefault);
+
     domEvent.unbind(document, 'mousedown', endDrag, true);
     domEvent.unbind(document, 'mouseup', endDrag, true);
 
@@ -27590,6 +27593,11 @@ function Dragging(eventBus, canvas, selection) {
       globalStart = Event.toPoint(event);
 
       stopPropagation(event);
+
+      // prevent default browser dragging behavior
+      if (originalEvent.type === 'dragstart') {
+        preventDefault(originalEvent);
+      }
     } else {
       originalEvent = null;
       globalStart = { x: 0, y: 0 };
@@ -27627,6 +27635,10 @@ function Dragging(eventBus, canvas, selection) {
       } else {
         // assume we use the mouse to interact per default
         domEvent.bind(document, 'mousemove', move);
+
+        // prevent default browser drag and text selection behavior
+        domEvent.bind(document, 'dragstart', preventDefault);
+        domEvent.bind(document, 'selectstart', preventDefault);
 
         domEvent.bind(document, 'mousedown', endDrag, true);
         domEvent.bind(document, 'mouseup', endDrag, true);
