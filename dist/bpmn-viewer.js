@@ -1,5 +1,5 @@
 /*!
- * bpmn-js - bpmn-viewer v0.26.1
+ * bpmn-js - bpmn-viewer v0.26.2
 
  * Copyright 2014 - 2017 camunda Services GmbH and other contributors
  *
